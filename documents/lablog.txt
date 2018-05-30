@@ -1,0 +1,352 @@
+PWD=/processing_Data/bioinformatics/research/20160530_ANTIBIOTICS_PS_MP_T/REFERENCES/PLASMIDS
+
+#######Remove chromosomal sequences from PACBIO_ddbb1
+####################################################
+
+listSeq=$(printf "%s|" $(cat PACBIO_1_ddbb.length | awk '$2 > 1000000 {print $1}') | sed 's/|$//g')
+
+awk 'BEGIN {RS=">"} !/'"${listSeq}"'/ {print ">"$0}' PACBIO_1_ddbb.fasta > PACBIO_1_ddbb_plasmid.fasta
+
+
+#######Extract fasta from table using its Refseq - 21-02-2017
+############################################################
+
+
+for i in $(cat genomes_plasmids_table_21_12_2017.txt | awk 'BEGIN{FS="\t"} (NR>2) {if ($6 ~ "N") {print $6;} else {print $7}}'); do curl -s "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&amp;id=$i&amp;retmode=text&amp;rettype=fasta"; done > plasmid.all.genomic.dec212017.fna
+
+
+###REMOVE USELESS TAGS
+
+cat plasmid.all.genomic.sep062017.fasta | awk '/cds| partial|putative|protein| gene|genome assembly/' | cut -d " " -f 1 | cut -d ">" -f 2 > remove_by_concept.txt
+
+listAcRegexp=$(printf "%s|" $(cat remove_by_concep.txt) | sed 's/|$//g')
+
+awk 'BEGIN {RS=">"} !/'"${listAcRegexp}"'/ {print ">"$0}' plasmid.all.genomic.sep062017.fasta > plasmid.all.genomic.sep062017.fasta.filtered
+
+#REMOVE EMPTY SEQUENCES IF NECESSARY
+
+awk 'BEGIN {RS = ">" ; FS = "\n" ; ORS = ""} {if ($2) print ">"$0}' input > output
+
+
+###OBTAIN LENGTH FILE
+
+cat plasmid.all.genomic.sep062017.fasta.filtered | awk 'BEGIN {FS=="| "} /^>/ {if (seqlen) print seqlen;printf "%s\t", $1; seqlen=0; next} {seqlen+=length($0)} END {print seqlen}' | sed 's/^>//g' > plasmid.all.genomic.sep062017.length
+
+
+
+###ANNOTATE WITH PROKKA
+
+qsub -V -b y -j y -l h_vmem=20G -pe openmp 10 -cwd -q all.q -N Prokka_PLSM_DDBB prokka --force --prefix plasmid_sep062017 --addgenes --kingdom Bacteria --usegenus --centre CNM --locustag ddbb --compliant ../plasmid.all.genomic.sep062017.fasta.filtered
+
+#create files with names
+cat ../plasmid.all.genomic.sep062017.fasta.filtered | awk '/>/ {print $1}' > list_ac_plasmif_all_sep062017.txt
+cat plasmid_sep062017.fna | awk '/>/' > list_contig_prokka_all_sep062017.txt
+
+
+#paste colums to relate names in a dictionary
+awk 'NR==FNR{ac[NR]=$0;next}{print ac[FNR], "\t", $0 }' list_ac_plasmif_all_sep062017.txt list_contig_prokka_all_sep062017.txt > list_dictionary_ac_contig_plasmid_all_sep062017.txt
+
+remove ">" and prefix
+
+
+#extract gene names from gff
+
+#only genes with name
+cat plasmid_sep062017.gff | awk 'BEGIN{OFS="\t";}{split($9,description,"Name=");split(description[2],name,";");{if ($3 == "gene" && $1 != "#" && $9 ~ /Name/) {print $1,$4,$5, name[1]}}}' > plasmid_sep062017.contigs.bed
+
+#names and CDS
+cat plasmid_sep062017.gff | awk 'BEGIN{OFS="\t";}{split($1,query,"_"); \
+split($9,description,"Name=");split(description[2],name,";"); \
+split($9,locustag,"locus_tag=");split(locustag[2],locus,";");split(locus[1],locusname,"_");\
+split(name[1],nameLowBar,"_")};{if ($3 == "gene" && $1 != "#" && $9 ~ /Name/) {print query[length(query)],$4,$5, nameLowBar[1]}; \
+{if ($3 == "gene" && $1 != "#" && $9 !~ /Name/) {print query[length(query)],$4,$5, "CDS_"locusname[2]}}}' > plasmid_sep062017.contigs.bed
+
+
+#Substitute contig names by plasmid accession number
+
+awk 'FNR==NR {dict[$2]=$1; next} {$1=dict[$1]}1' list_dictionary_ac_contig_plasmid_all_feb212017.txt plasmid_feb212017.contigs.bed > plasmid.all.genomic.sep062017.bed
+
+
+
+
+########CD-HIT on sep062017 plasmid database 21-dec-2017
+########################################################
+
+
+cat plasmid.all.genomic.sep062017.fasta.filtered | grep ">" | wc -l > 10864
+
+
+qsub -V -b y -j y -cwd -q all.q -N cd_hit_sep cd-hit-est -i /processing_Data/bioinformatics/research/20160530_ANTIBIOTICS_PS_MP_T/REFERENCES/PLASMIDS/plasmid.all.genomic.sep062017.fasta.filtered -o /processing_Data/bioinformatics/research/20160530_ANTIBIOTICS_PS_MP_T/REFERENCES/PLASMIDS/plasmid.all.genomic.sep062017.fasta.filtered_90 -c 0.9 -n 8 -d 0 -s 0.8 -B 1 -M 10000
+
+
+qsub -V -b y -j y -cwd -q all.q -N cd_hit_ent_90_80 cd-hit-est -i /processing_Data/bioinformatics/research/20160530_ANTIBIOTICS_PS_MP_T/REFERENCES/PLASMIDS/plasmid.all.genomic.sep062017.enterobac.fasta_90 -o /processing_Data/bioinformatics/research/20160530_ANTIBIOTICS_PS_MP_T/REFERENCES/PLASMIDS/plasmid.all.genomic.sep062017.enterobac.fasta_90_80 -c 0.9 -n 8 -d 0 -s 0.8 -B 1 -M 10000
+
+
+qsub -V -b y -j y -cwd -q all.q -N psi-cdhit_sep_80 psi-cd-hit.pl -i plasmid.all.genomic.sep062017.enterobac.fasta -o plasmid.all.genomic.sep062017.enterobac.fasta_psi_80 -c 0.8 -G 0 -g 1  -prog blastn -circle 1
+
+
+qsub -V -b y -j y -cwd -q all.q -N psi-cdhit_dec_80 psi-cd-hit.pl -i plasmid.all.genomic.dec212017.fasta -o plasmid.all.genomic.dec212017.fasta_psi_90 -c 0.9 -G 1 -g 1  -prog blastn -circle 1
+
+
+
+
+NEW DDBB SEP 2017 - 08-sep-2017
+
+#######Extract fasta from table using its Refseq - 21-02-2017
+############################################################
+
+
+for i in $(cat genomes_plasmids_table_06_09_2017.txt | awk 'BEGIN{FS="\t"} (NR>2) {if ($6 ~ "N") {print $6;} else {print $7}}'); do curl -s "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&amp;id=$i&amp;retmode=text&amp;rettype=fasta"; done > plasmid.all.genomic.sep062017.fna
+
+#REMOVE EMPTY SEQUENCES IF NECESSARY
+
+awk 'BEGIN {RS = ">" ; FS = "\n" ; ORS = ""} {if ($2) print ">"$0}' input > output
+
+#REMOVE ENTREZ FAILURE
+
+cat plasmid.all.genomic.dec212017.fna| awk '/^>/ || /^A/ || /^T/ || /^C/ || /^G/ || /^N/ || /^M/ || /^S/ || /^W/ || /^R/ || /^Y/ || /^K/' > plasmid.all.genomic.dec212017.fasta
+
+###REMOVE USELESS TAGS
+
+cat plasmid.all.genomic.sep062017.fasta | awk '/cds| partial|putative|protein| gene|genome assembly/' | cut -d " " -f 1 | cut -d ">" -f 2 > remove_by_concept.txt
+
+listAcRegexp=$(printf "%s|" $(cat remove_by_concept.txt) | sed 's/|$//g')
+
+awk 'BEGIN {RS=">"} !/'"${listAcRegexp}"'/ {print ">"$0}' plasmid.all.genomic.sep062017.fasta > plasmid.all.genomic.sep062017.fasta.filtered
+
+
+###OBTAIN LENGTH FILE
+
+cat plasmid.all.genomic.sep062017.fasta.filtered | awk 'BEGIN {FS=="| "} /^>/ {if (seqlen) print seqlen;printf "%s\t", $1; seqlen=0; next} {seqlen+=length($0)} END {print seqlen}' | sed 's/^>//g' > plasmid.all.genomic.sep062017.length
+
+
+
+###ANNOTATE WITH PROKKA
+
+qsub -V -b y -j y -l h_vmem=20G -pe openmp 10 -cwd -q all.q -N Prokka_PLSM_DDBB prokka --force --prefix plasmid_sep062017 --addgenes --kingdom Bacteria --usegenus --centre CNM --locustag ddbb --compliant ../plasmid.all.genomic.sep062017.fasta.filtered
+
+#create files with names
+cat ../plasmid.all.genomic.sep062017.fasta.filtered | awk '/>/ {print $1}' > list_ac_plasmif_all_sep062017.txt
+cat plasmid_sep062017.fna | awk '/>/' > list_contig_prokka_all_sep062017.txt
+
+
+#paste colums to relate names in a dictionary
+awk 'NR==FNR{ac[NR]=$0;next}{print ac[FNR], "\t", $0 }' list_ac_plasmif_all_sep062017.txt list_contig_prokka_all_sep062017.txt > list_dictionary_ac_contig_plasmid_all_sep062017.txt
+
+remove ">" and prefix
+
+
+#extract gene names from gff
+
+#only genes with name
+cat plasmid_sep062017.gff | awk 'BEGIN{OFS="\t";}{split($9,description,"Name=");split(description[2],name,";");{if ($3 == "gene" && $1 != "#" && $9 ~ /Name/) {print $1,$4,$5, name[1]}}}' > plasmid_sep062017.contigs.bed
+
+#names and CDS
+cat plasmid_sep062017.gff | awk 'BEGIN{OFS="\t";}{split($1,query,"_"); \
+split($9,description,"Name=");split(description[2],name,";"); \
+split($9,locustag,"locus_tag=");split(locustag[2],locus,";");split(locus[1],locusname,"_");\
+split(name[1],nameLowBar,"_")};{if ($3 == "gene" && $1 != "#" && $9 ~ /Name/) {print query[length(query)],$4,$5, nameLowBar[1]}; \
+{if ($3 == "gene" && $1 != "#" && $9 !~ /Name/) {print query[length(query)],$4,$5, "CDS_"locusname[2]}}}' > plasmid_sep062017.contigs.bed
+
+
+#Substitute contig names by plasmid accession number
+
+awk 'FNR==NR {dict[$2]=$1; next} {$1=dict[$1]}1' list_dictionary_ac_contig_plasmid_all_feb212017.txt plasmid_feb212017.contigs.bed > plasmid.all.genomic.sep062017.bed
+
+
+
+
+
+
+
+
+
+
+
+
+
+#####################OLD APPROACH
+awk 'FNR==NR {dict[$2]=$1; next} {$1=($1 in dict) ? dict[$1] : $1}1' list_dictionary_ac_contig_plasmid_all_feb212017.txt plasmid_feb212017.contigs.bed > plasmid_sep062017.plasmids.bed2
+
+
+qsub -V -b y -j y -cwd -l h_vmem=20G -pe openmp 10 -q all.q -N PROKKA bash rename.sh
+
+
+rename.sh = ['NR==FNR{ac[NR]=$1;contig[NR]=$2;next}{for(i = 1; i <= NR; ++i){if (contig[i] == $1) print ac[i],"\t", $2, $3, $4}}' list_dictionary_ac_contig_plasmid_all_sep062017.txt plasmid_sep062017.contigs.bed > plasmid_sep062017.plasmids.bed]
+
+#remove suffix
+
+cat plasmid_sep062017.plasmids.bed | awk '{split($4, annot, "_")}{print $1, $2, $3, annot[1]}' > /processing_Data/bioinformatics/research/20160530_ANTIBIOTICS_PS_MP_T/REFERENCES/PLASMIDS/plasmid.all.genomic.sep062017.bed
+#####################3
+
+
+
+
+
+
+
+
+
+
+#remove sequences with incomplete sequences flags (cds, partial, outative, protein, gene)
+
+cat plasmid.all.genomic.feb212017.fasta | awk '/cds| partial|putative|protein| gene/' > to_remove_plasmids.txt
+
+
+for i in $(cat to_remove_plasmids.txt)
+do
+	awk 'BEGIN {RS=">"} !/'"$i"'/ {print ">"$0}' plasmid.all.genomic.feb212017.fasta
+done
+
+
+#Obtain plasmid name
+
+cat plasmid.all.genomic.feb212017.fasta | awk '{split($0, id, /plasmid./); split(id[2],plasmidname,",")} {if ($0 ~ /^>/) print plasmidname[1]}'
+
+
+
+###OBTAIN GFF3 FROM GBFF AND BED FROM GFF###
+
+sudo perl /usr/local/bin/bp_genbank2gff3.pl -r plasmid.all.genomic.feb212017.gb -out stdout > plasmid.all.genomic.feb212017.gff3
+
+cat plasmid.all.genomic.feb212017.gff3 | awk 'BEGIN{OFS="\t";}{split($9,alias,"Name=");split(alias[2],name,";");{if ($3 == "gene" && $1 != "#") {print $1".1",$4,$5, name[1]}}}' > plasmid.all.genomic.feb212017.bed
+
+#Substitute those AC not treminating in .1
+#Substitute those finishing in .2
+for i in $(cat plasmid.all.genomic.feb212017.length | awk '{split($1,ac,"."); {if ($1 ~ /\.2$/) print ac[1]}}'); do sed -i.bak 's/'$i'\.1/'$i'\.2/g' plasmid.all.genomic.feb212017.bed2 ; done
+#Substitute those finishing in .3
+for i in $(cat plasmid.all.genomic.feb212017.length | awk '{split($1,ac,"."); {if ($1 ~ /\.3$/) print ac[1]}}'); do sed -i.bak 's/'$i'\.1/'$i'\.3/g' plasmid.all.genomic.feb212017.bed2 ; done
+#Substitute those finishing in .4
+for i in $(cat plasmid.all.genomic.feb212017.length | awk '{split($1,ac,"."); {if ($1 ~ /\.4$/) print ac[1]}}'); do sed -i.bak 's/'$i'\.1/'$i'\.4/g' plasmid.all.genomic.feb212017.bed2 ; done
+#Rename plasmid.all.genomic.feb212017.bed2 > plasmid.all.genomic.feb212017.bed 
+
+
+cat plasmid.all.genomic.feb212017.fasta | awk 'BEGIN {FS=="| "} /^>/ {if (seqlen) print seqlen;printf "%s\t", $1; seqlen=0; next} {seqlen+=length($0)} END {print seqlen}' | sed 's/^>//g' > plasmid.all.genomic.feb212017.length
+
+
+
+Extract fasta from table using its Refseq - 21-02-2017
+
+for i in $(cat genomes_plasmids_table_20_02_2017.txt | awk 'BEGIN{FS="\t"} (NR>2) {if ($6 ~ "N") {print $6;} else {print $7}}'); do curl -s "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&amp;id=$i&amp;retmode=text&amp;rettype=fasta"; done > plasmid.all.genomic.feb212017.fna
+
+for i in $(cat genomes_plasmids_table_20_02_2017.txt | awk 'BEGIN{FS="\t"} (NR>2) {if ($6 ~ "N") {print $6;} else {print $7}}'); do curl -s "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&amp;id=$i&amp;retmode=text&amp;rettype=gb"; done > plasmid.all.genomic.feb212017.gb
+
+
+#awk 'BEGIN{FS="\t"} {if(NR>2) {print $6}} - Extract list of Refseq field ($6) removing two first lines (NR>2)
+#use eutils with db nuccore and id in id field iterating with for loop
+
+
+Dowload list of reported plasmids - 20-02-2017
+
+ftp://ftp.ncbi.nlm.nih.gov/genomes/GENOME_REPORTS/plasmids.txt
+
+
+
+
+
+###OBTAIN GFF3 FROM GBFF###
+Install bioperl and dependencies: http://search.cpan.org/dist/BioPerl/scripts/Bio-DB-GFF/bp_genbank2gff3.pl
+
+sudo perl /usr/local/bin/bp_genbank2gff3.pl -r  plasmid.all.genomic.gbff -out stdout > plasmid.all.genomic.gff3
+
+#check how many gene features does each plasmid have
+
+cat plasmid.all.genomic.gff3 | awk '{if ($3 == "gene"){pl[$1]++}} END {for (i in pl) print i, pl[i]}'
+
+#GFF3 to BED coordinates (only for gene feature with its alias)
+
+cat plasmid.all.genomic.gff3 | awk 'BEGIN{OFS="\t";}{split($9,alias,/=|;/);{if ($3 == "gene") {print $1,$4,$5, alias[4]}}}' > plasmid.all.genomic.gff
+
+#GFF3 to BED coordinates (only for gene feature with its name and ad .1 to the ac name in order to match other scripts)
+
+cat plasmid.all.genomic.gff3 | awk 'BEGIN{OFS="\t";}{split($9,alias,"Name=");split(alias[2],name,";");{if ($3 == "gene" && $1 != "#") {print $1".1",$4,$5, name[1]}}}' > plasmid.all.genomic.ac.gff
+
+
+###REDUCE HEADER OF PLASMID DDBB TO ONLY AC NUMBERS in order to annotate with prokka
+
+awk '{if ($0 ~ />/){split($1,ac,"|");{print ">"ac[4]}} else {print $0}}' plasmid.all.genomic.fna > plasmid.all.genomic.ac.fna
+
+#####MAKE BLASTDB WITH PLASMIDS
+
+qsub -V -b y -j y -cwd -q all.q -N MKBLASTPLSMID makeblastdb -in /processing_Data/bioinformatics/research/20160530_ANTIBIOTICS_PS_MP_T/REFERENCES/PLASMIDS/plasmid.all.genomic.fna \
+-out /processing_Data/bioinformatics/research/20160530_ANTIBIOTICS_PS_MP_T/REFERENCES/BLAST/PLASMIDS/plasmid.all.genomic.blast -dbtype nucl
+
+#####
+
+
+##### Create a file with name and lenght formatted for PLACNET:
+# Print file
+# calculate lenght and format header
+# Remove ">" from header to match PLACNET output 
+
+cat /processing_Data/bioinformatics/research/20160530_ANTIBIOTICS_PS_MP_T/REFERENCES/PLASMIDS/plasmid.all.genomic.fna |
+
+awk 'BEGIN {FS=="| "} /^>/ {if (seqlen) print seqlen;printf "%s\t", $1; seqlen=0; next} {seqlen+=length($0)} END {print seqlen}' |
+
+sed 's/^>//g' >> "NCBI_PLASMID_LENGTH.tsv"
+
+
+
+
+qsub -V -b y -j y -cwd -N wget wget -r -P ftp://ftp.ncbi.nih.gov/refseq/release/plasmid/
+
+http://aclame.ulb.ac.be/ --> no exclusive entries
+
+- Cluster plasmid with 50% homology to clear networks in cytoscape
+
+qsub -V -b y -j y -cwd -q all.q -N CDHIT50_PLSMD cd-hit-est -i plasmid.all.genomic.fna -o plasmid.all.genomic50 -c 0.8 -n 4 -M 4000
+
+qsub -V -b y -j y -cwd -q all.q -N CDHIT80_PLSMD cd-hit -i plasmid.all.genomic.fna -o plasmid.all.genomic_cd_hit_80 -c 0.8 -n 5 -M 4000
+
+
+
+###############
+
+qsub -V -b y -j y -pe bioinf 20 -cwd -q all.q -N CDHIT80_EST_T0_PLSMD cd-hit-est -i plasmid.all.genomic.fna -o plasmid.all.genomic80 -c 0.8 -n 5 -M 100000 -T 0 7716 -> 5452
+
+
+##############
+
+
+qsub -V -b y -j y -pe bioinf 20 -cwd -q all.q -N CDHIT80_EST_PARA_PLSMD cd-hit-para.pl -i plasmid.all.genomic.fna -o plasmid.all.genomic80 -c 0.8 -n 5 -M 100000 --L 20 -P cd-hit-est
+
+qsub -V -b y -j y -pe bioinf 20 -cwd -q all.q -N CDHIT80_EST_PARA_PLSMD cd-hit-para.pl -i plasmid.all.genomic.fna -o plasmid.all.genomic80 -c 0.8 -n 5 -M 100000 --B bioinf -P cd-hit-est
+
+qsub -V -b y -j y -pe bioinf 20 -cwd -q all.q -N CDHIT99_EST_T0_PLSMD cd-hit-est -i plasmid.all.genomic.fna -o plasmid.all.genomic99 -c 0.99 -n 10 -M 100000 -T 0
+
+qsub -V -b y -j y -pe bioinf 20 -cwd -q all.q -N CDHIT99_EST_PARA_PLSMD cd-hit-para.pl -i plasmid.all.genomic.fna -o plasmid.all.genomic_para_99 -c 0.99 -n 8 -M 100000 --L 20 -P cd-hit-est
+
+
+### Hierarchical Clustering to save resources
+
+qsub -V -b y -j y -pe bioinf 20 -cwd -q all.q -N CDHIT99_EST_T0_PLSMD cd-hit-est -i plasmid.all.genomic.fna -o plasmid.all.genomic99 -c 0.99 -n 10 -M 100000 -T 0 7716 -> 6575
+
+qsub -V -b y -j y -pe bioinf 20 -cwd -q all.q -N CDHIT98_EST_T0_PLSMD cd-hit-est -i plasmid.all.genomic99 -o plasmid.all.genomic98 -c 0.98 -n 10 -M 100000 -T 0 6575 -> 6488
+
+qsub -V -b y -j y -pe bioinf 20 -cwd -q all.q -N CDHIT97_EST_T0_PLSMD cd-hit-est -i plasmid.all.genomic98 -o plasmid.all.genomic97 -c 0.97 -n 10 -M 100000 -T 0 6488 -> 6411
+
+qsub -V -b y -j y -cwd -q all.q -N CDHIT96_EST_T0_PLSMD cd-hit-est -i plasmid.all.genomic97 -o plasmid.all.genomic96 -c 0.96 -n 10 -M 100000 -T 0 6411 ->
+
+
+
+
+07-10-2016
+qsub -V -b y -j y -pe bioinf 20 -cwd -q all.q -N CDHIT97_EST_T0_PLSMD_nog1 cd-hit-est -i plasmid.all.genomic98 -o plasmid.all.genomic97_nog1 -c 0.97 -n 10 -M 100000 -T 0
+
+
+
+
+ 
+
+qsub -V -b y -j y -pe bioinf 20 -cwd -q all.q -N CDHIT95_EST_T0_PLSMD cd-hit-est -i plasmid.all.genomic96 -o plasmid.all.genomic95 -c 0.95 -n 10 -M 100000 -T 0
+
+
+
+### Parameter -g which is fast mode in regular cd-hit-est ######## 28/09/2016 --> Ended 24/10/2016
+
+qsub -V -b y -j y -pe bioinf 20 -cwd -q all.q -N g1_PLSMD_CDHIT90_EST cd-hit-est -i plasmid.all.genomic.fna -o plasmid.all.genomic_g1_90 -c 0.90 -n 10 -M 100000 -T 0 -g 1 7716 -> 6027
+
+### Parameter -g which is fast mode in psi-cd-hit ########
+
+qsub -V -b y -j y -pe bioinf 20 -cwd -q all.q -N g1_PSI_PLSMD_CDHIT90 psi-cd-hit.pl -i plasmid.all.genomic.fna -o plasmid.all.genomic_psi_g1_90 -c 0.90 -M 100000 -T 0 -g 1 -circle 1
+
