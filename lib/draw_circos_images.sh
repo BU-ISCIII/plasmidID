@@ -23,7 +23,7 @@ karyotype_file_individual=$imageDir/$sample".karyotype_individual.txt"
 karyotype_file_summary=$imageDir/$sample".karyotype_summary.txt"
 abr_file=$imageDir/$sample".abr.coordinates"
 replisome_file=$imageDir/$sample".inc.coordinates"
-additional_file=$imageDir/$sample".additional.coordinates"
+additional_file=$imageDir/$sample".annotation.coordinates"
 coverage_file=$imageDir/$sample".bedgraph_term"
 cds_contig_file=$imageDir/$sample".gff.coordinates"
 
@@ -40,7 +40,7 @@ echo "Creating config file for circos in SAMPLE $sample FILE $circosDir/$sample.
 awk '{gsub("PLASMID_KARYOTYPE","'$karyotype_file_summary'"); \
 gsub("PLASMID_ANTIBIOTIC_RESISTANCE","'$abr_file'"); \
 gsub("PLASMID_REPLISOME_PLASMIDFINDER","'$replisome_file'"); \
-gsub("PLASMID_IS_ISFINDER","'$additional_file'"); \
+gsub("PLASMID_ANNOTATION_USER","'$additional_file'"); \
 gsub("PLASMID_COVERAGE_GRAPH","'$coverage_file'"); \
 gsub("PLASMID_CDS_CONTIG","'$cds_contig_file'"); \
 gsub("PLASMID_CDS_DDBB","'$cdsDdbbFile'"); \
@@ -58,7 +58,7 @@ echo "Creating config file for circos in SAMPLE $sample FILE $circosDir/$sample.
 awk '{gsub("PLASMID_KARYOTYPE","'$karyotype_file_individual'"); \
 gsub("PLASMID_ANTIBIOTIC_RESISTANCE","'$abr_file'"); \
 gsub("PLASMID_REPLISOME_PLASMIDFINDER","'$replisome_file'"); \
-gsub("PLASMID_IS_ISFINDER","'$additional_file'"); \
+gsub("PLASMID_ANNOTATION_USER","'$additional_file'"); \
 gsub("PLASMID_COVERAGE_GRAPH","'$coverage_file'"); \
 gsub("PLASMID_CDS_CONTIG","'$cds_contig_file'"); \
 gsub("PLASMID_CDS_DDBB","'$cdsDdbbFile'"); \

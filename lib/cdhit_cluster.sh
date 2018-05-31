@@ -225,7 +225,6 @@ if [ ! $file_name ]; then
 	echo "filename is" $file_name
 fi
 
-echo "#####################################Cluster cutoff" $cluster_cutoff "###############iput" $cluster_cutoff_input
 ##CD-HIT EXECUTION
 
 echo "$(date)"
