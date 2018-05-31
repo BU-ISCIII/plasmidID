@@ -34,7 +34,7 @@ usage() {
 
 plasmidID is a computational pipeline tha reconstruct and annotate the most likely plasmids present in one sample
 
-usage : $0 [-1 <R1>] [-2 <R2>] <-d database(fasta)> <-s sample_name> [-g group_name] [options]
+usage : $0 <-1 R1> <-2 R2> <-d database(fasta)> <-s sample_name> [-g group_name] [options]
 
 	Mandatory input data:
 	-1 | --R1	<filename>	reads corresponding to paired-end R1 (mandatory)
@@ -140,6 +140,7 @@ no_trim=false
 only_reconstruct=false
 explore=false
 include_assembly=true
+annotation=false
 
 #PARSE VARIABLE ARGUMENTS WITH getops
 #common example with letters, for long options check longopts2getopts.sh
@@ -169,7 +170,8 @@ while getopts $options opt; do
 			group=$OPTARG
 			;;
 		a )
-			annotation+=($OPTARG)
+			annotation_file=$OPTARG
+			annotation=true
 			;;
 		t)
 			no_trim=true
@@ -445,7 +447,7 @@ echo "####SPECIFIC ANNOTATON####################################################
 
 ######################### ABR _ INCLUDE FILENAME
 
-lib/blast_align.sh -i /processing_Data/bioinformatics/research/20160530_ANTIBIOTICS_PSMP_T/ANALYSIS/PLASMIDID/references/ARGannot.r1.pID.fasta -d $group/$sample/data/$sample".fna" -o $group/$sample/data -p abr -f $sample
+lib/blast_align.sh -i databases/ARGannot.pID.fasta -d $group/$sample/data/$sample".fna" -o $group/$sample/data -p abr -f $sample
 
 #sample.abr.blast
 
@@ -459,7 +461,7 @@ lib/coordinate_adapter.sh -i $group/$sample/data/$sample".abr.bed" -l $group/$sa
 
 ###################### INC
 
-lib/blast_align.sh -i /processing_Data/bioinformatics/research/20160530_ANTIBIOTICS_PSMP_T/ANALYSIS/PLASMIDID/references/plasmidFinder_01_26_2018.fsa -d $group/$sample/data/$sample".fna" -o $group/$sample/data -p inc -f $sample
+lib/blast_align.sh -i databases/plasmidFinder_01_26_2018.fsa -d $group/$sample/data/$sample".fna" -o $group/$sample/data -p inc -f $sample
 
 #sample.inc.blast
 
@@ -469,6 +471,21 @@ lib/blast_to_bed.sh -i $group/$sample/data/$sample".inc.blast" -b 95 -l 80 -d _ 
 lib/coordinate_adapter.sh -i $group/$sample/data/$sample".inc.bed" -l $group/$sample/data/$sample".plasmids.blast.links" -u
 
 #sample.inc.coordinates
+
+
+if [ $annotation = true ]; then
+
+	lib/blast_align.sh -i $annotation_file -d $group/$sample/data/$sample".fna" -o $group/$sample/data -p annotation -f $sample
+	#sample.annotation.blast
+
+	lib/blast_to_bed.sh -i $group/$sample/data/$sample".annotation.blast" -b 90 -l 80 -d _ -D r -q _ -Q l
+	#sample.annotation.bed
+
+	lib/coordinate_adapter.sh -i $group/$sample/data/$sample".annotation.bed" -l $group/$sample/data/$sample".plasmids.blast.links" -u
+	#sample.annotation.coordinates
+fi
+
+echo "####DRAW IMAGES########################################################"
 
 
 lib/draw_circos_images.sh $group $sample
