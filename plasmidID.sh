@@ -451,7 +451,7 @@ lib/blast_align.sh -i databases/ARGannot.pID.fasta -d $group/$sample/data/$sampl
 
 #sample.abr.blast
 
-lib/blast_to_bed.sh -i $group/$sample/data/$sample".abr.blast" -b 100 -l 90 -d _ -D r -q " " -Q r
+lib/blast_to_bed.sh -i $group/$sample/data/$sample".abr.blast" -b 98 -l 90 -d _ -D r -q " " -Q r -U -
 
 #sample.abr.bed
 

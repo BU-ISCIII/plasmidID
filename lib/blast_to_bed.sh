@@ -16,6 +16,7 @@ VERSION=1.0
 #CREATED: 4 May 2018
 #REVISION: 
 #06 May 2018: add id optiopn in bed output
+#04 June 2018: add an option for an aditional division mostly for ABR sort
 #
 #DESCRIPTION:blast_to_bed script obtain a BED file with coordinates of local blast alignments matching some given conditions
 #================================================================
@@ -30,7 +31,7 @@ usage() {
 blast_to_bed is a script than obtain a BED file with coordinates of local blast alignments matching some given conditions
 
 usage : $0 <-i inputfile(.blast)> <-b id cutoff> [-o <directory>] [-b <int(0-100)>] [-l <int(0-100)>] [-L <int>]
-		[-p <prefix>] [-d <delimiter>] [-D (l|r)] [-q <delimiter>] [-Q (l|r)] [-I] [-u] [-v] [-h]
+		[-p <prefix>] [-d <delimiter>] [-D (l|r)] [-q <delimiter>] [-Q (l|r)] [-U <delimiter>] [-I] [-u] [-v] [-h]
 
 	-i input file 
 	-b blast identity cutoff (0 - 100), default 90
@@ -43,6 +44,7 @@ usage : $0 <-i inputfile(.blast)> <-b id cutoff> [-o <directory>] [-b <int(0-100
 	-D database field to retrieve (l=left, r=right), default right
 	-I contig mode
 	-u unique. Outputs only one query entry per database entry
+	-U unique mode with delimiter. Outputs only one delimited query per database entry
 	-v version
 	-h display usage message
 
@@ -72,13 +74,15 @@ database_field=r
 query_delimiter="_"
 query_field=l
 unique=false
+unique_divider=false
+divider_delimiter="-"
 suffix=""
 id_circos=false
 id_output=""
 
 #PARSE VARIABLE ARGUMENTS WITH getops
 #common example with letters, for long options check longopts2getopts.sh
-options=":i:b:q:Q:d:D:o:l:L:Iuvh"
+options=":i:b:q:Q:d:D:o:l:L:U:Iuvh"
 while getopts $options opt; do
 	case $opt in
 		i )
@@ -122,10 +126,15 @@ while getopts $options opt; do
 			unique=true
             suffix=".unique.tmp"
 			;;
+		U )
+			unique_divider=true
+			suffix=".unique.divider.tmp"
+			divider_delimiter=$OPTARG
+			;;
         I)
 			id_circos=true
             id_output=",\"id=\"query_name[length(query_name)]"
-			;;
+            ;;
         h )
 		  	usage
 		  	exit 1
@@ -216,7 +225,7 @@ echo "Min length aligned=" $blast_len_alignment
 echo "Min len percentage=" $blast_len_percentage
 
 
-cat $input_file |\
+cat $input_file | sort -k3 -nr | \
 awk '
 	{OFS="\t"
 	split($2, database_name, "'"${database_delimiter}"'")
@@ -228,11 +237,24 @@ awk '
 
 
 if [ "$unique" == "true" ]; then
+	echo "unique option enabled"
     awk '
         (!x[$1$4]++)
-    ' $output_dir/$file_name".bed"$suffix \
+    	' $output_dir/$file_name".bed"$suffix \
 > $output_dir/$file_name".bed"
 fi
+
+
+if [ "$unique_divider" == "true" ]; then
+	echo "unique delimiter option enabled"
+    awk '
+    	{split($4,query,"'"${divider_delimiter}"'")}
+        (!x[query[1]$1]++)
+    	' $output_dir/$file_name".bed"$suffix \
+	> $output_dir/$file_name".bed"
+fi
+
+rm $output_dir/$file_name".bed"$suffix
 
 echo "$(date)"
 echo "DONE adapting blast to bed"
