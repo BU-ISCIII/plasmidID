@@ -433,7 +433,7 @@ lib/blast_to_link.sh -i $group/$sample/data/$sample".plasmids.blast" -I
 #sample.plasmids.links
 #sample.plasmids.blast.links
 
-lib/gff_to_bed.sh -i $group/$sample/data/$sample".gff" -L
+lib/gff_to_bed.sh -i $group/$sample/data/$sample".gff" -u -L
 
 #sample.gff.bed
 
