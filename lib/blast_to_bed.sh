@@ -241,7 +241,8 @@ if [ "$unique" == "true" ]; then
     awk '
         (!x[$1$4]++)
     	' $output_dir/$file_name".bed"$suffix \
-> $output_dir/$file_name".bed"
+	> $output_dir/$file_name".bed"
+	rm $output_dir/$file_name".bed"$suffix
 fi
 
 
@@ -252,9 +253,10 @@ if [ "$unique_divider" == "true" ]; then
         (!x[query[1]$1]++)
     	' $output_dir/$file_name".bed"$suffix \
 	> $output_dir/$file_name".bed"
+	rm $output_dir/$file_name".bed"$suffix
 fi
 
-rm $output_dir/$file_name".bed"$suffix
+
 
 echo "$(date)"
 echo "DONE adapting blast to bed"
