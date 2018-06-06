@@ -5,8 +5,7 @@ echo -e "\n#Executing" $0 "\n"
 
 group=$1
 sample=$2
-
-cdsDdbbFile="/processing_Data/bioinformatics/research/20160530_ANTIBIOTICS_PSMP_T/REFERENCES/PLASMIDS/plasmid.all.genomic.feb212017.bed"
+cdsDdbb_file=$3
 
 
 
@@ -43,7 +42,7 @@ gsub("PLASMID_REPLISOME_PLASMIDFINDER","'$replisome_file'"); \
 gsub("PLASMID_ANNOTATION_USER","'$additional_file'"); \
 gsub("PLASMID_COVERAGE_GRAPH","'$coverage_file'"); \
 gsub("PLASMID_CDS_CONTIG","'$cds_contig_file'"); \
-gsub("PLASMID_CDS_DDBB","'$cdsDdbbFile'"); \
+gsub("PLASMID_CDS_DDBB","'$cdsDdbb_file'"); \
 gsub("PLASMID_CONTIGS","'$contig_file'"); \
 gsub("PLASMID_LINKS","'$links_file'"); \
 gsub("OUTPUTDIR","'$circosDir'"); \
@@ -61,7 +60,7 @@ gsub("PLASMID_REPLISOME_PLASMIDFINDER","'$replisome_file'"); \
 gsub("PLASMID_ANNOTATION_USER","'$additional_file'"); \
 gsub("PLASMID_COVERAGE_GRAPH","'$coverage_file'"); \
 gsub("PLASMID_CDS_CONTIG","'$cds_contig_file'"); \
-gsub("PLASMID_CDS_DDBB","'$cdsDdbbFile'"); \
+gsub("PLASMID_CDS_DDBB","'$cdsDdbb_file'"); \
 gsub("PLASMID_CONTIGS_COMPLETE","'$contig_file_complete'"); \
 gsub("PLASMID_CONTIGS","'$contig_file'"); \
 gsub("PLASMID_LINKS","'$links_file'"); \
@@ -73,8 +72,7 @@ echo "DONE Creating config file for circos in SAMPLE $sample"
 echo "Executing circos in SAMPLE $sample FILE $circosDir/$sample.circos.conf"
 
 
-#SAMPLE_SHOWN
-#IMAGENAME_SAMPLE
+
 
 for i in $(cat $plasmidMapped)
 do
@@ -87,7 +85,17 @@ done
 circos -conf $circosDir/$sample"_summary.circos.conf"
 
 
-rm $circosDir/$sample"*.conf"
+#Remove config files
+<<R 
+for i in $(cat $plasmidMapped)
+do
+	if [ -f $circosDir/$sample"_"$i"_individual.circos.conf" ]; then
+		rm $circosDir/$sample"_"$i"_individual.circos.conf"
+	fi
+	
+done
 
-
+	rm $circosDir/$sample"_summary.circos.conf"
+	rm $circosDir/$sample"_individual.circos.conf"
+R
 echo "ALL DONE"
