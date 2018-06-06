@@ -15,7 +15,7 @@ set -e
 #INSTITUTION:ISCIII
 #CENTRE:BU-ISCIII
 #AUTHOR: Pedro J. Sola
-VERSION=Beta 
+VERSION=1.1.0
 #CREATED: 15 March 2018
 #
 #ACKNOLEDGE: longops2getops.sh: https://gist.github.com/adamhotep/895cebf290e95e613c006afbffef09d7
@@ -58,7 +58,7 @@ usage : $0 <-1 R1> <-2 R2> <-d database(fasta)> <-s sample_name> [-g group_name]
 
 	--explore	Relaxes default parameters to find less reliable relationships within data supplied and database
 	--no-trim	Reads supplied will not be quality trimmed
-	--only-reconstruct	Database supplied will not be filtered and all sequences will be used as scaffold 
+	--only-reconstruct	Database supplied will not be filtered and all sequences will be used as scaffold [NOT TESTED]
 	
 	Additional options:
 
@@ -242,9 +242,6 @@ shift $((OPTIND-1))
 ##CHECK DEPENDENCIES, MANDATORY FIELDS, FOLDERS AND ARGUMENTS
 
 reconstruct_fasta=$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff"_term.fasta"_$cluster_cutoff
-#contigs=$group/$sample/assembly/scaffolds.fasta
-
-
 
 lib/check_mandatory_files.sh $r1_file $r2_file $database 
 
@@ -424,11 +421,11 @@ lib/blast_to_bed.sh -i $group/$sample/data/$sample".plasmids.blast" -b $alignmen
 
 #sample.plasmids.bed
 
-lib/blast_to_complete.sh -i $group/$sample/data/$sample".plasmids.blast"
+lib/blast_to_complete.sh -i $group/$sample/data/$sample".plasmids.blast" -l $alignment_percentage
 
 #sample.plasmids.complete
 
-lib/blast_to_link.sh -i $group/$sample/data/$sample".plasmids.blast" -I
+lib/blast_to_link.sh -i $group/$sample/data/$sample".plasmids.blast" -I -l $alignment_percentage
 
 #sample.plasmids.links
 #sample.plasmids.blast.links
@@ -481,11 +478,27 @@ if [ $annotation = true ]; then
 	lib/blast_to_bed.sh -i $group/$sample/data/$sample".annotation.blast" -b 90 -l 80 -d _ -D r -q _ -Q l
 	#sample.annotation.bed
 
-	lib/coordinate_adapter.sh -i $group/$sample/data/$sample".annotation.bed" -l $group/$sample/data/$sample".plasmids.blast.links" -u
+	lib/coordinate_adapter.sh -i $group/$sample/data/$sample".annotation.bed" -l $group/$sample/data/$sample".plasmids.blast.links"
 	#sample.annotation.coordinates
 fi
 
 echo "####DRAW IMAGES########################################################"
 
 
-lib/draw_circos_images.sh $group $sample
+#Annotate plasmids selected as database
+if [ -f $group/$sample/database/$sample".fna" -a -f $group/$sample/database/$sample".gff" ];then
+	echo "Found annotations files for reconstruct plasmids i sample" $sample;
+	echo "Omitting automatic annotation"
+else
+	lib/prokka_annotation.sh -i $reconstruct_fasta -p $sample -o $group/$sample/database -c
+fi
+
+
+lib/rename_from_fasta.sh -i $group/$sample/database/$sample".gff" -1 $reconstruct_fasta -2 $group/$sample/database/$sample".fna"
+
+
+lib/gff_to_bed.sh -i $group/$sample/database/$sample".gff.renamed" -u -L
+
+
+
+lib/draw_circos_images.sh $group $sample $group/$sample/database/$sample".gff.bed"

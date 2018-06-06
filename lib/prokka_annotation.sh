@@ -198,7 +198,6 @@ if [ $clean = true ]; then
 	echo "Removing unwanted files"
 	rm $output_dir/$prefix.val
 	rm $output_dir/$prefix.gbf
-	rm $output_dir/$prefix.ecn
 	rm $output_dir/$prefix.sqn
 	rm $output_dir/$prefix.tsv
 	rm $output_dir/$prefix.fsa
