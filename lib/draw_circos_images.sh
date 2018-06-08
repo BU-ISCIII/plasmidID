@@ -79,10 +79,19 @@ do
 	awk '{gsub("SAMPLE_SHOWN","'$i'"); \
 	gsub("IMAGENAME_SAMPLE_PLASMID","'$sample'_'$i'.png"); \
 	print $0}' $circosDir/$sample"_individual.circos.conf" > $circosDir/$sample"_"$i"_individual.circos.conf"
-	circos -conf $circosDir/$sample"_"$i"_individual.circos.conf" 
+	circos -conf $circosDir/$sample"_"$i"_individual.circos.conf"
+
 done 
 
-circos -conf $circosDir/$sample"_summary.circos.conf"
+
+if [ -s $karyotype_file_summary ]; then
+
+	circos -conf $circosDir/$sample"_summary.circos.conf"
+else
+
+	echo "No plasmid mathed requirements to draw the summary image"
+
+done
 
 
 #Remove config files

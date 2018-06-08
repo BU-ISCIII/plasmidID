@@ -480,6 +480,9 @@ if [ $annotation = true ]; then
 
 	lib/coordinate_adapter.sh -i $group/$sample/data/$sample".annotation.bed" -l $group/$sample/data/$sample".plasmids.blast.links"
 	#sample.annotation.coordinates
+else
+
+	touch $group/$sample/data/$sample".annotation.coordinates"
 fi
 
 echo "####DRAW IMAGES########################################################"
