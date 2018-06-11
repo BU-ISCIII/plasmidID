@@ -355,6 +355,17 @@ if [ $only_reconstruct = false ]; then
 	lib/filter_fasta.sh -i $database -f $group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff
 
 #sample.coverage_adapted_filtered_50_term.fasta
+
+	
+	if [ ! -s $group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff ]; then \
+		echo "ERROR"
+		echo "NO PLASMIDS MATCHED MAPPING REQUERIMENTS, PLEASE, TRY WITH LOWER COVERAGE CUTOFF"
+		echo "################################################################################"
+		exit 1
+	fi
+
+
+
 	if [ -f $group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff"_term.fasta_"$cluster_cutoff ];then \
 		echo "Found a clustered file for sample" $sample;
 		echo "Omitting clustering"
@@ -362,13 +373,17 @@ if [ $only_reconstruct = false ]; then
 
 		lib/cdhit_cluster.sh -i $group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff"_term.fasta" -c $cluster_cutoff -M $max_memory -T $threads
 	fi
+
+
+
+	lib/process_cluster_output.sh -i $reconstruct_fasta -b $group/$sample/mapping/$sample".coverage_adapted" -c $coverage_cutoff
 #$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff"_term.fasta"_$cluster_cutoff >> FINAL CLUSTERED AND FILTERED FASTA FILE TO USE AS SCAFFOLD
 ########################################################################################################
 
 #sample.coverage_adapted_filtered_50_term.fasta_80
 #sample.coverage_adapted_filtered_50_term.fasta_80.clstr
 
-	lib/process_cluster_output.sh -i $reconstruct_fasta -b $group/$sample/mapping/$sample".coverage_adapted" -c $coverage_cutoff
+	
 
 fi
 
@@ -496,12 +511,15 @@ else
 	lib/prokka_annotation.sh -i $reconstruct_fasta -p $sample -o $group/$sample/database -c
 fi
 
+#database/sample.fna
+#database/sample.gff
 
 lib/rename_from_fasta.sh -i $group/$sample/database/$sample".gff" -1 $reconstruct_fasta -2 $group/$sample/database/$sample".fna"
 
+#sample.gff.renamed
 
-lib/gff_to_bed.sh -i $group/$sample/database/$sample".gff.renamed" -u -L
+lib/gff_to_bed.sh -i $group/$sample/database/$sample".gff.renamed" -q " " -u -L
 
-
+#database/sample.gff.bed
 
 lib/draw_circos_images.sh $group $sample $group/$sample/database/$sample".gff.bed"
