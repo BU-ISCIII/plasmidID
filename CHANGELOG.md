@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 1.1.1 - 2018-06-11
+###Fixed
+- Additional database will not be required for circos executios, even though the file will be created
+- Fixed an issue when no plasmid matches mapping requeriments
+- Fixed an issue when circos will trow an error message when no plasmids met mapping requeriments
+
+
 ## 1.1.0 - 2018-06-06
 ### Added
 - Database plasmids used as scaffold are annotated after filtering. User doesn't need to annotate the initial huge plasmid database.
