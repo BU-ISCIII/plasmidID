@@ -34,23 +34,6 @@ imageName=$sample"_summary.png"
 
 mkdir -p $circosDir
 
-echo "Creating config file for circos in SAMPLE $sample FILE $circosDir/$sample.circos.conf"
-
-awk '{gsub("PLASMID_KARYOTYPE","'$karyotype_file_summary'"); \
-gsub("PLASMID_ANTIBIOTIC_RESISTANCE","'$abr_file'"); \
-gsub("PLASMID_REPLISOME_PLASMIDFINDER","'$replisome_file'"); \
-gsub("PLASMID_ANNOTATION_USER","'$additional_file'"); \
-gsub("PLASMID_COVERAGE_GRAPH","'$coverage_file'"); \
-gsub("PLASMID_CDS_CONTIG","'$cds_contig_file'"); \
-gsub("PLASMID_CDS_DDBB","'$cdsDdbb_file'"); \
-gsub("PLASMID_CONTIGS","'$contig_file'"); \
-gsub("PLASMID_LINKS","'$links_file'"); \
-gsub("OUTPUTDIR","'$circosDir'"); \
-gsub("IMAGENAME","'$imageName'"); \
-print $0}' $circos_conf_summary > $circosDir/$sample"_summary.circos.conf"
-
-echo "DONE Creating config file for circos in SAMPLE $sample"
-
 
 echo "Creating config file for circos in SAMPLE $sample FILE $circosDir/$sample.circos.conf"
 
@@ -75,14 +58,42 @@ echo "Executing circos in SAMPLE $sample FILE $circosDir/$sample.circos.conf"
 
 
 for i in $(cat $plasmidMapped)
-do
-	awk '{gsub("SAMPLE_SHOWN","'$i'"); \
-	gsub("IMAGENAME_SAMPLE_PLASMID","'$sample'_'$i'.png"); \
-	print $0}' $circosDir/$sample"_individual.circos.conf" > $circosDir/$sample"_"$i"_individual.circos.conf"
-	circos -conf $circosDir/$sample"_"$i"_individual.circos.conf" 
-done 
+	do
+		awk '{gsub("SAMPLE_SHOWN","'$i'"); \
+		gsub("IMAGENAME_SAMPLE_PLASMID","'$sample'_'$i'.png"); \
+		print $0}' $circosDir/$sample"_individual.circos.conf" > $circosDir/$sample"_"$i"_individual.circos.conf"
+		circos -conf $circosDir/$sample"_"$i"_individual.circos.conf"
 
-circos -conf $circosDir/$sample"_summary.circos.conf"
+	done 
+
+
+if [ -s $karyotype_file_summary ]; then
+
+	echo "Creating config file for circos in SAMPLE $sample FILE $circosDir/$sample.circos.conf"
+
+	awk '{gsub("PLASMID_KARYOTYPE","'$karyotype_file_summary'"); \
+	gsub("PLASMID_ANTIBIOTIC_RESISTANCE","'$abr_file'"); \
+	gsub("PLASMID_REPLISOME_PLASMIDFINDER","'$replisome_file'"); \
+	gsub("PLASMID_ANNOTATION_USER","'$additional_file'"); \
+	gsub("PLASMID_COVERAGE_GRAPH","'$coverage_file'"); \
+	gsub("PLASMID_CDS_CONTIG","'$cds_contig_file'"); \
+	gsub("PLASMID_CDS_DDBB","'$cdsDdbb_file'"); \
+	gsub("PLASMID_CONTIGS","'$contig_file'"); \
+	gsub("PLASMID_LINKS","'$links_file'"); \
+	gsub("OUTPUTDIR","'$circosDir'"); \
+	gsub("IMAGENAME","'$imageName'"); \
+	print $0}' $circos_conf_summary > $circosDir/$sample"_summary.circos.conf"
+
+	echo "DONE Creating config file for circos in SAMPLE $sample"
+
+
+	circos -conf $circosDir/$sample"_summary.circos.conf"
+
+else
+
+	echo "No plasmid mathed requirements to draw the summary image"
+
+fi
 
 
 #Remove config files
