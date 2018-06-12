@@ -12,6 +12,8 @@
 VERSION=1.0 
 #CREATED: 30 April 2018
 #REVISION:
+#12 June 2018: Handled cleaning process without hard coded paths
+#
 #DESCRIPTION:Script that uses prokka to annotate a FASTA file
 #
 #DOCUMENTATION
@@ -21,7 +23,7 @@ VERSION=1.0
 # gnl|center|locustag_02
 #
 #TO DO:
-#Handle cleaning
+#Handle cleaning [v]
 #
 #================================================================
 # END_OF_HEADER
@@ -195,16 +197,12 @@ echo "done annotating $input_file with prokka"
 ##CLEAN FILES THAT WILL NOT BE USED IN PLASMIDID
 
 if [ $clean = true ]; then
+
 	echo "Removing unwanted files"
-	rm $output_dir/$prefix.val
-	rm $output_dir/$prefix.gbf
-	rm $output_dir/$prefix.sqn
-	rm $output_dir/$prefix.tsv
-	rm $output_dir/$prefix.fsa
-	rm $output_dir/$prefix.txt
-	rm $output_dir/$prefix.tbl
-	rm $output_dir/$prefix.ffn
-	rm $output_dir/$prefix.faa
+	for i in $(ls $output_dir/$prefix.??? | awk '!/fna|gff|log|err/')
+	do
+		rm $i
+	done
 fi
 
 echo -e "\n"
