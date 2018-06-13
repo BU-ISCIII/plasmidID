@@ -173,7 +173,7 @@ echo ""
 base="https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
 
 
-wget -q -O $output_dir/$file_name".count" $base"esearch.fcgi?db="$database_type"&term=""$final_list_terms_regexp" 1> /dev/null
+wget -q -O $output_dir/$file_name".count" $base"esearch.fcgi?db="$database_type"&term=""$final_list_terms_regexp"
 
 counter=$(cat $output_dir/$file_name".count" | awk '/<Count>/' | head -n 1 | awk '/<Count>/ {split($0,counter_prev,"</Count>");split(counter_prev[1],counter,"<Count>")}END{print counter[length(counter)]}')
 echo -e "FOUND" $counter "RECORDS\n"
