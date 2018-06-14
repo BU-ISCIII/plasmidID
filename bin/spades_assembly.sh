@@ -159,7 +159,7 @@ shift $((OPTIND-1))
 
 echo -e "\n#Executing" $0 "\n"
 
-bash lib/check_dependencies.sh spades.py
+check_dependencies.sh spades.py
 
 
 if [ ! $directory_reads ]; then
@@ -195,7 +195,7 @@ if [ $quick_mode = true ]; then
 fi
 			
 
-bash lib/check_mandatory_files.sh $r1_paired_file $r2_paired_file
+check_mandatory_files.sh $r1_paired_file $r2_paired_file
 
 if [ $kmer_option = true ]; then
 	list_kmer_values=$(for value in "${kmer_value[@]}"; do echo "$value"; done)

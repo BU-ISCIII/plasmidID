@@ -141,9 +141,9 @@ shift $((OPTIND-1))
 
 echo -e "\n#Executing" $0 "\n"
 
-bash lib/check_mandatory_files.sh $r1_file $r2_file
+check_mandatory_files.sh $r1_file $r2_file
 
-bash lib/check_dependencies.sh java
+check_dependencies.sh java
 
 if [ ! $sample ]; then
 	echo "Please include a sample name"

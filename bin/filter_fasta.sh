@@ -95,7 +95,7 @@ while getopts $options opt; do
 			;;
 		f )
 			file_for_filtering=$OPTARG
-			bash lib/check_mandatory_files.sh $input_file
+			check_mandatory_files.sh $input_file
 			file_option=true
 			;;
         h )
@@ -131,7 +131,7 @@ shift $((OPTIND-1))
 
 echo -e "\n#Executing" $0 "\n"
 
-bash lib/check_mandatory_files.sh $input_file
+check_mandatory_files.sh $input_file
 
 
 if [ $general_filter = true ]; then
@@ -169,12 +169,12 @@ if [ $term_option = true ] && [ $file_option = false ]; then
 
 elif [ $term_option = false ] && [ $file_option = true ]; then
 
-	bash lib/check_mandatory_files.sh $file_for_filtering
+	check_mandatory_files.sh $file_for_filtering
 
 	final_list_terms_regexp=$(printf "%s|" $(cat $file_for_filtering) | sed 's/|$//g')
 else
 
-	bash lib/check_mandatory_files.sh $file_for_filtering
+	check_mandatory_files.sh $file_for_filtering
 
 	list_terms_listed=$(for term in "${terms_for_filtering[@]}"; do echo "$term"; done)
 	list_terms_regexp_term=$(printf "%s|" $list_terms_listed | sed 's/|$//g')

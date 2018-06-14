@@ -149,9 +149,9 @@ shift $((OPTIND-1))
 
 echo -e "\n#Executing" $0 "\n"
 
-bash lib/check_mandatory_files.sh $input_file
+check_mandatory_files.sh $input_file
 
-bash lib/check_dependencies.sh prokka
+check_dependencies.sh prokka
 
 if [ ! $prefix ]; then
 	echo "please provide a prefix"

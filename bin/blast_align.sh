@@ -79,7 +79,6 @@ if [ $# = 0 ] ; then
  exit 1
 fi
 
-
 #DECLARE FLAGS AND VARIABLES
 cwd="$(pwd)"
 group="NO_GROUP"
@@ -153,6 +152,10 @@ shift $((OPTIND-1))
 ##CHECK DEPENDENCIES, MANDATORY FIELDS, FOLDERS AND ARGUMENTS
 
 echo -e "\n#Executing" $0 "\n"
+
+check_mandatory_files.sh $input_file $database
+
+check_dependencies.sh blastn 
 
 
 if [ ! $prefix ]; then
