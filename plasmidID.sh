@@ -68,7 +68,7 @@ usage : $0 <-1 R1> <-2 R2> <-d database(fasta)> <-s sample_name> [-g group_name]
 	-h | --help		display usage message
 
 example: ./plasmidID.sh -1 ecoli_R1.fastq.gz -2 ecoli_R2.fastq.gz -d database.fasta -s ECO_553 -G ENTERO
-		./plasmidID.sh -1 ecoli_R1.fastq.gz -2 ecoli_R2.fastq.gz -d PacBio_sample.fasta -c scaffolds.fasta -C 60 -s ECO_60 -G ENTERO --only_reconstruct
+		./plasmidID.sh -1 ecoli_R1.fastq.gz -2 ecoli_R2.fastq.gz -d PacBio_sample.fasta -c scaffolds.fasta -C 60 -s ECO_60 -G ENTERO --no-trim
 
 EOF
 }
@@ -77,9 +77,10 @@ EOF
 # OPTION_PROCESSING
 #================================================================
 #Make sure the script is executed with arguments
-if [ $? != 0 ] ; then
- usage >&2
- exit 1
+if [ $# = 0 ]; then
+	echo "NO ARGUMENTS SUPPLIED"
+	usage >&2
+	exit 1
 fi
 
 
@@ -239,12 +240,6 @@ shift $((OPTIND-1))
 # MAIN_BODY
 #================================================================
 ##CHECK DEPENDENCIES, MANDATORY FIELDS, FOLDERS AND ARGUMENTS
-
-#if [ $# = 0 ] ; then
-#	echo "NO ARGUMENTS SUPPLIED"
-#	usage >&2
-#	exit 1
-#fi
 
 check_dependencies.sh blastn bowtie2-build bowtie2 cd-hit-est psi-cd-hit.pl bedtools prokka samtools
 
