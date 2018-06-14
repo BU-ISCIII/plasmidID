@@ -147,9 +147,9 @@ shift $((OPTIND-1))
 
 echo -e "\n#Executing" $0 "\n"
 
-bash lib/check_mandatory_files.sh $input_file
+check_mandatory_files.sh $input_file
 
-bash lib/check_dependencies.sh bedtools
+check_dependencies.sh bedtools
 
 if [ ! $output_dir ]; then
 	output_dir=$(dirname $input_file)
@@ -182,7 +182,7 @@ if [ $positional = true ]; then
 else
 
 
-	bash lib/check_mandatory_files.sh $database
+	check_mandatory_files.sh $database
 
 	if [ -f $database".length" ]; then
 		echo "Found length file for" $(basename $database)
@@ -190,7 +190,7 @@ else
 	else
 		echo "$(date)"
 		echo "Creating a length file for" $(basename $database)
-		bash lib/calculate_seqlen.sh -r -i $database > $database".length"
+		calculate_seqlen.sh -r -i $database > $database".length"
 	fi
 
 	if [ -f $output_dir/$filename".coverage" ];then \

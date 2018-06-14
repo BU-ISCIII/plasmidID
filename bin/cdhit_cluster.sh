@@ -182,9 +182,10 @@ shift $((OPTIND-1))
 
 echo -e "\n#Executing" $0 "\n"
 
-bash lib/check_mandatory_files.sh $input_file
 
-bash lib/check_dependencies.sh cd-hit-est psi-cd-hit.pl
+check_mandatory_files.sh $input_file
+
+check_dependencies.sh cd-hit-est psi-cd-hit.pl
 
 
 

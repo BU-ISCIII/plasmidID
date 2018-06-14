@@ -108,7 +108,7 @@ shift $((OPTIND-1))
 
 echo -e "\n#Executing" $0 "\n"
 
-bash lib/check_mandatory_files.sh $input_file
+check_mandatory_files.sh $input_file
 
 if [ ! $output_dir ]; then
 	output_dir=$(dirname $input_file)
