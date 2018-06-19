@@ -28,7 +28,7 @@ cds_contig_file=$imageDir/$sample".gff.coordinates"
 
 contig_file=$imageDir/$sample".plasmids.bed"
 contig_file_complete=$imageDir/$sample".plasmids.complete"
-links_file=$imageDir/$sample".plasmids.blast.links"
+links_file=$imageDir/$sample".plasmids.links"
 
 imageName=$sample"_summary.png"
 

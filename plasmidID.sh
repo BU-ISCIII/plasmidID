@@ -492,7 +492,7 @@ if [ $annotation = true ]; then
 	blast_align.sh -i $annotation_file -d $group/$sample/data/$sample".fna" -o $group/$sample/data -p annotation -f $sample
 	#sample.annotation.blast
 
-	blast_to_bed.sh -i $group/$sample/data/$sample".annotation.blast" -b 90 -l 80 -d _ -D r -q _ -Q l
+	blast_to_bed.sh -i $group/$sample/data/$sample".annotation.blast" -b 95 -l 85 -d _ -D r -q _ -Q l
 	#sample.annotation.bed
 
 	coordinate_adapter.sh -i $group/$sample/data/$sample".annotation.bed" -l $group/$sample/data/$sample".plasmids.blast.links"
