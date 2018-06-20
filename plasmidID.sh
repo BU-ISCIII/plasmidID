@@ -15,7 +15,7 @@ set -e
 #INSTITUTION:ISCIII
 #CENTRE:BU-ISCIII
 #AUTHOR: Pedro J. Sola
-VERSION=Beta 
+VERSION=1.1.2
 #CREATED: 15 March 2018
 #
 #ACKNOLEDGE: longops2getops.sh: https://gist.github.com/adamhotep/895cebf290e95e613c006afbffef09d7
@@ -58,7 +58,7 @@ usage : $0 <-1 R1> <-2 R2> <-d database(fasta)> <-s sample_name> [-g group_name]
 
 	--explore	Relaxes default parameters to find less reliable relationships within data supplied and database
 	--no-trim	Reads supplied will not be quality trimmed
-	--only-reconstruct	Database supplied will not be filtered and all sequences will be used as scaffold 
+	--only-reconstruct	Database supplied will not be filtered and all sequences will be used as scaffold [NOT TESTED]
 	
 	Additional options:
 
@@ -68,7 +68,7 @@ usage : $0 <-1 R1> <-2 R2> <-d database(fasta)> <-s sample_name> [-g group_name]
 	-h | --help		display usage message
 
 example: ./plasmidID.sh -1 ecoli_R1.fastq.gz -2 ecoli_R2.fastq.gz -d database.fasta -s ECO_553 -G ENTERO
-		./plasmidID.sh -1 ecoli_R1.fastq.gz -2 ecoli_R2.fastq.gz -d PacBio_sample.fasta -c scaffolds.fasta -C 60 -s ECO_60 -G ENTERO --only_reconstruct
+		./plasmidID.sh -1 ecoli_R1.fastq.gz -2 ecoli_R2.fastq.gz -d PacBio_sample.fasta -c scaffolds.fasta -C 60 -s ECO_60 -G ENTERO --no-trim
 
 EOF
 }
@@ -77,11 +77,11 @@ EOF
 # OPTION_PROCESSING
 #================================================================
 #Make sure the script is executed with arguments
-if [ $? != 0 ] ; then
- usage >&2
- exit 1
+if [ $# = 0 ]; then
+	echo "NO ARGUMENTS SUPPLIED"
+	usage >&2
+	exit 1
 fi
-
 
 
 # translate long options to short
@@ -130,7 +130,7 @@ cwd="$(pwd)"
 group="NO_GROUP"
 database="Database"
 coverage_cutoff=80
-coverage_summary=90
+coverage_summary=80
 cluster_cutoff=80
 alignment_identity=90
 alignment_percentage=30
@@ -241,12 +241,11 @@ shift $((OPTIND-1))
 #================================================================
 ##CHECK DEPENDENCIES, MANDATORY FIELDS, FOLDERS AND ARGUMENTS
 
+check_dependencies.sh blastn bowtie2-build bowtie2 cd-hit-est psi-cd-hit.pl bedtools prokka samtools
+
+check_mandatory_files.sh $r1_file $r2_file $database 
+
 reconstruct_fasta=$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff"_term.fasta"_$cluster_cutoff
-#contigs=$group/$sample/assembly/scaffolds.fasta
-
-
-
-lib/check_mandatory_files.sh $r1_file $r2_file $database 
 
 if [ ! $sample ]; then
 	echo "ERROR: please, provide a sample name"
@@ -292,7 +291,7 @@ if [ $only_reconstruct = false ]; then
 			echo "Omitting trimming"
 		else
 			echo "####TRIMMING################################################################"
-			lib/quality_trim.sh -1 $r1_file -2 $r2_file -s $sample -g $group -T $threads
+			quality_trim.sh -1 $r1_file -2 $r2_file -s $sample -g $group -T $threads
 		fi
 	else
 
@@ -310,7 +309,7 @@ if [ $only_reconstruct = false ]; then
 
 	if [ $include_assembly = true ]; then
 		echo "####ASSEMBLY################################################################"
-		lib/spades_assembly.sh -q $group/$sample/trimmed/ -c -T $threads
+		spades_assembly.sh -q $group/$sample/trimmed/ -c -T $threads
 		contigs=$group/$sample/assembly/scaffolds.fasta
 	else
 		echo "Contigs supplied, ommiting assembly step"
@@ -325,7 +324,7 @@ if [ $only_reconstruct = false ]; then
 		echo "Omitting mapping"
 	else
 		echo "####MAPPING#################################################################"
-		lib/bowtie_mapper.sh -d $database \
+		bowtie_mapper.sh -d $database \
 	 	-g $group \
 	 	-s $sample \
 	 	-1 $r1_file_mapping \
@@ -333,7 +332,7 @@ if [ $only_reconstruct = false ]; then
 
  #group/sample/mapping/sample.sam
 
-	 	lib/sam_to_bam.sh -i $group/$sample/mapping/$sample.sam
+	 	sam_to_bam.sh -i $group/$sample/mapping/$sample.sam
 
  #group/sample/mapping/sample.bam
  #group/sample/mapping/sample.bam.bai
@@ -346,32 +345,47 @@ if [ $only_reconstruct = false ]; then
 		echo "Omitting coverage calculation"
 	else
 		echo "####COVERAGE FILTERING########################################################"
- 		lib/get_coverage.sh -i $group/$sample/mapping/$sample".sorted.bam" -d $database
+ 		get_coverage.sh -i $group/$sample/mapping/$sample".sorted.bam" -d $database
  	fi
  #group/sample/mapping/sample.coverage
 
- 	lib/adapt_filter_coverage.sh -i $group/$sample/mapping/$sample".coverage" -c $coverage_cutoff
+ 	adapt_filter_coverage.sh -i $group/$sample/mapping/$sample".coverage" -c $coverage_cutoff
 
  #sample.coverage_adapted
  #sample.coverage_adapted_filtered_80
 
-	lib/filter_fasta.sh -i $database -f $group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff
+	filter_fasta.sh -i $database -f $group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff
 
 #sample.coverage_adapted_filtered_50_term.fasta
+
+	
+	if [ ! -s $group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff ]; then \
+		echo "ERROR"
+		echo "NO PLASMIDS MATCHED MAPPING REQUERIMENTS, PLEASE, TRY WITH LOWER COVERAGE CUTOFF"
+		echo "################################################################################"
+		exit 1
+	fi
+
+
+
 	if [ -f $group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff"_term.fasta_"$cluster_cutoff ];then \
 		echo "Found a clustered file for sample" $sample;
 		echo "Omitting clustering"
 	else
 
-		lib/cdhit_cluster.sh -i $group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff"_term.fasta" -c $cluster_cutoff -M $max_memory -T $threads
+		cdhit_cluster.sh -i $group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff"_term.fasta" -c $cluster_cutoff -M $max_memory -T $threads
 	fi
+
+
+
+	process_cluster_output.sh -i $reconstruct_fasta -b $group/$sample/mapping/$sample".coverage_adapted" -c $coverage_cutoff
 #$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff"_term.fasta"_$cluster_cutoff >> FINAL CLUSTERED AND FILTERED FASTA FILE TO USE AS SCAFFOLD
 ########################################################################################################
 
 #sample.coverage_adapted_filtered_50_term.fasta_80
 #sample.coverage_adapted_filtered_50_term.fasta_80.clstr
 
-	lib/process_cluster_output.sh -i $reconstruct_fasta -b $group/$sample/mapping/$sample".coverage_adapted" -c $coverage_cutoff
+	
 
 fi
 
@@ -387,7 +401,7 @@ fi
 
 echo "####CONTIG and ANNOTATON########################################################"
 
-lib/build_karyotype.sh -i $group/$sample/mapping/$sample".coverage_adapted_clustered" -K $coverage_summary -k $coverage_cutoff -o $group/$sample/data
+build_karyotype.sh -i $group/$sample/mapping/$sample".coverage_adapted_clustered" -K $coverage_summary -k $coverage_cutoff -o $group/$sample/data
 
 #group/sample/data
 #sample.karyotype_individual.txt
@@ -397,11 +411,11 @@ if [ -f $group/$sample/data/$sample".bedgraph" ];then
 	echo "Found a coverage file for sample" $sample;
 	echo "Omitting coverage calculation"
 else
-	lib/get_coverage.sh -i $group/$sample/mapping/$sample".sorted.bam" -p -o $group/$sample/data
+	get_coverage.sh -i $group/$sample/mapping/$sample".sorted.bam" -p -o $group/$sample/data
 fi
 #sample.bedgraph
 
-lib/filter_fasta.sh -i $group/$sample/data/$sample".bedgraph" -f $group/$sample/mapping/$sample".coverage_adapted_clustered_ac" -G
+filter_fasta.sh -i $group/$sample/data/$sample".bedgraph" -f $group/$sample/mapping/$sample".coverage_adapted_clustered_ac" -G
 
 #sample.bedgraph_term
 
@@ -409,35 +423,35 @@ if [ -f $group/$sample/data/$sample".fna" -a -f $group/$sample/data/$sample".gff
 	echo "Found annotations files for sample" $sample;
 	echo "Omitting automatic annotation"
 else
-	lib/prokka_annotation.sh -i $contigs -p $sample -o $group/$sample/data -c
+	prokka_annotation.sh -i $contigs -p $sample -o $group/$sample/data -c
 fi
 #sample.fna
 #sample.gff
 
 
-lib/blast_align.sh -i $group/$sample/data/$sample".fna" -d $reconstruct_fasta -o $group/$sample/data -p plasmids
+blast_align.sh -i $group/$sample/data/$sample".fna" -d $reconstruct_fasta -o $group/$sample/data -p plasmids
 
 #sample.plasmids.blast
 
 
-lib/blast_to_bed.sh -i $group/$sample/data/$sample".plasmids.blast" -b $alignment_identity -l 0 -L 500 -d - -q _ -Q r -I
+blast_to_bed.sh -i $group/$sample/data/$sample".plasmids.blast" -b $alignment_identity -l 0 -L 500 -d - -q _ -Q r -I
 
 #sample.plasmids.bed
 
-lib/blast_to_complete.sh -i $group/$sample/data/$sample".plasmids.blast"
+blast_to_complete.sh -i $group/$sample/data/$sample".plasmids.blast" -l $alignment_percentage
 
 #sample.plasmids.complete
 
-lib/blast_to_link.sh -i $group/$sample/data/$sample".plasmids.blast" -I
+blast_to_link.sh -i $group/$sample/data/$sample".plasmids.blast" -I -l $alignment_percentage
 
 #sample.plasmids.links
 #sample.plasmids.blast.links
 
-lib/gff_to_bed.sh -i $group/$sample/data/$sample".gff" -u -L
+gff_to_bed.sh -i $group/$sample/data/$sample".gff" -u -L
 
 #sample.gff.bed
 
-lib/coordinate_adapter.sh -i $group/$sample/data/$sample".gff.bed" -l $group/$sample/data/$sample".plasmids.blast.links" -p -n 5000
+coordinate_adapter.sh -i $group/$sample/data/$sample".gff.bed" -l $group/$sample/data/$sample".plasmids.blast.links" -p -n 5000
 
 #sample.gff.coordinates
 
@@ -447,45 +461,67 @@ echo "####SPECIFIC ANNOTATON####################################################
 
 ######################### ABR _ INCLUDE FILENAME
 
-lib/blast_align.sh -i databases/ARGannot.pID.fasta -d $group/$sample/data/$sample".fna" -o $group/$sample/data -p abr -f $sample
+blast_align.sh -i databases/ARGannot.pID.fasta -d $group/$sample/data/$sample".fna" -o $group/$sample/data -p abr -f $sample
 
 #sample.abr.blast
 
-lib/blast_to_bed.sh -i $group/$sample/data/$sample".abr.blast" -b 100 -l 90 -d _ -D r -q " " -Q r
+blast_to_bed.sh -i $group/$sample/data/$sample".abr.blast" -b 98 -l 90 -d _ -D r -q " " -Q r -U -
 
 #sample.abr.bed
 
-lib/coordinate_adapter.sh -i $group/$sample/data/$sample".abr.bed" -l $group/$sample/data/$sample".plasmids.blast.links" -u
+coordinate_adapter.sh -i $group/$sample/data/$sample".abr.bed" -l $group/$sample/data/$sample".plasmids.blast.links" -u
 
 #sample.abr.coordinates
 
 ###################### INC
 
-lib/blast_align.sh -i databases/plasmidFinder_01_26_2018.fsa -d $group/$sample/data/$sample".fna" -o $group/$sample/data -p inc -f $sample
+blast_align.sh -i databases/plasmidFinder_01_26_2018.fsa -d $group/$sample/data/$sample".fna" -o $group/$sample/data -p inc -f $sample
 
 #sample.inc.blast
 
-lib/blast_to_bed.sh -i $group/$sample/data/$sample".inc.blast" -b 95 -l 80 -d _ -D r -q _ -Q l
+blast_to_bed.sh -i $group/$sample/data/$sample".inc.blast" -b 95 -l 80 -d _ -D r -q _ -Q l
 #sample.inc.bed
 
-lib/coordinate_adapter.sh -i $group/$sample/data/$sample".inc.bed" -l $group/$sample/data/$sample".plasmids.blast.links" -u
+coordinate_adapter.sh -i $group/$sample/data/$sample".inc.bed" -l $group/$sample/data/$sample".plasmids.blast.links" -u
 
 #sample.inc.coordinates
 
 
 if [ $annotation = true ]; then
 
-	lib/blast_align.sh -i $annotation_file -d $group/$sample/data/$sample".fna" -o $group/$sample/data -p annotation -f $sample
+	blast_align.sh -i $annotation_file -d $group/$sample/data/$sample".fna" -o $group/$sample/data -p annotation -f $sample
 	#sample.annotation.blast
 
-	lib/blast_to_bed.sh -i $group/$sample/data/$sample".annotation.blast" -b 90 -l 80 -d _ -D r -q _ -Q l
+	blast_to_bed.sh -i $group/$sample/data/$sample".annotation.blast" -b 95 -l 85 -d _ -D r -q _ -Q l
 	#sample.annotation.bed
 
-	lib/coordinate_adapter.sh -i $group/$sample/data/$sample".annotation.bed" -l $group/$sample/data/$sample".plasmids.blast.links" -u
+	coordinate_adapter.sh -i $group/$sample/data/$sample".annotation.bed" -l $group/$sample/data/$sample".plasmids.blast.links"
 	#sample.annotation.coordinates
+else
+
+	touch $group/$sample/data/$sample".annotation.coordinates"
 fi
 
 echo "####DRAW IMAGES########################################################"
 
 
-lib/draw_circos_images.sh $group $sample
+#Annotate plasmids selected as database
+if [ -f $group/$sample/database/$sample".fna" -a -f $group/$sample/database/$sample".gff" ];then
+	echo "Found annotations files for reconstruct plasmids i sample" $sample;
+	echo "Omitting automatic annotation"
+else
+	prokka_annotation.sh -i $reconstruct_fasta -p $sample -o $group/$sample/database -c
+fi
+
+#database/sample.fna
+#database/sample.gff
+
+rename_from_fasta.sh -i $group/$sample/database/$sample".gff" -1 $reconstruct_fasta -2 $group/$sample/database/$sample".fna"
+
+#sample.gff.renamed
+
+gff_to_bed.sh -i $group/$sample/database/$sample".gff.renamed" -q " " -u -L
+
+#database/sample.gff.bed
+
+draw_circos_images.sh $group $sample $group/$sample/database/$sample".gff.bed"

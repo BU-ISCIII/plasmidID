@@ -13,11 +13,9 @@
 #CENTRE:BU-ISCIII
 #AUTHOR: Pedro J. Sola
 VERSION=1.0 
-#CREATED: 4 May 2018
-#REVISION: 
-#06 May 2018: add id optiopn in bed output
+#CREATED: 14 May 2018
 #
-#DESCRIPTION:blast_to_bed script obtain a BED file with coordinates of local blast alignments matching some given conditions
+#DESCRIPTION:blast_to_link script to obtain a link file that represent duplications between all members of the query 
 #================================================================
 # END_OF_HEADER
 #================================================================
@@ -35,19 +33,16 @@ usage : $0 <-i inputfile(.blast)> <-b id cutoff> [-o <directory>] [-b <int(0-100
 	-i input file 
 	-b blast identity cutoff (0 - 100), default 90
 	-l blast length percentage cutoff (0 - 100), default 20, use 90 for genes
-	-L blast length alignment cutoff, default 0, use 200 or 500 for contigs
 	-o output directory (optional). By default the file is replaced in the same location
 	-q database chraracter delimiter, default "_"
 	-Q query field to retrieve (l=left, r=right), default left
 	-d database chraracter delimiter, default "_"
 	-D database field to retrieve (l=left, r=right), default right
 	-I contig mode
-	-u unique. Outputs only one query entry per database entry
 	-v version
 	-h display usage message
 
-example: blast_to_bed.sh -i ecoli_prefix.blast -b 80 -l 50 -q - -Q r
-
+example: blast_to_link.sh -i ecoli_prefix.blast -b 80 -l 50
 EOF
 }
 
@@ -65,12 +60,12 @@ fi
 cwd="$(pwd)"
 input_file="Input_file"
 blast_id_cutoff=90
-blast_len_percentage=10
+blast_len_percentage=50
 blast_len_alignment=0
-database_delimiter="_"
-database_field=r
+database_delimiter="-"
+database_field=l
 query_delimiter="_"
-query_field=l
+query_field=r
 unique=false
 suffix=""
 id_circos=false
@@ -103,10 +98,7 @@ while getopts $options opt; do
 				blast_len_percentage=$OPTARG
 			fi
 			;;
-		L )
-			blast_len_alignment=$OPTARG
-			;;
-        d )
+		d )
 			database_delimiter=$OPTARG
 			;;
 		D )
@@ -152,6 +144,7 @@ while getopts $options opt; do
 done
 shift $((OPTIND-1))
 
+
 #================================================================
 # MAIN_BODY
 #================================================================
@@ -159,7 +152,7 @@ shift $((OPTIND-1))
 
 echo -e "\n#Executing" $0 "\n"
 
-bash lib/check_mandatory_files.sh $input_file
+check_mandatory_files.sh $input_file
 
 
 blast_len_percentage_value=$(echo "($blast_len_percentage/100)" | bc -l)
@@ -210,30 +203,46 @@ else
 fi
 
 echo "$(date)"
-echo "Adapting blast to bed using" $(basename $input_file) "with:"
+echo "Adapting blast to links using" $(basename $input_file) "with:"
 echo "Blast identity=" $blast_id_cutoff
-echo "Min length aligned=" $blast_len_alignment
 echo "Min len percentage=" $blast_len_percentage
 
+##Have only into account blast entries with a determine blast length
 
-cat $input_file |\
 awk '
-	{OFS="\t"
-	split($2, database_name, "'"${database_delimiter}"'")
-	split($1, query_name, "'"${query_delimiter}"'")}
-	(($3 >= '"${blast_id_cutoff}"')&&(($4/$13) >= '"${blast_len_percentage_value}"')&&($4 >= '"${blast_len_alignment}"')) \
-	{print database_name['"$database_field"'], $9, $10, query_name['"$query_field"']'"$id_output"'}
-	' \
-> $output_dir/$file_name".bed"$suffix
+	(($4/$13) >= '"${blast_len_percentage_value}"') && !contigPlasmid[$1$2]++ \
+	{print $1$2}
+	' $input_file \
+	> $output_dir/$file_name".dict_length_percentage"
 
+##Obtain coordinates query --> ddbb
 
-if [ "$unique" == "true" ]; then
-    awk '
-        (!x[$1$4]++)
-    ' $output_dir/$file_name".bed"$suffix \
-> $output_dir/$file_name".bed"
-fi
+awk '
+	NR==FNR{contigPlasmid[$1]=$1;next}
+	{split($2, database_name, "'"${database_delimiter}"'")
+	split($1, query_name, "'"${query_delimiter}"'")
+	header=$1$2}
+	{if ((header in contigPlasmid) && ($3>='"${blast_id_cutoff}"') && (($4/$13)>=0.05)) 
+		print query_name['"$query_field"'], $7,$8,database_name['"$database_field"'],$9,$10'"$id_output"'}' \
+	$output_dir/$file_name".dict_length_percentage" $input_file \
+	> $output_dir/$file_name."blast.links"
+
+##Change coordinates from query --> ddbb to ddbb-->ddbb in order to represent them in CIRCOSS
+
+awk '
+	BEGIN{OFS="\t"}
+	{
+	if($1 != savedNode)
+		{savedNode= $1; delete chr} 
+	else{for(i in chr)
+		{print $4" "$5" "$6" "chr[i]" id="savedNode}
+	}
+	chr[$4$5$6] = $4" "$5" "$6}' \
+	$output_dir/$file_name."blast.links" \
+	> $output_dir/$file_name."links"
+
+rm $output_dir/$file_name".dict_length_percentage"
 
 echo "$(date)"
-echo "DONE adapting blast to bed"
-echo -e "File can be found at" $output_dir/$file_name".bed" "\n"
+echo "DONE adapting blast to link"
+echo -e "File can be found at" $output_dir/$file_name".links" "\n"

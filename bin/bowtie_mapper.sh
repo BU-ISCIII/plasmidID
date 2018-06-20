@@ -138,9 +138,9 @@ shift $((OPTIND-1))
 
 echo -e "\n#Executing" $0 "\n"
 
-bash lib/check_dependencies.sh bowtie2-build bowtie2
+check_dependencies.sh bowtie2-build bowtie2
 
-bash lib/check_mandatory_files.sh $database $R1 $R2
+check_mandatory_files.sh $database $R1 $R2
 
 if [ ! $sample ]; then
 	echo "ERROR: please, provide a sample name"

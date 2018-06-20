@@ -119,9 +119,9 @@ shift $((OPTIND-1))
 
 echo -e "\n#Executing" $0 "\n"
 
-bash lib/check_mandatory_files.sh $input_file
+check_mandatory_files.sh $input_file
 
-bash lib/check_dependencies.sh samtools
+check_dependencies.sh samtools
 
 
 if [ ! $output_dir ]; then

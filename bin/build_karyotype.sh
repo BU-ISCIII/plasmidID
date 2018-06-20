@@ -125,7 +125,7 @@ shift $((OPTIND-1))
 
 echo -e "\n#Executing" $0 "\n"
 
-bash lib/check_mandatory_files.sh $input_file
+check_mandatory_files.sh $input_file
 
 coverage_cutoff_summary=$(echo "(1 - ($coverage_cutoff_summary_percentage/100))" | bc -l)
 coverage_cutoff_individual=$(echo "(1 - ($coverage_cutoff_individual_percentage/100))" | bc -l)
