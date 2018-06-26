@@ -324,7 +324,8 @@ if [ $only_reconstruct = false ]; then
 		echo "Omitting mapping"
 	else
 		echo "####MAPPING#################################################################"
-		bowtie_mapper.sh -d $database \
+		bowtie_mapper.sh -a -d $database \
+		-T $threads \
 	 	-g $group \
 	 	-s $sample \
 	 	-1 $r1_file_mapping \
@@ -348,6 +349,18 @@ if [ $only_reconstruct = false ]; then
  		get_coverage.sh -i $group/$sample/mapping/$sample".sorted.bam" -d $database
  	fi
  #group/sample/mapping/sample.coverage
+
+
+	temporary_coverage_files=$(ls $group/$sample/mapping/$sample".coverage_adapted_filtered_??" 2> /dev/null | wc -l)
+
+ 	if [ $temporary_coverage_files -gt 1 ]; then
+
+		echo "Removing previous coverage filtered files"
+		for i in $(ls $group/$sample/mapping/$sample".coverage_adapted_filtered"*)
+		do
+			rm $i
+		done
+	fi
 
  	adapt_filter_coverage.sh -i $group/$sample/mapping/$sample".coverage" -c $coverage_cutoff
 

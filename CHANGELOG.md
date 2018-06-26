@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 1.2.2 - 2018-06-22
+### Fixed
+- ***IMPORTANT***: PlasmidID maps with -a mode NOW, as it should have allways been. A bug on mapping script is now solved
+- Number of threads are now implemented on mapping
+- Some cumulative clustering temporary files are now removed
+
 ## 1.2.1 - 2018-06-14
 ### Fixed
 - All dependencies are now checked at the beggining
