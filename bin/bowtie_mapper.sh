@@ -71,7 +71,7 @@ R2="R2"
 
 #PARSE VARIABLE ARGUMENTS WITH getops
 #common example with letters, for long options check longopts2getopts.sh
-options=":i:o:s:g:d:1:2:f:avh"
+options=":i:o:s:g:d:1:2:f:T:avh"
 while getopts $options opt; do
 	case $opt in
 		i )
@@ -190,7 +190,7 @@ else
 	-2 $R2 \
 	-S $output_dir/$sample.sam \
 	-q \
-	--local \
+	--very-sensitive-local \
 	$a_mapping \
 	-p $threads \
 	-x $database
