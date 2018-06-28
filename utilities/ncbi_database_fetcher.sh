@@ -14,13 +14,13 @@ set -e
 VERSION=1.0 
 #CREATED: 12 June 2018
 #REVISION:
+# 22 June 2018: include quite mode that avoid watching the progress
 #		
 #
 #DESCRIPTION:Script that extract a database from ncbi database using terms
 #AKNOWLEDGE: 
 #		-Multiple arguments in one flag: https://stackoverflow.com/questions/7529856/retrieving-multiple-arguments-for-a-single-option-using-getopts-in-bash
-#TODO:
-#		-Add and remove sequences in the same execution
+#
 #================================================================
 # END_OF_HEADER
 #================================================================
@@ -30,9 +30,9 @@ VERSION=1.0
 usage() {
 	cat << EOF
 
-ncbi_database_fetcher is a script that extract sequences by term, either by key or file with a list
+ncbi_database_fetcher is a script that extract sequences from NCBI by term
 
-usage : $0 <(-y term1 -y term2 | -y "term1 term2")> [(-n term1 -n term2 | -n "term1 term2")] [-O <organism>][-d (nucleotide|protein)] [-f <filename>] [-o <directory>]  [-v] [-h]
+usage : $0 <(-y term1 -y term2 | -y "term1 term2")> [(-n term1 -n term2 | -n "term1 term2")] [-O <organism>][-d (nucleotide|protein)] [-f <filename>] [-o <directory>] [-q] [-v] [-h]
 
 	-y list of key terms separated by space to be INCLUDED in sequences title
 	-n list of key terms separated by space to be EXCLUDED in sequences title
@@ -40,6 +40,7 @@ usage : $0 <(-y term1 -y term2 | -y "term1 term2")> [(-n term1 -n term2 | -n "te
 	-d database type, default nucleotide
 	-o output directory (optional). By default the file is placed in cwd
 	-f file name (optional). By default is the first term used as query
+	-q quiet
 	-v version
 	-h display usage message
 
@@ -62,10 +63,11 @@ cwd="$(pwd)"
 use_term_and=false
 use_term_not=false
 use_term_org=false
+quiet=false
 database_type=nucleotide
 #PARSE VARIABLE ARGUMENTS WITH getops
 
-options=":y:n:o:f:d:O:vh"
+options=":y:n:o:f:d:O:qvh"
 while getopts $options opt; do
 	case $opt in
 		o )
@@ -88,6 +90,9 @@ while getopts $options opt; do
 		n )
 			terms_not+=($OPTARG)
 			use_term_not=true
+			;;
+		q )
+			quiet=true
 			;;
 		h )
 		  	usage
@@ -142,7 +147,7 @@ fi
 
 if [ ! $file_name ]; then
 
-	if [ "${#terms_and[@]}" > 1 ]; then
+	if [ "${#terms_and[@]}" -gt 1 ]; then
 		file_name_value_one=$(echo ${terms_and[0]})
 		file_name_value_two=$(echo ${terms_and[1]})
 
@@ -197,6 +202,13 @@ wget -q -O $output_dir/$file_name".count" $base"esearch.fcgi?db="$database_type"
 
 counter=$(cat $output_dir/$file_name".count" | awk '/<Count>/' | head -n 1 | awk '/<Count>/ {split($0,counter_prev,"</Count>");split(counter_prev[1],counter,"<Count>")}END{print counter[length(counter)]}')
 echo -e "FOUND" $counter "RECORDS\n"
+
+if [ $counter -eq 0 ]; then
+	echo "Try different terms"
+	echo "EXIT"
+	exit 1
+fi
+
 echo "Retrieving Id"
 
 ##OBTAIN TOTAL LIST OF ID
@@ -220,7 +232,10 @@ fi
 
 for i in $list_of_id
 do 
-	echo $counter"/""${#array_of_id[@]}" >&1
+	if [ $quiet = false ]; then
+
+		echo $counter"/""${#array_of_id[@]}"
+	fi
 
 	((counter++))
 	
