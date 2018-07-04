@@ -308,9 +308,14 @@ if [ $only_reconstruct = false ]; then
 #############################################################################
 
 	if [ $include_assembly = true ]; then
-		echo "####ASSEMBLY################################################################"
-		spades_assembly.sh -q $group/$sample/trimmed/ -c -T $threads
-		contigs=$group/$sample/assembly/scaffolds.fasta
+		if [ -f $group/$sample/assembly/scaffolds.fasta ]; then
+			echo "Found an assembled file for sample" $sample
+			echo "Omitting assembly"
+		else
+			echo "####ASSEMBLY################################################################"
+			spades_assembly.sh -q $group/$sample/trimmed/ -c -T $threads
+			contigs=$group/$sample/assembly/scaffolds.fasta
+		fi
 	else
 		echo "Contigs supplied, ommiting assembly step"
 	fi
