@@ -26,12 +26,13 @@ usage() {
 
 summary table is a script that  creates a summary table fir plasmiID mapping results
 
-usage : $0 <pID_group>
+usage : $0 <pID_group_directory>
 
+NOTE: do not include last slash
 
 Output directory is placed in group folder, named 00-summary
 
-example: ./summary_table.sh ECO_NDM 
+example: ./summary_table.sh path/to/ECO_NDM 
 		 
 
 EOF
@@ -42,47 +43,47 @@ if [ $# = 0 ] ; then
  exit 1
 fi
 
-group=$1
-plasmidIdDir="$(pwd)"
-mappedDir=$plasmidIdDir/$group/$sample/mapping
-summaryDir=$plasmidIdDir/$group/00_summary
+group_directory=$1
+group=$(basename $group_directory)
+mappedDir=$group_directory/$sample/mapping
+summaryDir=$group_directory/00_summary
 
 mkdir -p $summaryDir
 
 
-if [ -f $plasmidIdDir/$group/00_summary/sampleid_found_$group.txt ];then \
+if [ -f $group_directory/00_summary/sampleid_found_$group.txt ];then \
 	
-	rm $plasmidIdDir/$group/00_summary/sampleid_found_$group.txt
+	rm $group_directory/00_summary/sampleid_found_$group.txt
 fi
 
-if [ -f $plasmidIdDir/$group/00_summary/sampleid_not_found_$group.txt ]; then \
+if [ -f $group_directory/00_summary/sampleid_not_found_$group.txt ]; then \
 
-	rm $plasmidIdDir/$group/00_summary/sampleid_not_found_$group.txt
+	rm $group_directory/00_summary/sampleid_not_found_$group.txt
 	
 fi
 
 
 echo "checking samples within the group"
 
-for sample_in_group in $(ls $plasmidIdDir/$group | grep -v 00_summary); do \
+for sample_in_group in $(ls $group_directory | grep -v 00_summary); do \
 
-	final_mapping_file=$(find $plasmidIdDir/$group/$sample_in_group/mapping -type f -name "*_adapted_filtered_*" | awk '/_term.fasta_..$/' | sort | awk 'NR==1' | wc -l)
+	final_mapping_file=$(find $group_directory/$sample_in_group/mapping -type f -name "*_adapted_filtered_*" | awk '/_term.fasta_..$/' | sort | awk 'NR==1' | wc -l)
 
 	if [ $final_mapping_file -gt 0 ]; then \
 
-		echo $sample_in_group >> $plasmidIdDir/$group/00_summary/sampleid_found_$group.txt
+		echo $sample_in_group >> $group_directory/00_summary/sampleid_found_$group.txt
 	
 	else 
 	
-		echo $sample_in_group >> $plasmidIdDir/$group/00_summary/sampleid_not_found_$group.txt
+		echo $sample_in_group >> $group_directory/00_summary/sampleid_not_found_$group.txt
 	fi
 
 done
 
-if [ -f $plasmidIdDir/$group/00_summary/sampleid_not_found_$group.txt ]; then \
+if [ -f $group_directory/00_summary/sampleid_not_found_$group.txt ]; then \
 
 	echo "WARNING"
-	printf "%s," $(cat $plasmidIdDir/$group/00_summary/sampleid_not_found_$group.txt) | sed 's/,$//g'
+	printf "%s," $(cat $group_directory/00_summary/sampleid_not_found_$group.txt) | sed 's/,$//g'
 	echo -e "\nNot found, using the rest for summary table"
 	
 fi
@@ -94,7 +95,7 @@ echo "obtaining list and description of all plasmids matching requisites in $gro
 #check full description of each plasmid matching the requeriments
 #Obtain full description of plasmids present in all samples in one file
 
-awk '{split(FILENAME,sample,"/")} />/ {print sample[length(sample)-2],"\t",$0}' $plasmidIdDir/$group/*/mapping/*coverage_adapted_filtered_*_term.fasta_[0-9][0-9] > $summaryDir/sample_description_list_$group.txt
+awk '{split(FILENAME,sample,"/")} />/ {print sample[length(sample)-2],"\t",$0}' $group_directory/*/mapping/*coverage_adapted_filtered_*_term.fasta_[0-9][0-9] > $summaryDir/sample_description_list_$group.txt
 
 #A14_03   >NZ_CP007733.1 Klebsiella pneumoniae subsp. pneumoniae KPNIH27 plasmid pKPN-068, complete sequence
 #A14_03   >NC_009649.1 Klebsiella pneumoniae subsp. pneumoniae MGH 78578 plasmid pKPN3, complete sequence
@@ -119,7 +120,7 @@ awk '{gsub(">","")} {uniq[$2]++} END {for (i in uniq) print i}' $summaryDir/samp
 
 echo "obtaining percentages of common plasmids in all samples $group"
 
-for i in $(find $plasmidIdDir/$group/ -type f -name "*_percentage"); do \
+for i in $(find $group_directory/ -type f -name "*_percentage"); do \
 	awk 'BEGIN{OFS="\t"} split(FILENAME,sample,"/") {print sample[length(sample)-2],$1,$2}' $i ;
 done > $summaryDir/sample_ac_percentage_$group.txt
 
@@ -133,7 +134,7 @@ done > $summaryDir/sample_ac_percentage_$group.txt
 echo "obtaining length of common plamsids in all samples $group"
 
 
-awk 'BEGIN {FS=="| "} /^>/ {if (seqlen) print seqlen;printf "%s\t", $1; seqlen=0; next} {seqlen+=length($0)} END {print seqlen}' $plasmidIdDir/$group/*/mapping/*coverage_adapted_filtered_*_term.fasta_[0-9][0-9] \
+awk 'BEGIN {FS=="| "} /^>/ {if (seqlen) print seqlen;printf "%s\t", $1; seqlen=0; next} {seqlen+=length($0)} END {print seqlen}' $group_directory/*/mapping/*coverage_adapted_filtered_*_term.fasta_[0-9][0-9] \
 |sort -u | sed 's/^>//g' > $summaryDir/sample_ac_common_length_$group.txt
 
 #NC_016138.1	123322
@@ -193,7 +194,7 @@ echo "obtaining table with presence/absence $group"
 
 echo "creating a file with all combinations"
 
-for sampleid in $(cat $plasmidIdDir/$group/00_summary/sampleid_found_$group.txt);do \
+for sampleid in $(cat $group_directory/00_summary/sampleid_found_$group.txt);do \
   for ac in $(cat $summaryDir/sample_ac_common_list_$group.txt); do \
     echo -e $sampleid "\t" $ac
   done
@@ -235,7 +236,7 @@ $summaryDir/sample_ac_combination_list_$group.txt $summaryDir/sample_ac_percenta
 echo "sorting presence/absence table $group"
 
 
-columnNumber=$(cat $plasmidIdDir/$group/00_summary/sampleid_found_$group.txt | wc -l)
+columnNumber=$(cat $group_directory/00_summary/sampleid_found_$group.txt | wc -l)
 rowNumber=$(cat $summaryDir/sample_ac_common_list_$group.txt | wc -l )
 
 awk '{a[$1" "$2]++};END{for (i in a) print i, a[i]}' $summaryDir/table_ac_sample_presence_$group.tsv | sort > $summaryDir/table_ac_sample_presence_fixed_$group.tsv
@@ -269,7 +270,7 @@ echo "merging all data in a final report table $group"
 
 paste <(awk '{for(i=1;i<=NF;i++) t+=$i; print t; t=0}' $summaryDir/table_presence.plasmids_$group.tsv) <(cat $summaryDir/table_percentage.plasmids_$group.tsv)  > $summaryDir/table_report.plasmids_$group.tsv
 
-printf "%s\t" AC_Number Length Species Description N $(cat $plasmidIdDir/$group/00_summary/sampleid_found_$group.txt | sort) > $summaryDir/header_column_$group.tsv
+printf "%s\t" AC_Number Length Species Description N $(cat $group_directory/00_summary/sampleid_found_$group.txt | sort) > $summaryDir/header_column_$group.tsv
 
 printf "\n" >> $summaryDir/header_column_$group.tsv
 
