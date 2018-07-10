@@ -15,7 +15,7 @@ set -e
 #INSTITUTION:ISCIII
 #CENTRE:BU-ISCIII
 #AUTHOR: Pedro J. Sola
-VERSION=1.1.2
+VERSION=1.2.2
 #CREATED: 15 March 2018
 #
 #ACKNOLEDGE: longops2getops.sh: https://gist.github.com/adamhotep/895cebf290e95e613c006afbffef09d7
@@ -52,8 +52,8 @@ usage : $0 <-1 R1> <-2 R2> <-d database(fasta)> <-s sample_name> [-g group_name]
 	-C | --coverage-cutoff	<int>	minimun coverage percentage to select a plasmid as scafold (0-100), default 80
 	-S | --coverage-summary	<int>	minimun coverage percentage to include plasmids in summary image (0-100), default 90
 	-f | --cluster		<int>	identity percentage to cluster plasmids into the same representative sequence (0-100), default 80
-	-i | --alignment-identity <int>	minimun identity percentage aligned for a contig to annotate
-	-l | --alignment-percentage <int>	minimun length percentage aligned for a contig to annotate
+	-i | --alignment-identity <int>	minimun identity percentage aligned for a contig to annotate, default 90
+	-l | --alignment-percentage <int>	minimun length percentage aligned for a contig to annotate, default 30
 	-L | --length-total	<int>	minimun alignment length to filter blast analysis
 
 	--explore	Relaxes default parameters to find less reliable relationships within data supplied and database
@@ -170,7 +170,7 @@ while getopts $options opt; do
 			group=$OPTARG
 			;;
 		a )
-			annotation_file=$OPTARG
+			annotation_config_file=$OPTARG
 			annotation=true
 			;;
 		t)
@@ -477,35 +477,10 @@ coordinate_adapter.sh -i $group/$sample/data/$sample".gff.bed" -l $group/$sample
 echo "####SPECIFIC ANNOTATON########################################################"
 
 
-######################### ABR _ INCLUDE FILENAME
-
-blast_align.sh -i databases/ARGannot.pID.fasta -d $group/$sample/data/$sample".fna" -o $group/$sample/data -p abr -f $sample
-
-#sample.abr.blast
-
-blast_to_bed.sh -i $group/$sample/data/$sample".abr.blast" -b 98 -l 90 -d _ -D r -q " " -Q r -U -
-
-#sample.abr.bed
-
-coordinate_adapter.sh -i $group/$sample/data/$sample".abr.bed" -l $group/$sample/data/$sample".plasmids.blast.links" -u
-
-#sample.abr.coordinates
-
-###################### INC
-
-blast_align.sh -i databases/plasmidFinder_01_26_2018.fsa -d $group/$sample/data/$sample".fna" -o $group/$sample/data -p inc -f $sample
-
-#sample.inc.blast
-
-blast_to_bed.sh -i $group/$sample/data/$sample".inc.blast" -b 95 -l 80 -d _ -D r -q _ -Q l
-#sample.inc.bed
-
-coordinate_adapter.sh -i $group/$sample/data/$sample".inc.bed" -l $group/$sample/data/$sample".plasmids.blast.links" -u
-
-#sample.inc.coordinates
-
-
 if [ $annotation = true ]; then
+
+
+	#for i in $(cat $annotation_config_file | awk '!/^#/ &&  NF > 0' | wc -l)
 
 	blast_align.sh -i $annotation_file -d $group/$sample/data/$sample".fna" -o $group/$sample/data -p annotation -f $sample
 	#sample.annotation.blast

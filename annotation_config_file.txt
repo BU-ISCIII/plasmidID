@@ -1,0 +1,14 @@
+#1. Fasta file for annotation
+#2. Name given to this annotation 
+#3. Alignment %Identity necessary to include the sequence
+#4. Alignment %Length neccesary to include the sequence
+#5. Query divisor for the sequence name. (ie. For name Inc_NC_632542_protein-description)
+#6. Query field to represent (l:left|r:rigth) (ie. with divisor "_", left would be "Inc" and rigth "protein-description")
+#7. Unique. Each sequence will be allowed only once per plasmid
+#8. Color. Color used to represent this database (blue, green, grey, orange, purple, red, yellow. vvl,, vl, l, d, vd and vvd stands for very v), light(l) and dark(d))
+
+#DDBBFILE	NANE	P_IDENTITY	P_ALIGNMENT	Q_DIVISOR	Q_SIDE_LR	IS_UNIQUE	COLOR
+
+databases/ARGannot.pID.fasta	abr	98	90	" "	r	u	vlred
+databases/plasmidFinder_01_26_2018.fsa	inc	95	80	_	l	vlyellow
+/processing_Data/bioinformatics/research/20160530_ANTIBIOTICS_PSMP_T/REFERENCES/PLASMIDS/IS_ncbi.fasta	IS	95	85	_	l	vlbrown
