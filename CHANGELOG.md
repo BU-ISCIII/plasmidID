@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 1.3.0 - 2018-07-11
+### New
+- Summary table can be generated with new utility
+- Several databases can be now annotated filling annotation_config_file.txt
+### Fixed
+- circos dependency is now checked
+
 ## 1.2.2 - 2018-06-22
 ### Fixed
 - ***IMPORTANT***: PlasmidID maps with -a mode NOW, as it should have allways been. A bug on mapping script is now solved
@@ -32,7 +39,5 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
-- Script to create a summary file with useful mapping/presence/decription stats for groups and sample info
 - Create config files as required by user and include visual parameters
-- Include more user inputted databases to annotate
 - Test and adapt the --only-reconstruct option

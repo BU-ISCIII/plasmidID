@@ -1,28 +1,143 @@
 #!/bin/bash
 
+# Exit immediately if a pipeline, which may consist of a single simple command, a list, 
+#or a compound command returns a non-zero status: If errors are not handled by user
+set -e
+#set -x
+#=============================================================
+# HEADER
+#=============================================================
+
+#INSTITUTION:ISCIII
+#CENTRE:BU-ISCIII
+#AUTHOR: Pedro J. Sola
+VERSION=1.0 
+#CREATED: 01 May 2018
+#REVISION:
+#		11 July 2018: Apply good practices bash
+#						Include independent files
+#						Include several databases
+#
+#DESCRIPTION:Script that creates and execute a cicos config file for plasmidID 
+#
+#
+#
+#================================================================
+# END_OF_HEADER
+#================================================================
+
+#SHORT USAGE RULES
+#LONG USAGE FUNCTION
+usage() {
+	cat << EOF
+
+draw_circos_image script that creates and execute a cicos config file for plasmidID
+
+usage : $0 <-i input_directory> <-d config_files_directory> <-s sample> <-g <group> <-o <output_directory> [-l <log_file>] [-c] [-v] [-h]
+
+	-i input directory containing files to represent
+	-d directory containing config files
+	-s sample
+	-g group
+	-l log file
+	-o output directory to create config and pictures
+	-c clean: remove config files
+	-v version
+	-h display usage message
+
+EOF
+}
+
+#================================================================
+# OPTION_PROCESSING
+#================================================================
+#Make sure the script is executed with arguments
+if [ $# = 0 ] ; then
+ usage >&2
+ exit 1
+fi
+
+
+#DECLARE FLAGS AND VARIABLES
+
+cwd="$(pwd)"
+clean=false
+
+
+#PARSE VARIABLE ARGUMENTS WITH getops
+#common example with letters, for long options check longopts2getopts.sh
+options=":i:m:o:g:l:s:d:cvh"
+while getopts $options opt; do
+	case $opt in
+		i )
+			input_dir=$OPTARG
+			;;
+		o )
+			output_dir=$OPTARG
+			;;
+		d )
+			config_dir=$OPTARG
+			;;
+		l )
+			log_file=$OPTARG
+			;;
+		g )
+			group=$OPTARG
+			;;
+		s )
+			sample=$OPTARG
+			;;
+		c )
+			clean=true
+			;;
+        h )
+		  	usage
+		  	exit 1
+		  	;;
+		v )
+		  	echo $VERSION
+		  	exit 1
+		  	;;
+		\?)  
+			echo "Invalid Option: -$OPTARG" 1>&2
+			usage
+			exit 1
+			;;
+		: )
+      		echo "Option -$OPTARG requires an argument." >&2
+      		exit 1
+      		;;
+      	* ) 
+			echo "Unimplemented option: -$OPTARG" >&2;
+			exit 1
+			;;
+
+	esac
+done
+shift $((OPTIND-1))
+
+#================================================================
+# MAIN_BODY
+#================================================================
+
+imageDir=$input_dir"/data"
+mappedDir=$input_dir"/mapping"
 
 echo -e "\n#Executing" $0 "\n"
 
-group=$1
-sample=$2
-cdsDdbb_file=$3
+cdsDdbb_file=$input_dir/database/$sample".gff.bed"
 
-
-
-mappedDir=$group/$sample/mapping
-imageDir=$group/$sample/data
-
-circos_conf_summary="config_files/circos_summary.conf"
-circos_conf_individual="config_files/circos_individual.conf"
-circosDir=$group/$sample/images
+circos_conf_summary="$config_dir/circos_summary.conf"
+circos_conf_individual="$config_dir/circos_individual.conf"
+circosDir=$output_dir
 
 plasmidMapped=$mappedDir/$sample".coverage_adapted_clustered_ac"
 
 karyotype_file_individual=$imageDir/$sample".karyotype_individual.txt"
 karyotype_file_summary=$imageDir/$sample".karyotype_summary.txt"
-abr_file=$imageDir/$sample".abr.coordinates"
-replisome_file=$imageDir/$sample".inc.coordinates"
-additional_file=$imageDir/$sample".annotation.coordinates"
+annotation_text_file=$imageDir/pID_text_annotation.coordinates
+annotation_highlights_file=$imageDir/pID_highlights.conf
+
 coverage_file=$imageDir/$sample".bedgraph_term"
 cds_contig_file=$imageDir/$sample".gff.coordinates"
 
@@ -38,15 +153,13 @@ mkdir -p $circosDir
 echo "Creating config file for circos in SAMPLE $sample FILE $circosDir/$sample.circos.conf"
 
 awk '{gsub("PLASMID_KARYOTYPE","'$karyotype_file_individual'"); \
-gsub("PLASMID_ANTIBIOTIC_RESISTANCE","'$abr_file'"); \
-gsub("PLASMID_REPLISOME_PLASMIDFINDER","'$replisome_file'"); \
-gsub("PLASMID_ANNOTATION_USER","'$additional_file'"); \
+gsub("PLASMID_SPECIFIC_PLASMIDFINDER","'$annotation_text_file'"); \
+gsub("PID_ALL_HIGHLIGHTS","'$annotation_highlights_file'"); \
 gsub("PLASMID_COVERAGE_GRAPH","'$coverage_file'"); \
 gsub("PLASMID_CDS_CONTIG","'$cds_contig_file'"); \
 gsub("PLASMID_CDS_DDBB","'$cdsDdbb_file'"); \
 gsub("PLASMID_CONTIGS_COMPLETE","'$contig_file_complete'"); \
 gsub("PLASMID_CONTIGS","'$contig_file'"); \
-gsub("PLASMID_LINKS","'$links_file'"); \
 gsub("OUTPUTDIR","'$circosDir'"); \
 print $0}' $circos_conf_individual > $circosDir/$sample"_individual.circos.conf"
 
@@ -59,22 +172,24 @@ echo "Executing circos in SAMPLE $sample FILE $circosDir/$sample.circos.conf"
 
 for i in $(cat $plasmidMapped)
 	do
+		echo "Creating image for plasmid" $i "in sample" $sample
 		awk '{gsub("SAMPLE_SHOWN","'$i'"); \
 		gsub("IMAGENAME_SAMPLE_PLASMID","'$sample'_'$i'.png"); \
 		print $0}' $circosDir/$sample"_individual.circos.conf" > $circosDir/$sample"_"$i"_individual.circos.conf"
 		circos -conf $circosDir/$sample"_"$i"_individual.circos.conf"
 
-	done 
+		#echo "DONE"
+
+	done &> $log_file
 
 
 if [ -s $karyotype_file_summary ]; then
 
-	echo "Creating config file for circos in SAMPLE $sample FILE $circosDir/$sample.circos.conf"
+	echo "Creating summary image for in sample" $sample
 
 	awk '{gsub("PLASMID_KARYOTYPE","'$karyotype_file_summary'"); \
-	gsub("PLASMID_ANTIBIOTIC_RESISTANCE","'$abr_file'"); \
-	gsub("PLASMID_REPLISOME_PLASMIDFINDER","'$replisome_file'"); \
-	gsub("PLASMID_ANNOTATION_USER","'$additional_file'"); \
+	gsub("PLASMID_SPECIFIC_PLASMIDFINDER","'$annotation_text_file'"); \
+	gsub("PID_ALL_HIGHLIGHTS","'$annotation_highlights_file'"); \
 	gsub("PLASMID_COVERAGE_GRAPH","'$coverage_file'"); \
 	gsub("PLASMID_CDS_CONTIG","'$cds_contig_file'"); \
 	gsub("PLASMID_CDS_DDBB","'$cdsDdbb_file'"); \
@@ -84,10 +199,7 @@ if [ -s $karyotype_file_summary ]; then
 	gsub("IMAGENAME","'$imageName'"); \
 	print $0}' $circos_conf_summary > $circosDir/$sample"_summary.circos.conf"
 
-	echo "DONE Creating config file for circos in SAMPLE $sample"
-
-
-	circos -conf $circosDir/$sample"_summary.circos.conf"
+	circos -conf $circosDir/$sample"_summary.circos.conf" &> $log_file
 
 else
 
@@ -97,16 +209,17 @@ fi
 
 
 #Remove config files
-<<R 
-for i in $(cat $plasmidMapped)
-do
-	if [ -f $circosDir/$sample"_"$i"_individual.circos.conf" ]; then
-		rm $circosDir/$sample"_"$i"_individual.circos.conf"
-	fi
-	
-done
+if [ clean = true ];then
+	for i in $(cat $plasmidMapped)
+	do
+		if [ -f $circosDir/$sample"_"$i"_individual.circos.conf" ]; then
+			rm $circosDir/$sample"_"$i"_individual.circos.conf"
+		fi
+		
+	done
 
-	rm $circosDir/$sample"_summary.circos.conf"
-	rm $circosDir/$sample"_individual.circos.conf"
-R
-echo "ALL DONE"
+		rm $circosDir/$sample"_summary.circos.conf"
+		rm $circosDir/$sample"_individual.circos.conf"
+fi
+
+echo "DONE, files can be found at" $circosDir
