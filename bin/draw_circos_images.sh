@@ -17,7 +17,8 @@ VERSION=1.0
 #		11 July 2018: Apply good practices bash
 #						Include independent files
 #						Include several databases
-#
+#		13 July 2018: Include log file
+#						manage directories
 #DESCRIPTION:Script that creates and execute a cicos config file for plasmidID 
 #
 #
@@ -157,7 +158,7 @@ mkdir -p $circosDir
 echo "Creating config file for circos in SAMPLE $sample FILE $circosDir/$sample.circos.conf"
 
 awk '{gsub("PLASMID_KARYOTYPE","'$karyotype_file_individual'"); \
-gsub("PLASMID_SPECIFIC_PLASMIDFINDER","'$annotation_text_file'"); \
+gsub("PLASMID_SPECIFIC_TEXT","'$annotation_text_file'"); \
 gsub("PID_ALL_HIGHLIGHTS","'$annotation_highlights_file'"); \
 gsub("PLASMID_COVERAGE_GRAPH","'$coverage_file'"); \
 gsub("PLASMID_CDS_CONTIG","'$cds_contig_file'"); \
@@ -195,7 +196,7 @@ if [ -s $karyotype_file_summary ]; then
 	echo "Creating summary image for in sample" $sample
 
 	awk '{gsub("PLASMID_KARYOTYPE","'$karyotype_file_summary'"); \
-	gsub("PLASMID_SPECIFIC_PLASMIDFINDER","'$annotation_text_file'"); \
+	gsub("PLASMID_SPECIFIC_TEXT","'$annotation_text_file'"); \
 	gsub("PID_ALL_HIGHLIGHTS","'$annotation_highlights_file'"); \
 	gsub("PLASMID_COVERAGE_GRAPH","'$coverage_file'"); \
 	gsub("PLASMID_CDS_CONTIG","'$cds_contig_file'"); \

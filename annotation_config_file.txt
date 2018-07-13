@@ -10,6 +10,6 @@
 
 #DDBBFILE,NANE,P_IDENTITY,P_ALIGNMENT,Q_DIVISOR,Q_SIDE_LR,IS_UNIQUE,DOBLE_UNIQUE,COLOR,
 
-databases/ARGannot.pID.fasta,abr,98,90, ,r,y,-,lred
-databases/plasmidFinder_01_26_2018.fsa,inc,95,80,_,l,y,n,lyellow
-/processing_Data/bioinformatics/research/20160530_ANTIBIOTICS_PSMP_T/REFERENCES/PLASMIDS/IS_ncbi.fasta,annotation,95,85,_,l,n,n,lbrown
+databases/ARGannot.pID.fasta,abr,98,90, ,r,y,-,nucl,lred
+databases/plasmidFinder_01_26_2018.fsa,inc,95,80,_,l,y,n,nucl,lyellow
+#/processing_Data/bioinformatics/research/20160530_ANTIBIOTICS_PSMP_T/REFERENCES/PLASMIDS/IS_ncbi.fasta,annotation,95,85,_,l,n,n,nucl,lbrown

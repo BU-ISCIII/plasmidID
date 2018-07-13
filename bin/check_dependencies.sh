@@ -45,8 +45,8 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m'
 
-printf '\n%s\t%30s\n' "DEPENDENCY" "STATUS"
-printf '%s\t%30s\n'   "----------" "------"
+printf '\n%s\t%20s\n' "DEPENDENCY" "STATUS"
+printf '%s\t%20s\n'   "----------" "------"
 
 for command in "$@"; do
 	#dependency_version=$($command --version)

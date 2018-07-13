@@ -152,6 +152,7 @@ echo -e "\n#Executing" $0 "\n"
 check_mandatory_files.sh $input_file
 
 check_dependencies.sh prokka
+echo "PREFIX" $prefix
 
 if [ ! $prefix ]; then
 	echo "please provide a prefix"

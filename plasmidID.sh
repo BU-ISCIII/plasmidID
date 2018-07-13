@@ -263,7 +263,7 @@ shift $((OPTIND-1))
 #================================================================
 ##CHECK DEPENDENCIES, MANDATORY FIELDS, FOLDERS AND ARGUMENTS
 echo -e "CHECHKING DEPENDENCIES AND MANDATORY FILES"
-check_dependencies.sh blastn bowtie2-build bowtie2 cd-hit-est psi-cd-hit.pl bedtools prokka samtools circos
+check_dependencies.sh blastn bowtie2-build bowtie2 cd-hit-est bedtools prokka samtools circos
 
 check_mandatory_files.sh $r1_file $r2_file $database 
 
@@ -411,12 +411,21 @@ if [ $only_reconstruct = false ]; then
 #############################################################################
 
 	if [ $include_assembly = true ]; then
+		
 		if [ -f $output_dir/$group/$sample/assembly/scaffolds.fasta ]; then
 			echo "Found an assembled file for sample" $sample
 			echo "Omitting assembly"
+			contigs=$output_dir/$group/$sample/assembly/scaffolds.fasta
 		else
-			echo "####ASSEMBLY################################################################"
-			spades_assembly.sh -q $output_dir/$group/$sample/trimmed/ -c -T $threads &>> $log_file
+			if [ $no_trim = true ]; then
+				check_dependencies.sh spades.py
+				echo "####ASSEMBLY################################################################"
+				spades_assembly.sh -p $r1_file_mapping -P $r2_file_mapping -c -T $threads -o $output_dir/$group/$sample/assembly &>> $log_file
+			else
+				check_dependencies.sh spades.py
+				echo "####ASSEMBLY################################################################"
+				spades_assembly.sh -q $output_dir/$group/$sample/trimmed/ -c -T $threads &>> $log_file
+			fi
 			contigs=$output_dir/$group/$sample/assembly/scaffolds.fasta
 		fi
 	else
@@ -427,7 +436,7 @@ if [ $only_reconstruct = false ]; then
 
 ####MAPPING##################################################################
 #############################################################################
-	if [ -f $group/$sample/mapping/$sample.sorted.bam -a -f $group/$sample/mapping/$sample.sorted.bam.bai -o -f $group/$sample/mapping/$sample.sam ];then
+	if [ -f  $output_dir/$group/$sample/mapping/$sample.sorted.bam -a -f  $output_dir/$group/$sample/mapping/$sample.sorted.bam.bai -o -f  $output_dir/$group/$sample/mapping/$sample.sam ];then
 		echo "Found a mapping file for sample" $sample;
 		echo "Omitting mapping"
 	else
@@ -437,11 +446,12 @@ if [ $only_reconstruct = false ]; then
 	 	-g $group \
 	 	-s $sample \
 	 	-1 $r1_file_mapping \
-	 	-2 $r2_file_mapping &>> $log_file
+	 	-2 $r2_file_mapping \
+		-o $output_dir/$group/$sample/mapping &>> $log_file
 
  #group/sample/mapping/sample.sam
 
-	 	sam_to_bam.sh -i $group/$sample/mapping/$sample.sam
+	 	sam_to_bam.sh -i  $output_dir/$group/$sample/mapping/$sample.sam
 
  #group/sample/mapping/sample.bam
  #group/sample/mapping/sample.bam.bai
@@ -449,38 +459,38 @@ if [ $only_reconstruct = false ]; then
 
 ####COVERAGE FILTERING#######################################################
 #############################################################################
-	if [ -f $group/$sample/mapping/$sample".coverage" ];then \
+	if [ -f  $output_dir/$group/$sample/mapping/$sample".coverage" ];then \
 		echo "Found a coverage file for sample" $sample;
 		echo "Omitting coverage calculation"
 	else
 		echo "####COVERAGE FILTERING########################################################"
- 		get_coverage.sh -i $group/$sample/mapping/$sample".sorted.bam" -d $database
+ 		get_coverage.sh -i  $output_dir/$group/$sample/mapping/$sample".sorted.bam" -d $database
  	fi
  #group/sample/mapping/sample.coverage
 
 
-	temporary_coverage_files=$(ls $group/$sample/mapping/$sample".coverage_adapted_filtered_??" 2> /dev/null | wc -l)
+	temporary_coverage_files=$(ls  $output_dir/$group/$sample/mapping/$sample".coverage_adapted_filtered_??" 2> /dev/null | wc -l)
 
  	if [ $temporary_coverage_files -gt 1 ]; then
 
 		echo "Removing previous coverage filtered files"
-		for i in $(ls $group/$sample/mapping/$sample".coverage_adapted_filtered"*)
+		for i in $(ls  $output_dir/$group/$sample/mapping/$sample".coverage_adapted_filtered"*)
 		do
 			rm $i
 		done
 	fi
 
- 	adapt_filter_coverage.sh -i $group/$sample/mapping/$sample".coverage" -c $coverage_cutoff
+ 	adapt_filter_coverage.sh -i  $output_dir/$group/$sample/mapping/$sample".coverage" -c $coverage_cutoff
 
  #sample.coverage_adapted
  #sample.coverage_adapted_filtered_80
 
-	filter_fasta.sh -i $database -f $group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff
+	filter_fasta.sh -i $database -f  $output_dir/$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff
 
 #sample.coverage_adapted_filtered_50_term.fasta
 
 	
-	if [ ! -s $group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff ]; then \
+	if [ ! -s  $output_dir/$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff ]; then \
 		echo -e "${RED}ERROR${NC}"
 		echo "NO PLASMIDS MATCHED MAPPING REQUERIMENTS, PLEASE, TRY WITH LOWER COVERAGE CUTOFF"
 		echo "################################################################################"
@@ -489,17 +499,17 @@ if [ $only_reconstruct = false ]; then
 
 
 
-	if [ -f $group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff"_term.fasta_"$cluster_cutoff ];then \
+	if [ -f  $output_dir/$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff"_term.fasta_"$cluster_cutoff ];then \
 		echo "Found a clustered file for sample" $sample;
 		echo "Omitting clustering"
 	else
 
-		cdhit_cluster.sh -i $group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff"_term.fasta" -c $cluster_cutoff -M $max_memory -T $threads
+		cdhit_cluster.sh -i  $output_dir/$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff"_term.fasta" -c $cluster_cutoff -M $max_memory -T $threads
 	fi
 
 
 
-	process_cluster_output.sh -i $reconstruct_fasta -b $group/$sample/mapping/$sample".coverage_adapted" -c $coverage_cutoff
+	process_cluster_output.sh -i $reconstruct_fasta -b  $output_dir/$group/$sample/mapping/$sample".coverage_adapted" -c $coverage_cutoff
 #$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff"_term.fasta"_$cluster_cutoff >> FINAL CLUSTERED AND FILTERED FASTA FILE TO USE AS SCAFFOLD
 ########################################################################################################
 
@@ -523,7 +533,7 @@ echo -e "\n${YELLOW} STARTING CONTIG ALIGNMENT and ANNOTATON${NC}\n"
 echo -e "\n${CYAN}OBTAINING KARYOTYPE TRACKS${NC}\n \
 A file with the informatin of putative plasmid and its length will be generated.\n"
 
-build_karyotype.sh -i $group/$sample/mapping/$sample".coverage_adapted_clustered" -K $coverage_summary -k $coverage_cutoff -o $group/$sample/data &>> $log_file
+build_karyotype.sh -i  $output_dir/$group/$sample/mapping/$sample".coverage_adapted_clustered" -K $coverage_summary -k $coverage_cutoff -o  $output_dir/$group/$sample/data &>> $log_file
 
 #group/sample/data
 #sample.karyotype_individual.txt
@@ -532,26 +542,27 @@ build_karyotype.sh -i $group/$sample/mapping/$sample".coverage_adapted_clustered
 echo -e "\n${CYAN}OBTAINING COVERAGE TRACK${NC}\n \
 A bedgraph file containing mapping information for filtered plasmids will be generated.\n"
 
-if [ -f $group/$sample/data/$sample".bedgraph" ];then
+if [ -f  $output_dir/$group/$sample/data/$sample".bedgraph" ];then
 	echo "Found a coverage file for sample" $sample;
 	echo "Omitting coverage calculation"
 else
-	get_coverage.sh -i $group/$sample/mapping/$sample".sorted.bam" -p -o $group/$sample/data &>> $log_file
+	get_coverage.sh -i  $output_dir/$group/$sample/mapping/$sample".sorted.bam" -p -o  $output_dir/$group/$sample/data &>> $log_file
 fi
 #sample.bedgraph
 
-filter_fasta.sh -i $group/$sample/data/$sample".bedgraph" -f $group/$sample/mapping/$sample".coverage_adapted_clustered_ac" -G &>> $log_file
+filter_fasta.sh -i  $output_dir/$group/$sample/data/$sample".bedgraph" -f  $output_dir/$group/$sample/mapping/$sample".coverage_adapted_clustered_ac" -G &>> $log_file
 
 #sample.bedgraph_term
 
 echo -e "\n${CYAN}ANNOTATING CONTIGS${NC}\n \
 A file including all automatic annotations on contigs will be generated.\n"
 
-if [ -f $group/$sample/data/$sample".fna" -a -f $group/$sample/data/$sample".gff" ];then
+if [ -f  $output_dir/$group/$sample/data/$sample".fna" -a -f  $output_dir/$group/$sample/data/$sample".gff" ];then
 	echo "Found annotations files for sample" $sample;
 	echo "Omitting automatic annotation"
 else
-	prokka_annotation.sh -i $contigs -p $sample -o $group/$sample/data -c &>> $log_file
+	echo "prokka_annotation.sh -i $contigs -p $sample -T $threads -o  $output_dir/$group/$sample/data -c &>> $log_fil" >> $command_log
+	prokka_annotation.sh -i $contigs -p $sample -T $threads -o  $output_dir/$group/$sample/data -c &>> $log_file
 fi
 #sample.fna
 #sample.gff
@@ -565,39 +576,38 @@ if [ -f $output_dir/$group/$sample/logs/contig_alignment.log ]; then
 	rm $output_dir/$group/$sample/logs/contig_alignment.log
 fi
 
-blast_align.sh -i $group/$sample/data/$sample".fna" -d $reconstruct_fasta -o $group/$sample/data -p plasmids &>> $log_file
+blast_align.sh -i  $output_dir/$group/$sample/data/$sample".fna" -d $reconstruct_fasta -o  $output_dir/$group/$sample/data -p plasmids &>> $log_file
 
 #sample.plasmids.blast
 
 
-blast_to_bed.sh -i $group/$sample/data/$sample".plasmids.blast" -b $alignment_identity -l 0 -L 500 -d - -q _ -Q r -I &>> $log_file
+blast_to_bed.sh -i  $output_dir/$group/$sample/data/$sample".plasmids.blast" -b $alignment_identity -l 0 -L 500 -d - -q _ -Q r -I &>> $log_file
 
 #sample.plasmids.bed
 
-blast_to_complete.sh -i $group/$sample/data/$sample".plasmids.blast" -l $alignment_percentage &>> $log_file
+blast_to_complete.sh -i  $output_dir/$group/$sample/data/$sample".plasmids.blast" -l $alignment_percentage &>> $log_file
 
 #sample.plasmids.complete
 
-blast_to_link.sh -i $group/$sample/data/$sample".plasmids.blast" -I -l $alignment_percentage &>> $log_file
+blast_to_link.sh -i  $output_dir/$group/$sample/data/$sample".plasmids.blast" -I -l $alignment_percentage &>> $log_file
 
 #sample.plasmids.links
 #sample.plasmids.blast.links
 
-gff_to_bed.sh -i $group/$sample/data/$sample".gff" -u -L &>> $log_file
+gff_to_bed.sh -i  $output_dir/$group/$sample/data/$sample".gff" -u -L &>> $log_file
 
 #sample.gff.bed
 
-coordinate_adapter.sh -i $group/$sample/data/$sample".gff.bed" -l $group/$sample/data/$sample".plasmids.blast.links" -p -n 1500 &>> $log_file
+coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 1500 &>> $log_file
 
 #sample.gff.coordinates
 
 
-
-
-echo -e "\n${CYAN}ANNOTATING SPECIFIC DATABASES SUPPLIED${NC}\n \
-Each database supplied will be locally aligned against contigs and the coordinates will be adapted for image representation\n"
-
 if [ $annotation = true ]; then
+
+	echo -e "\n${CYAN}ANNOTATING SPECIFIC DATABASES SUPPLIED${NC}\n \
+	Each database supplied will be locally aligned against contigs and the coordinates will be adapted for image representation\n"
+
 
 	if [ -f $output_dir/$group/$sample/logs/speciffic_annotation.log ]; then
 		rm $output_dir/$group/$sample/logs/speciffic_annotation.log
@@ -662,19 +672,19 @@ if [ $annotation = true ]; then
 		#sample.annotation.coordinates
 
 
-		coordinates_file=$(echo $group/$sample/data/$sample"."$ddbb_name".coordinates")
+		coordinates_file=$(echo  $output_dir/$group/$sample/data/$sample"."$ddbb_name".coordinates")
 		z_value="10${database_number}"
 
 
-		printf '%s\n' "<highlight>" "file = ${coordinates_file}" "z= ${z_value}" "r1 = 0.90r" "r0 = 0.69r" "fill_color = ${color_highlight}" "</highlight>" >> $group/$sample/data/pID_highlights.conf
+		printf '%s\n' "<highlight>" "file = ${coordinates_file}" "z= ${z_value}" "r1 = 0.90r" "r0 = 0.69r" "fill_color = ${color_highlight}" "</highlight>" >>  $output_dir/$group/$sample/data/pID_highlights.conf
 		
 		cat $output_dir/$group/$sample/data/$sample"."$ddbb_name".coordinates" >> $output_dir/$group/$sample/data/pID_text_annotation.coordinates
 
 	done
 
 else
-	touch $output_dir/$group/$sample/images/pID_highlights.conf
-	touch $output_dir/$group/$sample/images/pID_text_annotation.coordinates
+	touch $output_dir/$group/$sample/data/pID_highlights.conf
+	touch $output_dir/$group/$sample/data/pID_text_annotation.coordinates
 	
 fi
 
@@ -692,7 +702,7 @@ else
 	echo "Executing prokka for plasmids from database"
 
 	echo "prokka_annotation.sh -i $reconstruct_fasta -p $sample -o $output_dir/$group/$sample/database -c" >> $command_log
-	prokka_annotation.sh -i $reconstruct_fasta -p $sample -o $output_dir/$group/$sample/database -c &>> $log_file
+	prokka_annotation.sh -i $reconstruct_fasta -p $sample -T $threads -o $output_dir/$group/$sample/database -c &>> $log_file
 
 	#database/sample.fna
 	#database/sample.gff

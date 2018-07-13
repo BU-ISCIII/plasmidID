@@ -185,7 +185,8 @@ echo -e "\n#Executing" $0 "\n"
 
 check_mandatory_files.sh $input_file
 
-check_dependencies.sh cd-hit-est psi-cd-hit.pl
+check_dependencies.sh cd-hit-est 
+ #psi-cd-hit.pl
 
 
 
