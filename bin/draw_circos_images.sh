@@ -33,7 +33,7 @@ usage() {
 
 draw_circos_image script that creates and execute a cicos config file for plasmidID
 
-usage : $0 <-i input_directory> <-d config_files_directory> <-s sample> <-g <group> <-o <output_directory> [-l <log_file>] [-c] [-v] [-h]
+usage : $0 <-i input_directory> <-d config_files_directory> <-s sample> <-g <group> <-o <output_directory> [-l <log_file>] [-V] [-c] [-v] [-h]
 
 	-i input directory containing files to represent
 	-d directory containing config files
@@ -43,6 +43,7 @@ usage : $0 <-i input_directory> <-d config_files_directory> <-s sample> <-g <gro
 	-o output directory to create config and pictures
 	-c clean: remove config files
 	-v version
+	-V vervose
 	-h display usage message
 
 EOF
@@ -62,11 +63,11 @@ fi
 
 cwd="$(pwd)"
 clean=false
-
+vervose=false
 
 #PARSE VARIABLE ARGUMENTS WITH getops
 #common example with letters, for long options check longopts2getopts.sh
-options=":i:m:o:g:l:s:d:cvh"
+options=":i:m:o:g:l:s:d:cVvh"
 while getopts $options opt; do
 	case $opt in
 		i )
@@ -93,6 +94,9 @@ while getopts $options opt; do
         h )
 		  	usage
 		  	exit 1
+		  	;;
+		V )
+		  	vervose=true
 		  	;;
 		v )
 		  	echo $VERSION
@@ -129,7 +133,7 @@ cdsDdbb_file=$input_dir/database/$sample".gff.bed"
 
 circos_conf_summary="$config_dir/circos_summary.conf"
 circos_conf_individual="$config_dir/circos_individual.conf"
-circosDir=$output_dir
+circosDir="$output_dir"
 
 plasmidMapped=$mappedDir/$sample".coverage_adapted_clustered_ac"
 
@@ -165,22 +169,25 @@ print $0}' $circos_conf_individual > $circosDir/$sample"_individual.circos.conf"
 
 echo "DONE Creating config file for circos in SAMPLE $sample"
 
-echo "Executing circos in SAMPLE $sample FILE $circosDir/$sample.circos.conf"
+echo "Executing circos in SAMPLE $sample"
 
-
+if [ -f $log_file ]; then
+	rm $log_file
+fi
 
 
 for i in $(cat $plasmidMapped)
-	do
-		echo "Creating image for plasmid" $i "in sample" $sample
-		awk '{gsub("SAMPLE_SHOWN","'$i'"); \
-		gsub("IMAGENAME_SAMPLE_PLASMID","'$sample'_'$i'.png"); \
-		print $0}' $circosDir/$sample"_individual.circos.conf" > $circosDir/$sample"_"$i"_individual.circos.conf"
-		circos -conf $circosDir/$sample"_"$i"_individual.circos.conf"
-
-		#echo "DONE"
-
-	done &> $log_file
+do
+	echo "Creating image for plasmid" $i "in sample" $sample
+	awk '{gsub("SAMPLE_SHOWN","'$i'"); \
+	gsub("IMAGENAME_SAMPLE_PLASMID","'$sample'_'$i'.png"); \
+	print $0}' $circosDir/$sample"_individual.circos.conf" > $circosDir/$sample"_"$i"_individual.circos.conf"
+	if [ $vervose = true ]; then
+		circos -conf $circosDir/$sample"_"$i"_individual.circos.conf" |& tee -a $log_file
+	else
+		circos -conf $circosDir/$sample"_"$i"_individual.circos.conf" &>> $log_file
+	fi
+done 
 
 
 if [ -s $karyotype_file_summary ]; then
@@ -199,8 +206,11 @@ if [ -s $karyotype_file_summary ]; then
 	gsub("IMAGENAME","'$imageName'"); \
 	print $0}' $circos_conf_summary > $circosDir/$sample"_summary.circos.conf"
 
-	circos -conf $circosDir/$sample"_summary.circos.conf" &> $log_file
-
+	if [ $vervose = true ]; then
+		circos -conf $circosDir/$sample"_summary.circos.conf" |& tee -a $log_file
+	else
+		circos -conf $circosDir/$sample"_summary.circos.conf" &>> $log_file
+	fi
 else
 
 	echo "No plasmid mathed requirements to draw the summary image"
@@ -215,7 +225,6 @@ if [ clean = true ];then
 		if [ -f $circosDir/$sample"_"$i"_individual.circos.conf" ]; then
 			rm $circosDir/$sample"_"$i"_individual.circos.conf"
 		fi
-		
 	done
 
 		rm $circosDir/$sample"_summary.circos.conf"

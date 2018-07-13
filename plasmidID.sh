@@ -105,6 +105,7 @@ do
 ##PIPELINE
 		--only-reconstruct)	set -- "$@" -R ;;
 		--no-trim)	set -- "$@" -t ;;
+		--trimmomatic_directory) set -- "$@" -X ;;
 		--explore)	set -- "$@" -E ;;
 		--alignment-identity)	set -- "$@" -i ;;
 
@@ -117,6 +118,7 @@ do
 		--memory)		set -- "$@"	-M ;;
 		--threads)		set -- "$@"	-T ;;
        	--help)    	set -- "$@" -h ;;
+		--vervose) 	set -- "$@" -V ;;
        	--version) 	set -- "$@" -v ;;
        # pass through anything else
        *)         set -- "$@" "$arg" ;;
@@ -141,6 +143,8 @@ only_reconstruct=false
 explore=false
 include_assembly=true
 annotation=false
+vervose_option_circos=""
+is_vervose=false
 
 #SET COLORS
 
@@ -154,7 +158,7 @@ NC='\033[0m'
 
 #PARSE VARIABLE ARGUMENTS WITH getops
 #common example with letters, for long options check longopts2getopts.sh
-options=":1:2:d:s:g:c:a:i:o:C:S:f:l:L:T:M:Rtvh"
+options=":1:2:d:s:g:c:a:i:o:C:S:f:l:L:T:M:X:RVtvh"
 while getopts $options opt; do
 	case $opt in
 		1 )
@@ -185,6 +189,9 @@ while getopts $options opt; do
 			;;
 		t)
 			no_trim=true
+			;;
+		X)
+			trimmomatic_directory=$OPTARG
 			;;
 		E)
 			explore=true
@@ -219,6 +226,11 @@ while getopts $options opt; do
 			;;
         o)
 			output_dir=$OPTARG
+			;;
+		V)
+			vervose_option_circos="-V"
+			is_vervose=true
+			log_file="/dev/stdout"
 			;;
         h )
 		  	usage
@@ -273,6 +285,14 @@ else
 fi
 
 mkdir -p $output_dir/$group/$sample/logs
+
+if [ $is_vervose = false ]; then
+	log_file=$output_dir/$group/$sample/logs/plasmidID.log
+	echo $log_file
+	echo "LOG FILE PLASMIDID" > $log_file
+	echo $(date) >> $log_file
+fi
+
 
 reconstruct_fasta=$output_dir/$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff"_term.fasta"_$cluster_cutoff
 
@@ -341,35 +361,43 @@ if [ $annotation = true ]; then
 fi
 
 
+command_log=$output_dir/$group/$sample/logs/00_commands.log
+
+if [ -f $command_log ];then
+	rm $command_log
+fi
+
 
 ####START PLASMIDID########################################################################################################################
 ###########################################################################################################################################
 
 if [ $only_reconstruct = false ]; then
 
-	reconstruct_fasta=$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff"_term.fasta"_$cluster_cutoff
+	reconstruct_fasta=$output_dir/$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff"_term.fasta"_$cluster_cutoff
 
 ####TRIMMING#################################################################
 #############################################################################
 	
 	if [ $no_trim = false ]; then
 
-		r1_file_mapping=$group/$sample/trimmed/$sample"_1_paired.fastq.gz"
-		r2_file_mapping=$group/$sample/trimmed/$sample"_2_paired.fastq.gz"
+		r1_file_mapping=$r1_file
+		r2_file_mapping=$r2_file
 
+		echo -e "\n${CYAN}TRIMMING READS{NC}\n"
+		echo "R1:" $r1_file
+		echo "R2:" $r2_file
 
-
-		filestrimmed=$(ls $group/$sample/trimmed 2> /dev/null | grep "paired" | wc -l)
+		filestrimmed=$(ls $output_dir/$group/$sample/trimmed 2> /dev/null | grep "paired" | wc -l)
 
 		if [ "$filestrimmed" = "4" ];then
 			echo "Found trimmed files for this sample" $sample;
 			echo "Omitting trimming"
 		else
 			echo "####TRIMMING################################################################"
-			quality_trim.sh -1 $r1_file -2 $r2_file -s $sample -g $group -T $threads
+			quality_trim.sh -1 $r1_file -2 $r2_file -s $sample -g $group -o $output_dir/$group/$sample/trimmed -d $trimmomatic_directory -T $threads
 		fi
 	else
-
+		echo "No trim selected, skipping trimming step"
 		r1_file_mapping=$r1_file
 		r2_file_mapping=$r2_file
 	fi
@@ -383,13 +411,13 @@ if [ $only_reconstruct = false ]; then
 #############################################################################
 
 	if [ $include_assembly = true ]; then
-		if [ -f $group/$sample/assembly/scaffolds.fasta ]; then
+		if [ -f $output_dir/$group/$sample/assembly/scaffolds.fasta ]; then
 			echo "Found an assembled file for sample" $sample
 			echo "Omitting assembly"
 		else
 			echo "####ASSEMBLY################################################################"
-			spades_assembly.sh -q $group/$sample/trimmed/ -c -T $threads &> $output_dir/$group/$sample/logs/assembly_$sample.log
-			contigs=$group/$sample/assembly/scaffolds.fasta
+			spades_assembly.sh -q $output_dir/$group/$sample/trimmed/ -c -T $threads &>> $log_file
+			contigs=$output_dir/$group/$sample/assembly/scaffolds.fasta
 		fi
 	else
 		echo "Contigs supplied, ommiting assembly step"
@@ -409,7 +437,7 @@ if [ $only_reconstruct = false ]; then
 	 	-g $group \
 	 	-s $sample \
 	 	-1 $r1_file_mapping \
-	 	-2 $r2_file_mapping &> $output_dir/$group/$sample/logs/mapping_$sample.log
+	 	-2 $r2_file_mapping &>> $log_file
 
  #group/sample/mapping/sample.sam
 
@@ -478,8 +506,6 @@ if [ $only_reconstruct = false ]; then
 #sample.coverage_adapted_filtered_50_term.fasta_80
 #sample.coverage_adapted_filtered_50_term.fasta_80.clstr
 
-	
-
 fi
 
 
@@ -492,37 +518,40 @@ fi
 ######################## DONE WITH MAPPING AND CLUSTERING #####################################################################################
 ###############################################################################################################################################
 
-echo "####CONTIG and ANNOTATON########################################################"
+echo -e "\n${YELLOW} STARTING CONTIG ALIGNMENT and ANNOTATON${NC}\n"
 
-build_karyotype.sh -i $group/$sample/mapping/$sample".coverage_adapted_clustered" -K $coverage_summary -k $coverage_cutoff -o $group/$sample/data
+echo -e "\n${CYAN}OBTAINING KARYOTYPE TRACKS${NC}\n \
+A file with the informatin of putative plasmid and its length will be generated.\n"
+
+build_karyotype.sh -i $group/$sample/mapping/$sample".coverage_adapted_clustered" -K $coverage_summary -k $coverage_cutoff -o $group/$sample/data &>> $log_file
 
 #group/sample/data
 #sample.karyotype_individual.txt
 #sample.karyotype_individual.txt
 
 echo -e "\n${CYAN}OBTAINING COVERAGE TRACK${NC}\n \
-A bedgraph file containing mapping information for filtered plasmids will be generated."
+A bedgraph file containing mapping information for filtered plasmids will be generated.\n"
 
 if [ -f $group/$sample/data/$sample".bedgraph" ];then
 	echo "Found a coverage file for sample" $sample;
 	echo "Omitting coverage calculation"
 else
-	get_coverage.sh -i $group/$sample/mapping/$sample".sorted.bam" -p -o $group/$sample/data &> $output_dir/$group/$sample/logs/coverage_bedgraph.log
+	get_coverage.sh -i $group/$sample/mapping/$sample".sorted.bam" -p -o $group/$sample/data &>> $log_file
 fi
 #sample.bedgraph
 
-filter_fasta.sh -i $group/$sample/data/$sample".bedgraph" -f $group/$sample/mapping/$sample".coverage_adapted_clustered_ac" -G &>> $output_dir/$group/$sample/logs/coverage_bedgraph.log
+filter_fasta.sh -i $group/$sample/data/$sample".bedgraph" -f $group/$sample/mapping/$sample".coverage_adapted_clustered_ac" -G &>> $log_file
 
 #sample.bedgraph_term
 
 echo -e "\n${CYAN}ANNOTATING CONTIGS${NC}\n \
-A file including all automatic annotations on contigs will be generated."
+A file including all automatic annotations on contigs will be generated.\n"
 
 if [ -f $group/$sample/data/$sample".fna" -a -f $group/$sample/data/$sample".gff" ];then
 	echo "Found annotations files for sample" $sample;
 	echo "Omitting automatic annotation"
 else
-	prokka_annotation.sh -i $contigs -p $sample -o $group/$sample/data -c &> $output_dir/$group/$sample/logs/annotation_contigs.log
+	prokka_annotation.sh -i $contigs -p $sample -o $group/$sample/data -c &>> $log_file
 fi
 #sample.fna
 #sample.gff
@@ -530,44 +559,49 @@ fi
 
 echo -e "\n${CYAN}ALIGNING CONTIGS TO FILTERED PLASMIDS${NC}\n \
 Contigs are aligned to filtered plasmids and those are selected by alignment identity and alignment percentage \
-in order to create links, full length and annotation tracks"
+in order to create links, full length and annotation tracks\n"
 
 if [ -f $output_dir/$group/$sample/logs/contig_alignment.log ]; then
 	rm $output_dir/$group/$sample/logs/contig_alignment.log
 fi
 
-blast_align.sh -i $group/$sample/data/$sample".fna" -d $reconstruct_fasta -o $group/$sample/data -p plasmids &> $output_dir/$group/$sample/logs/contig_alignment.log
+blast_align.sh -i $group/$sample/data/$sample".fna" -d $reconstruct_fasta -o $group/$sample/data -p plasmids &>> $log_file
 
 #sample.plasmids.blast
 
 
-blast_to_bed.sh -i $group/$sample/data/$sample".plasmids.blast" -b $alignment_identity -l 0 -L 500 -d - -q _ -Q r -I &>> $output_dir/$group/$sample/logs/contig_alignment.log
+blast_to_bed.sh -i $group/$sample/data/$sample".plasmids.blast" -b $alignment_identity -l 0 -L 500 -d - -q _ -Q r -I &>> $log_file
 
 #sample.plasmids.bed
 
-blast_to_complete.sh -i $group/$sample/data/$sample".plasmids.blast" -l $alignment_percentage &>> $output_dir/$group/$sample/logs/contig_alignment.log
+blast_to_complete.sh -i $group/$sample/data/$sample".plasmids.blast" -l $alignment_percentage &>> $log_file
 
 #sample.plasmids.complete
 
-blast_to_link.sh -i $group/$sample/data/$sample".plasmids.blast" -I -l $alignment_percentage &>> $output_dir/$group/$sample/logs/contig_alignment.log
+blast_to_link.sh -i $group/$sample/data/$sample".plasmids.blast" -I -l $alignment_percentage &>> $log_file
 
 #sample.plasmids.links
 #sample.plasmids.blast.links
 
-gff_to_bed.sh -i $group/$sample/data/$sample".gff" -u -L &>> $output_dir/$group/$sample/logs/contig_alignment.log
+gff_to_bed.sh -i $group/$sample/data/$sample".gff" -u -L &>> $log_file
 
 #sample.gff.bed
 
-coordinate_adapter.sh -i $group/$sample/data/$sample".gff.bed" -l $group/$sample/data/$sample".plasmids.blast.links" -p -n 1500 &>> $output_dir/$group/$sample/logs/contig_alignment.log
+coordinate_adapter.sh -i $group/$sample/data/$sample".gff.bed" -l $group/$sample/data/$sample".plasmids.blast.links" -p -n 1500 &>> $log_file
 
 #sample.gff.coordinates
 
 
+
+
 echo -e "\n${CYAN}ANNOTATING SPECIFIC DATABASES SUPPLIED${NC}\n \
-Each database supplied will be locally aligned against contigs and the coordinates will be adapted for image representation"
+Each database supplied will be locally aligned against contigs and the coordinates will be adapted for image representation\n"
 
 if [ $annotation = true ]; then
 
+	if [ -f $output_dir/$group/$sample/logs/speciffic_annotation.log ]; then
+		rm $output_dir/$group/$sample/logs/speciffic_annotation.log
+	fi
 
 	number_of_annotation=$(cat $annotation_config_file | awk '!/^#/ &&  NF > 0' | wc -l)
 	lines_to_annotate=$(cat $annotation_config_file | awk '!/^#/ &&  NF > 0 {print NR}')
@@ -615,17 +649,16 @@ if [ $annotation = true ]; then
 			double_unique_command="-U ${double_unique}"
 		fi
 
-		if [ -f $output_dir/$group/$sample/logs/speciffic_annotation.log ]; then
-			rm $output_dir/$group/$sample/logs/speciffic_annotation.log
-		fi
-
-		blast_align.sh -i $ddbb_file -d $output_dir/$group/$sample/data/$sample".fna" -o $output_dir/$group/$sample/data -p $ddbb_name -f $sample -t $database_type &>> $output_dir/$group/$sample/logs/speciffic_annotation.log
+		#echo "blast_align.sh -i $ddbb_file -d $output_dir/$group/$sample/data/$sample".fna" -o $output_dir/$group/$sample/data -p $ddbb_name -f $sample -t $database_type &>> $log_file >> $command_log
+		blast_align.sh -i $ddbb_file -d $output_dir/$group/$sample/data/$sample".fna" -o $output_dir/$group/$sample/data -p $ddbb_name -f $sample -t $database_type &>> $log_file
 		#sample.annotation.blast
 
-		blast_to_bed.sh -i $output_dir/$group/$sample/data/$sample"."$ddbb_name".blast" -b $percent_identity -l $percent_aligment -d _ -D r -q "$query_divisor" -Q $query_side $double_unique_command &>> $output_dir/$group/$sample/logs/speciffic_annotation.log
+		#echo "		blast_to_bed.sh -i $output_dir/$group/$sample/data/$sample"."$ddbb_name".blast" -b $percent_identity -l $percent_aligment -d _ -D r -q "$query_divisor" -Q $query_side $double_unique_command &>> $log_file"
+		blast_to_bed.sh -i $output_dir/$group/$sample/data/$sample"."$ddbb_name".blast" -b $percent_identity -l $percent_aligment -d _ -D r -q "$query_divisor" -Q $query_side $double_unique_command &>> $log_file
 		#sample.annotation.bed
 
-		coordinate_adapter.sh -i $output_dir/$group/$sample/data/$sample"."$ddbb_name".bed" -l $output_dir/$group/$sample/data/$sample".plasmids.blast.links" $is_unique_command &>> $output_dir/$group/$sample/logs/speciffic_annotation.log
+		#echo "coordinate_adapter.sh -i $output_dir/$group/$sample/data/$sample"."$ddbb_name".bed" -l $output_dir/$group/$sample/data/$sample".plasmids.blast.links" $is_unique_command &>> $log_file"
+		coordinate_adapter.sh -i $output_dir/$group/$sample/data/$sample"."$ddbb_name".bed" -l $output_dir/$group/$sample/data/$sample".plasmids.blast.links" $is_unique_command &>> $log_file
 		#sample.annotation.coordinates
 
 
@@ -647,9 +680,9 @@ fi
 
 
 
-echo -e "\n${CYAN}ANNOTATING PLASMIDS USED AS SCAFFOLD${NC}\n \
-A file including all automatic annotations on plasmids that matched requeriments will be generated."
 
+echo -e "\n${CYAN}ANNOTATING PLASMIDS USED AS SCAFFOLD${NC}\n \
+A file including all automatic annotations on plasmids that matched requeriments will be generated.\n"
 
 #Annotate plasmids selected as database
 if [ -f $output_dir/$group/$sample/database/$sample".fna" -a -f $output_dir/$group/$sample/database/$sample".gff" ];then
@@ -657,29 +690,42 @@ if [ -f $output_dir/$group/$sample/database/$sample".fna" -a -f $output_dir/$gro
 	echo "Omitting automatic annotation"
 else
 	echo "Executing prokka for plasmids from database"
-	prokka_annotation.sh -i $reconstruct_fasta -p $sample -o $output_dir/$group/$sample/database -c &> $output_dir/$group/$sample/logs/annotate_scaffols.log
+
+	echo "prokka_annotation.sh -i $reconstruct_fasta -p $sample -o $output_dir/$group/$sample/database -c" >> $command_log
+	prokka_annotation.sh -i $reconstruct_fasta -p $sample -o $output_dir/$group/$sample/database -c &>> $log_file
 
 	#database/sample.fna
 	#database/sample.gff
+	echo "rename_from_fasta.sh -i $output_dir/$group/$sample/database/$sample.gff -1 $reconstruct_fasta -2 $output_dir/$group/$sample/database/$sample.fna" >> $command_log
 
-	rename_from_fasta.sh -i $output_dir/$group/$sample/database/$sample".gff" -1 $reconstruct_fasta -2 $output_dir/$group/$sample/database/$sample".fna" &>> $output_dir/$group/$sample/logs/annotate_scaffols.log
+	rename_from_fasta.sh -i $output_dir/$group/$sample/database/$sample".gff" -1 $reconstruct_fasta -2 $output_dir/$group/$sample/database/$sample".fna" &>> $log_file
 
 	#sample.gff.renamed
 
-	gff_to_bed.sh -i $output_dir/$group/$sample/database/$sample".gff.renamed" -q " " -u -L &>> $output_dir/$group/$sample/logs/annotate_scaffols.log
+	echo "gff_to_bed.sh -i $output_dir/$group/$sample/database/$sample.gff.renamed -q " " -u -L" >> $command_log
+
+	gff_to_bed.sh -i $output_dir/$group/$sample/database/$sample".gff.renamed" -q " " -u -L &>> $log_file
 
 	#database/sample.gff.bed
 fi
 
+
+
+
 echo -e "\n${CYAN}DRAWING CIRCOS IMAGES${NC}\n \
 An image per putative plasmid will be drawn having into account all data supplied.\n \
-Additionally a summary image will be created to determine redundancy within remaining plasmids"
+Additionally a summary image will be created to determine redundancy within remaining plasmids\n"
 
+echo "draw_circos_images.sh -i $output_dir/$group/$sample \
+-d config_files \
+-o $output_dir/$group/$sample/images \
+-g $group -s $sample -l $output_dir/$group/$sample/logs/draw_circos_images.log -c $vervose_option_circos" >> $command_log 
 
 draw_circos_images.sh -i $output_dir/$group/$sample \
--d config_files
--o $output_dir/$group/$sample/images
--g $group -s $sample -l $output_dir/$group/$sample/logs/draw_circos_images.log -c
+-d config_files \
+-o $output_dir/$group/$sample/images \
+-g $group -s $sample -l $output_dir/$group/$sample/logs/draw_circos_images.log -c $vervose_option_circos
 
-echo -e "${WHITE}ALL DONE WITH plasmidID${NC}\n \
-Thank you for using plasmidID"
+
+echo -e "\n${YELLOW}ALL DONE WITH plasmidID${NC}\n \
+Thank you for using plasmidID\n"
