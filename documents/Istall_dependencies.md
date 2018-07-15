@@ -1,3 +1,8 @@
+# Trimmomatic
+- wget http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-0.38.zip
+- unzip Trimmomatic-0.38.zip
+- copy to /opt/Trimmomatic or use trimmomatic-dir PATH/TO/Trimmomatic-0.38
+
 # SPAdes
 
 - wget http://cab.spbu.ru/files/release3.12.0/SPAdes-3.12.0-Linux.tar.gz

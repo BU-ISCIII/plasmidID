@@ -126,7 +126,6 @@ shift $((OPTIND-1))
 #================================================================
 
 imageDir=$input_dir"/data"
-mappedDir=$input_dir"/mapping"
 
 echo -e "\n#Executing" $0 "\n"
 
@@ -136,7 +135,7 @@ circos_conf_summary="$config_dir/circos_summary.conf"
 circos_conf_individual="$config_dir/circos_individual.conf"
 circosDir="$output_dir"
 
-plasmidMapped=$mappedDir/$sample".coverage_adapted_clustered_ac"
+plasmidMapped=$imageDir/$sample".coverage_adapted_clustered_ac"
 
 karyotype_file_individual=$imageDir/$sample".karyotype_individual.txt"
 karyotype_file_summary=$imageDir/$sample".karyotype_summary.txt"

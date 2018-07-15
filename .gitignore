@@ -1,5 +1,8 @@
 ## Custom
 TEST/
+TEST_DATA/*.bt2
+TEST_DATA/*.length
+TEST_DATA/*.blast*
 psi_cd_hit_may_2018_log.txt
 plasmid.database*
 
