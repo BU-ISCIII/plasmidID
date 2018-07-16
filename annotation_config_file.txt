@@ -10,6 +10,10 @@
 
 #DDBBFILE,NANE,P_IDENTITY,P_ALIGNMENT,Q_DIVISOR,Q_SIDE_LR,IS_UNIQUE,DOBLE_UNIQUE,COLOR,
 
+#DEFAULTEXAMPLE: Copy and paste next line, change the file name, name of database and color
+#PATH/TO/FILE,NAME,95,90,_,l,n,n,nucl,COLOR
+
+#ANTIBIOTIC_RESISTANCE_ANNOTATION
 databases/ARGannot.pID.fasta,abr,98,90, ,r,y,-,nucl,lred
+#REPLISOME_ANNOTATION
 databases/plasmidFinder_01_26_2018.fsa,inc,95,80,_,l,y,n,nucl,lyellow
-#/processing_Data/bioinformatics/research/20160530_ANTIBIOTICS_PSMP_T/REFERENCES/PLASMIDS/IS_ncbi.fasta,annotation,95,85,_,l,n,n,nucl,lbrown

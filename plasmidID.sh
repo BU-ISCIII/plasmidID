@@ -44,7 +44,7 @@ usage : $0 <-1 R1> <-2 R2> <-d database(fasta)> <-s sample_name> [-g group_name]
 
 	Optional input data:
 	-g | --group	<string>	group name (optional). If unset, samples will be gathered in NO_GROUP group
-	-c | --contig	<filename>	file with contigs. If supplied, plasmidID will not assembly reads
+	-c | --contigs	<filename>	file with contigs. If supplied, plasmidID will not assembly reads
 	-a | --annotate <filename>	file with configuration file for specific annotation
 	-o 		<output_dir>	output directory, by default is the current directory
 
@@ -110,7 +110,7 @@ do
 		--sample)	set -- "$@"	-s ;;
 ##OPTIONAL
 		--group)	set -- "$@"	-g ;;
-		--contig)	set -- "$@"	-c ;;
+		--contigs)	set -- "$@"	-c ;;
 		--annotate)	set -- "$@"	-a ;;
 ##PIPELINE
 		--only-reconstruct)	set -- "$@" -R ;;
@@ -157,6 +157,7 @@ annotation=false
 vervose_option_circos=""
 is_vervose=false
 config_dir="config_files"
+trimmomatic_directory=/opt/Trimmomatic/
 #SET COLORS
 
 YELLOW='\033[0;33m'
@@ -408,7 +409,7 @@ if [ $no_trim = false ]; then
 	r1_file_mapping=$r1_file
 	r2_file_mapping=$r2_file
 
-	echo -e "\n${CYAN}TRIMMING READS${NC}\n \
+	echo -e "\n${CYAN}TRIMMING READS${NC} $(date)\n \
 Reads will be quality trimmed with a window of 4 and an average quality of 20"
 	#echo "R1:" $r1_file
 	#echo "R2:" $r2_file
@@ -446,14 +447,14 @@ if [ $include_assembly = true ]; then
 	else
 		if [ $no_trim = true ]; then
 			
-			echo -e "\n${CYAN}ASSEMBLY READS${NC}\n \
+			echo -e "\n${CYAN}ASSEMBLY READS${NC} ($(date))\n \
 Reads will be assembled using SPAdes with k-mers: 21,33,55,77,99,127. This might take a while. \n \
 I suggest compare other assembly methods and input the contigs with -c|--contig option\n"
 			check_dependencies.sh spades.py
 			spades_assembly.sh -p $r1_file_mapping -P $r2_file_mapping -c -T $threads -o $output_dir/$group/$sample/assembly &>> $log_file
 		else
 			
-			echo -e "\n${CYAN}ASSEMBLY READS${NC}\n \
+			echo -e "\n${CYAN}ASSEMBLY READS${NC} ($(date))\n \
 Reads will be assembled using SPAdes with k-mers: 21,33,55,77,99,127. This might take a while. \n \
 I suggest compare other assembly methods and input the contigs with -c|--contigs option.\n"
 			check_dependencies.sh spades.py
@@ -527,7 +528,7 @@ done
 
 	####MAPPING##################################################################
 	#############################################################################
-	echo -e "\n${CYAN}MAPPING READS${NC}\n \
+	echo -e "\n${CYAN}MAPPING READS${NC} ($(date))\n \
 Reads will be mapped against database supplied for further coverage calculation,\n \
 this will determine the most likely plasmids in the sample" $sample
 
@@ -553,7 +554,7 @@ this will determine the most likely plasmids in the sample" $sample
 
 	####COVERAGE FILTERING#######################################################
 	#############################################################################
-	echo -e "\n${CYAN}FILTERING DATABASE BY COVERAGE${NC}\n \
+	echo -e "\n${CYAN}FILTERING DATABASE BY COVERAGE${NC} ($(date))\n \
 Coverage will be calculated and the entries covered more than" $coverage_cutoff"%\n \
 will pass to further analysis"
 
@@ -594,7 +595,7 @@ will pass to further analysis"
 		exit 1
 	fi
 
-	echo -e "\n${CYAN}CLUSTERING PUTATIVE PLASMIDS${NC}\n \
+	echo -e "\n${CYAN}CLUSTERING PUTATIVE PLASMIDS${NC} ($(date))\n \
 Clustering by homology removes database redundancy, taking the longest representative of each group.\n \
 Clusters will be composed by plasmids with an identity of" $cluster_cutoff"% or higher" 
 
@@ -628,7 +629,7 @@ Clusters will be composed by plasmids with an identity of" $cluster_cutoff"% or 
 
 	echo -e "\n${YELLOW} STARTING CONTIG ALIGNMENT and ANNOTATON${NC}\n"
 
-	echo -e "\n${CYAN}OBTAINING KARYOTYPE TRACKS${NC}\n \
+	echo -e "\n${CYAN}OBTAINING KARYOTYPE TRACKS${NC} ($(date))\n \
 A file with the informatin of putative plasmid and its length will be generated.\n"
 
 	build_karyotype.sh -i  $output_dir/$group/$sample/mapping/$sample".coverage_adapted_clustered" -K $coverage_summary -k $coverage_cutoff -o  $output_dir/$group/$sample/data &>> $log_file
@@ -637,7 +638,7 @@ A file with the informatin of putative plasmid and its length will be generated.
 	#sample.karyotype_individual.txt
 	#sample.karyotype_individual.txt
 
-	echo -e "\n${CYAN}OBTAINING COVERAGE TRACK${NC}\n \
+	echo -e "\n${CYAN}OBTAINING COVERAGE TRACK${NC} ($(date))\n \
 A bedgraph file containing mapping information for filtered plasmids will be generated.\n"
 
 	if [ -f  $output_dir/$group/$sample/data/$sample".bedgraph" ];then
@@ -657,7 +658,7 @@ else
 #####################################################################################################################################################
 
 	
-	echo -e "\n${BLUE}ONLY RECONSTRUCT MODE SELECTED${NC}\n \
+	echo -e "\n${BLUE}ONLY RECONSTRUCT MODE SELECTED${NC} ($(date))\n \
 ${YELLOW}WARNING${NC}:PlasmidID will not filter the database supplied by coverage,\n \
 instead all sequences supplied by user will be used as scaffold.\n \
 Please use a fasta file with limited ammount of sequences."
@@ -690,7 +691,7 @@ Please use a fasta file with limited ammount of sequences."
 fi
 
 
-echo -e "\n${CYAN}ANNOTATING CONTIGS${NC}\n \
+echo -e "\n${CYAN}ANNOTATING CONTIGS${NC} ($(date))\n \
 A file including all automatic annotations on contigs will be generated.\n"
 
 if [ -f  $output_dir/$group/$sample/data/$sample".fna" -a -f  $output_dir/$group/$sample/data/$sample".gff" ];then
@@ -704,7 +705,7 @@ fi
 #sample.gff
 
 
-echo -e "\n${CYAN}ALIGNING CONTIGS TO FILTERED PLASMIDS${NC}\n \
+echo -e "\n${CYAN}ALIGNING CONTIGS TO FILTERED PLASMIDS${NC} ($(date))\n \
 Contigs are aligned to filtered plasmids and those are selected by alignment identity and alignment percentage \
 in order to create links, full length and annotation tracks\n"
 
@@ -741,7 +742,7 @@ coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.bed" -l  
 
 if [ $annotation = true ]; then
 
-	echo -e "\n${CYAN}ANNOTATING SPECIFIC DATABASES SUPPLIED${NC}\n \
+	echo -e "\n${CYAN}ANNOTATING SPECIFIC DATABASES SUPPLIED${NC} ($(date))\n \
 Each database supplied will be locally aligned against contigs and the coordinates will be adapted for image representation\n"
 
 
@@ -834,7 +835,7 @@ fi
 
 
 
-echo -e "\n${CYAN}ANNOTATING PLASMIDS USED AS SCAFFOLD${NC}\n \
+echo -e "\n${CYAN}ANNOTATING PLASMIDS USED AS SCAFFOLD${NC} ($(date))\n \
 A file including all automatic annotations on plasmids that matched requeriments will be generated.\n"
 
 #Annotate plasmids selected as database
@@ -864,7 +865,7 @@ fi
 
 
 
-echo -e "\n${CYAN}DRAWING CIRCOS IMAGES${NC}\n \
+echo -e "\n${CYAN}DRAWING CIRCOS IMAGES${NC} ($(date))\n \
 An image per putative plasmid will be drawn having into account all data supplied.\n \
 Additionally a summary image will be created to determine redundancy within remaining plasmids\n"
 
