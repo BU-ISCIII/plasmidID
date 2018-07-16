@@ -155,7 +155,7 @@ echo -e "\n#Executing" $0 "\n"
 
 check_mandatory_files.sh $input_file $database
 
-check_dependencies.sh blastn 
+#check_dependencies.sh blastn 
 
 
 if [ ! $prefix ]; then

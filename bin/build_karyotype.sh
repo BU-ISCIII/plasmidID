@@ -34,6 +34,7 @@ usage : $0 <-i inputfile(coverage)> [-o <directory>] [-f <file_name>] [-g <group
 	-o output directory (optional). By default the file is replaced in the same location
 	-f file name for identification
 	-g group name for identification
+	-R Reconstruct
 	-K percentage value to display plasmids covered >= in summary image
 	-k percentage value to display plasmids covered >= in individual image
 	-v version
@@ -58,10 +59,11 @@ fi
 cwd="$(pwd)"
 input_file="Input_file"
 coverage_cutoff_input=100
+reconstruct=false
 
 #PARSE VARIABLE ARGUMENTS WITH getops
 #common example with letters, for long options check longopts2getopts.sh
-options=":i:o:f:g:K:k:vh"
+options=":i:o:f:g:K:k:Rvh"
 while getopts $options opt; do
 	case $opt in
 		i )
@@ -73,6 +75,8 @@ while getopts $options opt; do
 		f ) file_name=$OPTARG
 			;;
 		g ) group_name=$OPTARG
+			;;
+		R ) reconstruct=true 
 			;;
 		K )
 			if [ $OPTARG -lt 0 ] || [ $OPTARG -gt 100 ]; then
@@ -150,24 +154,32 @@ echo "FILE NAME" $file_name
 echo "$(date)"
 echo "Obtain list of cromosomes (idiogram) for CIRCOS karyotype file"
 echo "Generating summary karyotype file with plasmids that mapped more than" $coverage_cutoff_summary_percentage"%"
+if [ $reconstruct = true ];then
 
-awk '
-	{if ($2 == 0 && $5 < '"${coverage_cutoff_summary}"')
-		{print "chr -", $1, $1, "0", $4, "id="$1}
-	}
-	' $input_file \
-	> $output_dir/$file_name".karyotype_summary.txt"
+	awk '{print "chr -", $1, $1, "0", $2, "id="$1}' $input_file \
+	>$output_dir/$file_name".karyotype_summary.txt"
+
+	awk '{print "chr -", $1, $1, "0", $2, "id="$1}' $input_file \
+	>$output_dir/$file_name".karyotype_individual.txt"
+
+else
+	awk '
+		{if ($2 == 0 && $5 < '"${coverage_cutoff_summary}"')
+			{print "chr -", $1, $1, "0", $4, "id="$1}
+		}
+		' $input_file \
+		> $output_dir/$file_name".karyotype_summary.txt"
 
 
-echo "Generating individual karyotype file with plasmids that mapped more than" $coverage_cutoff_individual_percentage"%"
+	echo "Generating individual karyotype file with plasmids that mapped more than" $coverage_cutoff_individual_percentage"%"
 
-awk '
-	{if ($2 == 0 && $5 < '"${coverage_cutoff_individual}"')
-		{print "chr -", $1, $1, "0", $4, "id="$1}
-	}
-	' $input_file \
-	> $output_dir/$file_name".karyotype_individual.txt"
-
+	awk '
+		{if ($2 == 0 && $5 < '"${coverage_cutoff_individual}"')
+			{print "chr -", $1, $1, "0", $4, "id="$1}
+		}
+		' $input_file \
+		> $output_dir/$file_name".karyotype_individual.txt"
+fi
 
 echo "$(date)"
 echo "Done Obtain list of cromosomes (idiogram) for CIRCOS karyotype file"
