@@ -5,8 +5,14 @@ All notable changes to this project will be documented in this file.
 ### New
 - Summary table can be generated with new utility
 - Several databases can be now annotated filling annotation_config_file.txt
+- --only-reconstruct is now implemented if user only needs to reconstruct and annotate contigs with small known databases
 ### Fixed
 - circos dependency is now checked
+- Output is now correctly redirected with -o
+### Added
+- trimmomatic directory containing .jar can no be especified with --trimmomatic-directory
+- Vervose mode included. By default a log file will be created
+- Friendly terminal output
 
 ## 1.2.2 - 2018-06-22
 ### Fixed
