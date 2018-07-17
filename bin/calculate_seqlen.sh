@@ -70,7 +70,7 @@ while getopts $options opt; do
 			output_dir=$OPTARG
 			;;
 		n )
-			file_name=$OPTARG
+			filename=$OPTARG
 			;;
 		r )
 			remove_head="^>"

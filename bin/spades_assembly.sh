@@ -33,7 +33,7 @@ usage : $0 <-p R1_paired file> <-P R2_paired file> [-u <R1_unpaired>] [-U <R2_un
 	-P R2_paired file (mandatory)
 	-u R1_unpaired file
 	-U R2_unpaired file
-	-k kmers, supplied as numbers sepparated by number or one flag per number, default: 61, 81, 101, 121
+	-k kmers, supplied as numbers sepparated by number or one flag per number, default: 21,33,55,77,99,127
 	-o output directory (optional)
 	-f file name
 	-s sample name (mandatory)
@@ -68,7 +68,7 @@ r2_paired_file="R2_paired_file"
 r1_unpaired_command=""
 r2_unpaired_command=""
 threads=1
-kmer_values_command="61,81,101,121"
+kmer_values_command="21,33,55,77,99,127"
 kmer_option=false
 quick_mode=false
 clean_mode=false

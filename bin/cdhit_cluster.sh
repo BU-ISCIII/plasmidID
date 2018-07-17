@@ -185,7 +185,8 @@ echo -e "\n#Executing" $0 "\n"
 
 check_mandatory_files.sh $input_file
 
-check_dependencies.sh cd-hit-est psi-cd-hit.pl
+check_dependencies.sh cd-hit-est 
+ #psi-cd-hit.pl
 
 
 
@@ -240,7 +241,9 @@ if [ -f $output_dir/$file_name""_""$cluster_cutoff_input ]; then \
 	echo "Omitting clustering process calculation"
 	exit 1
 else
-	if [ $cd_hit_command  == "psi-cd-hit.pl" ]; then 
+	if [ $cd_hit_command  == "psi-cd-hit.pl" ]; then
+		
+		check_dependencies.sh psi-cd-hit.pl 
 		$cd_hit_command -i $(basename $input_file) -o $file_name""_""$cluster_cutoff_input -c $cluster_cutoff -G $global_psi_cd_hit -g 1 -prog $psi_cd_hit_program -circle $is_circle
 	
 	else

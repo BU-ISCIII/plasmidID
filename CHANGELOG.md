@@ -1,6 +1,19 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 1.3.0 - 2018-07-11
+### New
+- Summary table can be generated with new utility
+- Several databases can be now annotated filling annotation_config_file.txt
+- --only-reconstruct is now implemented if user only needs to reconstruct and annotate contigs with small known databases
+### Fixed
+- circos dependency is now checked
+- Output is now correctly redirected with -o
+### Added
+- trimmomatic directory containing .jar can no be especified with --trimmomatic-directory
+- Vervose mode included. By default a log file will be created
+- Friendly terminal output
+
 ## 1.2.2 - 2018-06-22
 ### Fixed
 - ***IMPORTANT***: PlasmidID maps with -a mode NOW, as it should have allways been. A bug on mapping script is now solved
@@ -32,7 +45,5 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
-- Script to create a summary file with useful mapping/presence/decription stats for groups and sample info
 - Create config files as required by user and include visual parameters
-- Include more user inputted databases to annotate
 - Test and adapt the --only-reconstruct option
