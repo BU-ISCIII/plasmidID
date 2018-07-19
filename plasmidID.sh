@@ -14,8 +14,8 @@ set -e
 
 #INSTITUTION:ISCIII
 #CENTRE:BU-ISCIII
-#AUTHOR: Pedro J. Sola
-VERSION=1.3.0
+#AUTHOR: Pedro J. Sola (pedroscampoy@gmail.com)
+VERSION=1.3.1
 #CREATED: 15 March 2018
 #
 #ACKNOLEDGE: longops2getops.sh: https://gist.github.com/adamhotep/895cebf290e95e613c006afbffef09d7
@@ -280,7 +280,7 @@ shift $((OPTIND-1))
 printf "\n\n%s"
 printf "${YELLOW}------------------${NC}\n"
 printf "%s"
-printf "${YELLOW}Starting plasmidID${NC}\n"
+printf "${YELLOW}Starting plasmidID version:${VERSION}${NC}\n"
 printf "%s"
 printf "${YELLOW}------------------${NC}\n\n"
 
@@ -690,6 +690,48 @@ Please use a fasta file with limited ammount of sequences."
 	touch $output_dir/$group/$sample/data/$sample".bedgraph_term"
 fi
 
+####### PREVIOUS SUMMARY OUTPUT CONTIG#################
+#######################################################
+
+number_entries_database=$(cat $reconstruct_fasta | grep ">" | wc -l)
+filename_database=$(basename $reconstruct_fasta)
+filename_contigs=$(basename $contigs)
+
+
+printf "\n\n%s"
+printf "${YELLOW}-------------------------${NC}\n"
+printf "%s"
+printf "${YELLOW}#Pipeline reconstruction#${NC}\n"
+printf "%s"
+printf "${YELLOW}-------------------------${NC}\n"
+
+concepts[0]="Contigs"
+concepts[1]="Will be aligned to"
+concepts[2]="That contains"
+concepts[3]="And those aligned more than"
+concepts[4]="and had at least"
+concepts[5]="Will be represented and annotated"
+
+variables[0]="$filename_contigs"
+variables[1]="$filename_database"
+variables[2]="$number_entries_database entries"
+variables[3]="$alignment_percentage %"
+variables[4]="$alignment_identity %"
+variables[5]=" "
+
+for i in $(seq 0 5)
+do 
+
+#echo -e ${concepts[$i]} "\t" ${variables[$i]}
+length_concepts=$(echo "${concepts[$i]}" | wc -m)
+distance_table_summary=$((40 - $length_concepts))
+distance_expression=$(echo "%${distance_table_summary}s")
+
+printf '%s' "${concepts[$i]}"
+printf $distance_expression
+printf '%s\n' "${variables[$i]}"
+
+done
 
 echo -e "\n${CYAN}ANNOTATING CONTIGS${NC} ($(date))\n \
 A file including all automatic annotations on contigs will be generated.\n"
@@ -722,11 +764,11 @@ blast_to_bed.sh -i  $output_dir/$group/$sample/data/$sample".plasmids.blast" -b 
 
 #sample.plasmids.bed
 
-blast_to_complete.sh -i  $output_dir/$group/$sample/data/$sample".plasmids.blast" -l $alignment_percentage &>> $log_file
+blast_to_complete.sh -i  $output_dir/$group/$sample/data/$sample".plasmids.blast" -l $alignment_percentage -b $alignment_identity &>> $log_file
 
 #sample.plasmids.complete
 
-blast_to_link.sh -i  $output_dir/$group/$sample/data/$sample".plasmids.blast" -I -l $alignment_percentage &>> $log_file
+blast_to_link.sh -i  $output_dir/$group/$sample/data/$sample".plasmids.blast" -I -l $alignment_percentage -b $alignment_identity &>> $log_file
 
 #sample.plasmids.links
 #sample.plasmids.blast.links

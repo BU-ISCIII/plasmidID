@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 1.3.1
+### Added
+- Quick staus of values applied to plasmid reconstruction
+###Fixed
+- Bug in complete contig track generator that took the wrong value and couldn't draw sequences that matched the position 0 of plasmid
+
 ## 1.3.0 - 2018-07-11
 ### New
 - Summary table can be generated with new utility

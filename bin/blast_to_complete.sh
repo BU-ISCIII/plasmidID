@@ -61,7 +61,7 @@ fi
 cwd="$(pwd)"
 input_file="Input_file"
 blast_id_cutoff=90
-blast_len_percentage=50
+blast_len_percentage=15
 database_delimiter="-"
 database_field=r
 query_delimiter="_"
@@ -247,7 +247,7 @@ awk '
 	{split($1, query_name, "'"${query_delimiter}"'")
 	split($2,database_name, "'"${database_delimiter}"'")}
 	(($3 >= '"${blast_id_cutoff}"') && (($4/$13)>='"${blast_len_percentage_value}"') && (!x[$2$1]++)) \
-	{{isInverted=($10-$7)
+	{{isInverted=($10-$9)
 	ext2=($13-$8)}
 	{if (isInverted < 0) 
 		{pos1=$10
