@@ -146,7 +146,7 @@ fi
 
 echo "$(date)"
 echo "adapting coordinates from" $input_file and $link_file
-
+echo "file name is:" $file_name
 #Create a dictionary file with all posibilities: Column 1 and 5 must have some common terms
 
 

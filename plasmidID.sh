@@ -708,15 +708,15 @@ printf "${YELLOW}-------------------------${NC}\n"
 concepts[0]="Contigs"
 concepts[1]="Will be aligned to"
 concepts[2]="That contains"
-concepts[3]="And those aligned more than"
-concepts[4]="and had at least"
+concepts[3]="And each contig aligned more than"
+concepts[4]="and have at least"
 concepts[5]="Will be represented and annotated"
 
 variables[0]="$filename_contigs"
 variables[1]="$filename_database"
-variables[2]="$number_entries_database entries"
+variables[2]="$number_entries_database plasmids"
 variables[3]="$alignment_percentage %"
-variables[4]="$alignment_identity %"
+variables[4]="$alignment_identity % identity"
 variables[5]=" "
 
 for i in $(seq 0 5)
@@ -751,10 +751,6 @@ echo -e "\n${CYAN}ALIGNING CONTIGS TO FILTERED PLASMIDS${NC} ($(date))\n \
 Contigs are aligned to filtered plasmids and those are selected by alignment identity and alignment percentage \
 in order to create links, full length and annotation tracks\n"
 
-if [ -f $output_dir/$group/$sample/logs/contig_alignment.log ]; then
-	rm $output_dir/$group/$sample/logs/contig_alignment.log
-fi
-
 blast_align.sh -i  $output_dir/$group/$sample/data/$sample".fna" -d $reconstruct_fasta -o  $output_dir/$group/$sample/data -p plasmids &>> $log_file
 
 #sample.plasmids.blast
@@ -773,11 +769,15 @@ blast_to_link.sh -i  $output_dir/$group/$sample/data/$sample".plasmids.blast" -I
 #sample.plasmids.links
 #sample.plasmids.blast.links
 
-gff_to_bed.sh -i  $output_dir/$group/$sample/data/$sample".gff" -L &>> $log_file
+gff_to_bed.sh -i $output_dir/$group/$sample/data/$sample".gff" -L &>> $log_file
 
 #sample.gff.bed
 
-coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 1500 &>> $log_file
+coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 1000 &>> $log_file
+
+coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.forward.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 1000 -f $sample".gff.forward" &>> $log_file
+
+coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.reverse.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 1000 -f $sample".gff.reverse" &>> $log_file
 
 #sample.gff.coordinates
 

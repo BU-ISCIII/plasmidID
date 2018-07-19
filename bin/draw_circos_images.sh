@@ -144,6 +144,9 @@ annotation_highlights_file=$imageDir/pID_highlights.conf
 
 coverage_file=$imageDir/$sample".bedgraph_term"
 cds_contig_file=$imageDir/$sample".gff.coordinates"
+cds_contig_file_forward=$imageDir/$sample".gff.forward.coordinates"
+cds_contig_file_reverse=$imageDir/$sample".gff.reverse.coordinates"
+
 
 contig_file=$imageDir/$sample".plasmids.bed"
 contig_file_complete=$imageDir/$sample".plasmids.complete"
@@ -161,6 +164,8 @@ gsub("PLASMID_SPECIFIC_TEXT","'$annotation_text_file'"); \
 gsub("PID_ALL_HIGHLIGHTS","'$annotation_highlights_file'"); \
 gsub("PLASMID_COVERAGE_GRAPH","'$coverage_file'"); \
 gsub("PLASMID_CDS_CONTIG","'$cds_contig_file'"); \
+gsub("PLASMID_CDS_FORWARD","'$cds_contig_file_forward'"); \
+gsub("PLASMID_CDS_REVERSE","'$cds_contig_file_reverse'"); \
 gsub("PLASMID_CDS_DDBB","'$cdsDdbb_file'"); \
 gsub("PLASMID_CONTIGS_COMPLETE","'$contig_file_complete'"); \
 gsub("PLASMID_CONTIGS","'$contig_file'"); \

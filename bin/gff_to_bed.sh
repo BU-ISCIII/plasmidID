@@ -177,6 +177,45 @@ awk '
 	split(locustag[2],locus,";")
 	split(locus[1],locusname,"_")
 	split(name[1],nameLowBar,"_")}
+	{if ($3 == "gene" && $1 != "#" && $7 == "-" && $9 ~ /Name/)
+		{print query_name['"$query_field"'],$4,$5, name[1]}
+	{if ($3 == "gene" && $1 != "#" && $7 == "-" && $9 !~ /Name/)
+		{print query_name['"$query_field"'],$4,$5,'"${cds_word}"' "" '"${cds_locus}"'}
+	}
+	}
+	' \
+	$input_file \
+	> $output_dir/$file_name".reverse.bed"$suffix
+
+awk '
+	BEGIN{OFS="\t"}
+	{split($1, query_name, "'"${query_delimiter}"'")
+	split($9,description,"Name=")
+	split(description[2],name,";")
+	split($9,locustag,"locus_tag=")
+	split(locustag[2],locus,";")
+	split(locus[1],locusname,"_")
+	split(name[1],nameLowBar,"_")}
+	{if ($3 == "gene" && $1 != "#" && $7 == "+" && $9 ~ /Name/)
+		{print query_name['"$query_field"'],$4,$5, name[1]}
+	{if ($3 == "gene" && $1 != "#" && $7 == "+" && $9 !~ /Name/)
+		{print query_name['"$query_field"'],$4,$5,'"${cds_word}"' "" '"${cds_locus}"'}
+	}
+	}
+	' \
+	$input_file \
+	> $output_dir/$file_name".forward.bed"$suffix
+
+
+awk '
+	BEGIN{OFS="\t"}
+	{split($1, query_name, "'"${query_delimiter}"'")
+	split($9,description,"Name=")
+	split(description[2],name,";")
+	split($9,locustag,"locus_tag=")
+	split(locustag[2],locus,";")
+	split(locus[1],locusname,"_")
+	split(name[1],nameLowBar,"_")}
 	{if ($3 == "gene" && $1 != "#" && $9 ~ /Name/)
 		{print query_name['"$query_field"'],$4,$5, name[1]}
 	{if ($3 == "gene" && $1 != "#" && $9 !~ /Name/)
@@ -188,6 +227,7 @@ awk '
 	> $output_dir/$file_name".bed"$suffix
 
 
+
 if [ "$unique" == "true" ]; then
     awk '
         (!x[$1$4]++)
@@ -195,14 +235,43 @@ if [ "$unique" == "true" ]; then
 		> $output_dir/$file_name".bed"$suffix".name"
 
 	awk '
+        (!x[$1$4]++)
+    	' $output_dir/$file_name".forward.bed"$suffix \
+		> $output_dir/$file_name".forward.bed"$suffix".name"
+
+	awk '
+        (!x[$1$4]++)
+    	' $output_dir/$file_name".reverse.bed"$suffix \
+		> $output_dir/$file_name".reverse.bed"$suffix".name"
+
+	awk '
+		BEGIN{OFS="\t"}
+		{split($4, namelowbar, "_")} 
+		{$4=($4 !~ /CDS/) ? namelowbar[1] : $4}1
+		' $output_dir/$file_name".reverse.bed"$suffix".name" \
+		> $output_dir/$file_name".reverse.bed"
+
+	awk '
+		BEGIN{OFS="\t"}
+		{split($4, namelowbar, "_")} 
+		{$4=($4 !~ /CDS/) ? namelowbar[1] : $4}1
+		' $output_dir/$file_name".forward.bed"$suffix".name" \
+		> $output_dir/$file_name".forward.bed"
+
+	awk '
 		BEGIN{OFS="\t"}
 		{split($4, namelowbar, "_")} 
 		{$4=($4 !~ /CDS/) ? namelowbar[1] : $4}1
 		' $output_dir/$file_name".bed"$suffix".name" \
 		> $output_dir/$file_name".bed"
+		
 
 		rm $output_dir/$file_name".bed"$suffix
 		rm $output_dir/$file_name".bed"$suffix".name"
+		rm $output_dir/$file_name".forward.bed"$suffix
+		rm $output_dir/$file_name".forward.bed"$suffix".name"
+		rm $output_dir/$file_name".reverse.bed"$suffix
+		rm $output_dir/$file_name".reverse.bed"$suffix".name"
 fi
 
 echo "$(date)"
