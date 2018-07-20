@@ -848,6 +848,9 @@ Each database supplied will be locally aligned against contigs and the coordinat
 
 		#echo "coordinate_adapter.sh -i $output_dir/$group/$sample/data/$sample"."$ddbb_name".bed" -l $output_dir/$group/$sample/data/$sample".plasmids.blast.links" $is_unique_command &>> $log_file"
 		coordinate_adapter.sh -i $output_dir/$group/$sample/data/$sample"."$ddbb_name".bed" -l $output_dir/$group/$sample/data/$sample".plasmids.blast.links" $is_unique_command &>> $log_file
+
+		#coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample"."$ddbb_name".forward.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 1000 -f $ddbb".gff.forward" &>> $log_file
+
 		#sample.annotation.coordinates
 
 
