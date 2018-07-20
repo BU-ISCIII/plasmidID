@@ -130,6 +130,9 @@ imageDir=$input_dir"/data"
 echo -e "\n#Executing" $0 "\n"
 
 cdsDdbb_file=$input_dir/database/$sample".gff.bed"
+cdsDdbb_file_forward=$input_dir/database/$sample".gff.forward.bed"
+cdsDdbb_file_reverse=$input_dir/database/$sample".gff.reverse.bed"
+
 
 circos_conf_summary="$config_dir/circos_summary.conf"
 circos_conf_individual="$config_dir/circos_individual.conf"
@@ -167,6 +170,8 @@ gsub("PLASMID_CDS_CONTIG","'$cds_contig_file'"); \
 gsub("PLASMID_CDS_FORWARD","'$cds_contig_file_forward'"); \
 gsub("PLASMID_CDS_REVERSE","'$cds_contig_file_reverse'"); \
 gsub("PLASMID_CDS_DDBB","'$cdsDdbb_file'"); \
+gsub("CDS_DDBB_FORWARD","'$cdsDdbb_file_forward'"); \
+gsub("CDS_DDBB_REVERSE","'$cdsDdbb_file_reverse'"); \
 gsub("PLASMID_CONTIGS_COMPLETE","'$contig_file_complete'"); \
 gsub("PLASMID_CONTIGS","'$contig_file'"); \
 gsub("OUTPUTDIR","'$circosDir'"); \

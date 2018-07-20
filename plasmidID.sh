@@ -902,11 +902,11 @@ else
 	#sample.gff.renamed
 
 	#echo "gff_to_bed.sh -i $output_dir/$group/$sample/database/$sample.gff.renamed -q " " -u -L" >> $command_log
-
+fi
 	gff_to_bed.sh -i $output_dir/$group/$sample/database/$sample".gff.renamed" -q " " -u -L &>> $log_file
 
 	#database/sample.gff.bed
-fi
+
 
 
 
