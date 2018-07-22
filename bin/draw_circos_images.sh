@@ -134,8 +134,8 @@ cdsDdbb_file_forward=$input_dir/database/$sample".gff.forward.bed"
 cdsDdbb_file_reverse=$input_dir/database/$sample".gff.reverse.bed"
 
 
-circos_conf_summary="$config_dir/circos_summary.conf"
-circos_conf_individual="$config_dir/circos_individual.conf"
+circos_conf_summary="$config_dir/circos_summary_1_3_3.conf"
+circos_conf_individual="$config_dir/circos_individual_simple.conf"
 circosDir="$output_dir"
 
 plasmidMapped=$imageDir/$sample".coverage_adapted_clustered_ac"
@@ -209,6 +209,8 @@ if [ -s $karyotype_file_summary ]; then
 	gsub("PID_ALL_HIGHLIGHTS","'$annotation_highlights_file'"); \
 	gsub("PLASMID_COVERAGE_GRAPH","'$coverage_file'"); \
 	gsub("PLASMID_CDS_CONTIG","'$cds_contig_file'"); \
+	gsub("PLASMID_CDS_FORWARD","'$cds_contig_file_forward'"); \
+	gsub("PLASMID_CDS_REVERSE","'$cds_contig_file_reverse'"); \
 	gsub("PLASMID_CDS_DDBB","'$cdsDdbb_file'"); \
 	gsub("PLASMID_CONTIGS","'$contig_file'"); \
 	gsub("PLASMID_LINKS","'$links_file'"); \

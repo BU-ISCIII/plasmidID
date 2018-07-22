@@ -772,14 +772,29 @@ blast_to_link.sh -i  $output_dir/$group/$sample/data/$sample".plasmids.blast" -I
 gff_to_bed.sh -i $output_dir/$group/$sample/data/$sample".gff" -L &>> $log_file
 
 #sample.gff.bed
+#sample.gff.forward.bed
+#sample.gff.reverse.bed
 
 coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 1000 &>> $log_file
 
+#sample.gff.coordinates
+
 coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.forward.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 1000 -f $sample".gff.forward" &>> $log_file
+
+#sample.gff.forward.coordinates
 
 coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.reverse.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 1000 -f $sample".gff.reverse" &>> $log_file
 
-#sample.gff.coordinates
+#sample.gff.reverse.coordinates
+
+#if [ -f $output_dir/$group/$sample/data/$sample".gff.forward_reverse.coordinates" ]; then
+#	rm $output_dir/$group/$sample/data/$sample".gff.forward_reverse.coordinates"
+#fi
+
+#awk '{print $0 "\t" "var=fwrd"}' $output_dir/$group/$sample/data/$sample".gff.forward.coordinates" > $output_dir/$group/$sample/data/$sample".gff.forward_reverse.coordinates"
+#awk '{print $0 "\t" "var=rvrs"}' $output_dir/$group/$sample/data/$sample".gff.reverse.coordinates" >> $output_dir/$group/$sample/data/$sample".gff.forward_reverse.coordinates"
+
+
 
 
 if [ $annotation = true ]; then
@@ -858,7 +873,7 @@ Each database supplied will be locally aligned against contigs and the coordinat
 		z_value="10${database_number}"
 
 
-		printf '%s\n' "<highlight>" "file = ${coordinates_file}" "z= ${z_value}" "r1 = 0.90r" "r0 = 0.69r" "fill_color = ${color_highlight}" "</highlight>" >>  $output_dir/$group/$sample/data/pID_highlights.conf
+		printf '%s\n' "<highlight>" "file = ${coordinates_file}" "z= ${z_value}" "r1 = 0.90r" "r0 = 0.67r" "fill_color = ${color_highlight}" "</highlight>" >>  $output_dir/$group/$sample/data/pID_highlights.conf
 		
 		cat $output_dir/$group/$sample/data/$sample"."$ddbb_name".coordinates" >> $output_dir/$group/$sample/data/pID_text_annotation.coordinates
 
