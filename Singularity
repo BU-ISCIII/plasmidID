@@ -25,47 +25,13 @@ From: centos:latest
 	echo "Installing SCI-F"
     pip install scif
 
-	echo "Installing trimmomatic app"
-    scif install /opt/trimmomatic_v0.38_centos7.scif
-    # Executables must be exported for nextflow, if you use their singularity native integration.
-    # It will be cool to use $SCIF_APPBIN_bwa variable, but it must be set after PATH variable, because I tried to use it here and in %environment without success.
-    echo 'export PATH=${PATH}:/scif/apps/trimmomatic/bin' >> $SINGULARITY_ENVIRONMENT
-
-	echo "Installing samtools app"
-    scif install /opt/samtools_v1.9_centos7.scif
-    echo 'export PATH=${PATH}:/scif/apps/samtools/bin' >> $SINGULARITY_ENVIRONMENT
-
-	echo "Installing spades app"
-    scif install /opt/spades_v3.12.0_centos7.scif
-    echo 'export PATH=${PATH}:/scif/apps/spades/bin' >> $SINGULARITY_ENVIRONMENT
-
-    echo "Installing NCBI-BLAST + app"
-    scif install /opt/ncbiblast_v2.7.1_centos7.scif
-    echo 'export PATH=${PATH}:/scif/apps/ncbiblast/bin' >> $SINGULARITY_ENVIRONMENT
-
-    echo "Installing bedtools app"
-    scif install /opt/bedtools_v2.27_centos7.scif
-    echo 'export PATH=${PATH}:/scif/apps/bedtools/bin' >> $SINGULARITY_ENVIRONMENT
-
-    echo "Installing bowtie2 app"
-    scif install /opt/bowtie2_v2.3.4.2_centos7.scif
-    echo 'export PATH=${PATH}:/scif/apps/bowtie2/bin' >> $SINGULARITY_ENVIRONMENT
-
-    echo "Installing prokka app"
-    scif install /opt/prokka_v1.13_centos7.scif
-    echo 'export PATH=${PATH}:/scif/apps/prokka/bin' >> $SINGULARITY_ENVIRONMENT
-
-    echo "Installing cdhit app"
-    scif install /opt/cdhit_v4.6.6_centos7.scif
-    echo 'export PATH=${PATH}:/scif/apps/cdhit/bin' >> $SINGULARITY_ENVIRONMENT
-
-    echo "Installing circos app"
-    scif install /opt/circos_v0.69.6_centos7.scif
-    echo 'export PATH=${PATH}:/scif/apps/circos/bin' >> $SINGULARITY_ENVIRONMENT
-
     echo "Installing plasmidID app"
     scif install /opt/plasmidid_v1.3.0_centos7.scif
-    echo 'export PATH=${PATH}:/scif/apps/plasmidid/bin' >> $SINGULARITY_ENVIRONMENT
+
+    # Executables must be exported for nextflow, if you use their singularity native integration.
+    # It would be cool to use $SCIF_APPBIN_bwa variable, but it must be set after PATH variable, because I tried to use it here and in %environment without success.
+    find /scif/apps -maxdepth 2 -name "bin" | while read in; do echo "export PATH=\${PATH}:$in >> $SINGULARITY_ENVIRONMENT";done
+
 
 %runscript
     exec scif "$@"
