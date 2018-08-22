@@ -9,3 +9,7 @@ plasmid.database*
 ## Trash
 *~
 .fuse*
+
+## Container images
+*.img
+*.simg
