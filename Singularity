@@ -11,6 +11,7 @@ From: centos:latest
 	./scif_app_recipes/prokka_v1.13_centos7.scif /opt
 	./scif_app_recipes/cdhit_v4.6.6_centos7.scif /opt
 	./scif_app_recipes/circos_v0.69.6_centos7.scif /opt
+	./scif_app_recipes/plasmidid_v1.3.0_centos7.scif /opt
 
 %post
 	echo "Install basic development tools"
@@ -61,6 +62,10 @@ From: centos:latest
     echo "Installing circos app"
     scif install /opt/circos_v0.69.6_centos7.scif
     echo 'export PATH=${PATH}:/scif/apps/circos/bin' >> $SINGULARITY_ENVIRONMENT
+
+    echo "Installing plasmidID app"
+    scif install /opt/plasmidid_v1.3.0_centos7.scif
+    echo 'export PATH=${PATH}:/scif/apps/plasmidid/bin' >> $SINGULARITY_ENVIRONMENT
 
 %runscript
     exec scif "$@"
