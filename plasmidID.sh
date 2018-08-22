@@ -15,7 +15,7 @@ set -e
 #INSTITUTION:ISCIII
 #CENTRE:BU-ISCIII
 #AUTHOR: Pedro J. Sola (pedroscampoy@gmail.com)
-VERSION=1.3.1
+VERSION=1.3.3
 #CREATED: 15 March 2018
 #
 #ACKNOLEDGE: longops2getops.sh: https://gist.github.com/adamhotep/895cebf290e95e613c006afbffef09d7
@@ -69,7 +69,7 @@ usage : $0 <-1 R1> <-2 R2> <-d database(fasta)> <-s sample_name> [-g group_name]
 
 	Draw images:
 	--config-directory <dir>	directory holding config files, default config_files/
-
+	--config-file-individual <file-name> file name of the individual file used to reconstruct
 	Additional options:
 
 	-M | --memory	<int>	max memory allowed to use
@@ -118,6 +118,8 @@ do
 		--no-trim)	set -- "$@" -t ;;
 		--trimmomatic-directory) set -- "$@" -X ;;
 		--config-directory) set -- "$@" -Y ;;
+		--config-file-individual) set -- "$@" -y ;;
+
 		--explore)	set -- "$@" -E ;;
 		--alignment-identity)	set -- "$@" -i ;;
 		--coverage-cutoff)	set -- "$@"	-C ;;
@@ -158,6 +160,7 @@ vervose_option_circos=""
 is_vervose=false
 config_dir="config_files"
 trimmomatic_directory=/opt/Trimmomatic/
+config_file_individual="circos_individual_1_3_3.conf"
 #SET COLORS
 
 YELLOW='\033[0;33m'
@@ -170,7 +173,7 @@ NC='\033[0m'
 
 #PARSE VARIABLE ARGUMENTS WITH getops
 #common example with letters, for long options check longopts2getopts.sh
-options=":1:2:d:s:g:c:a:i:o:C:S:f:l:L:T:M:X:RVtvh"
+options=":1:2:d:s:g:c:a:i:o:C:S:f:l:L:T:M:X:y:Y:RVtvh"
 while getopts $options opt; do
 	case $opt in
 		1 )
@@ -208,11 +211,15 @@ while getopts $options opt; do
 		Y)
 			config_dir=$OPTARG
 			;;
+		y)
+			config_file_individual=$OPTARG
+			;;
 		E)
 			explore=true
 			;;
 		R )
 			only_reconstruct=true
+			no_trim=true
 			reconstruct_fasta=$database
 			;;
 		C )
@@ -775,15 +782,15 @@ gff_to_bed.sh -i $output_dir/$group/$sample/data/$sample".gff" -L &>> $log_file
 #sample.gff.forward.bed
 #sample.gff.reverse.bed
 
-coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 1000 &>> $log_file
+coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 10000 &>> $log_file
 
 #sample.gff.coordinates
 
-coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.forward.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 1000 -f $sample".gff.forward" &>> $log_file
+coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.forward.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 10000 -f $sample".gff.forward" &>> $log_file
 
 #sample.gff.forward.coordinates
 
-coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.reverse.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 1000 -f $sample".gff.reverse" &>> $log_file
+coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.reverse.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 10000 -f $sample".gff.reverse" &>> $log_file
 
 #sample.gff.reverse.coordinates
 
@@ -910,7 +917,7 @@ else
 
 	#database/sample.fna
 	#database/sample.gff
-	echo "rename_from_fasta.sh -i $output_dir/$group/$sample/database/$sample.gff -1 $reconstruct_fasta -2 $output_dir/$group/$sample/database/$sample.fna" >> $command_log
+	#echo "rename_from_fasta.sh -i $output_dir/$group/$sample/database/$sample.gff -1 $reconstruct_fasta -2 $output_dir/$group/$sample/database/$sample.fna" >> $command_log
 
 	rename_from_fasta.sh -i $output_dir/$group/$sample/database/$sample".gff" -1 $reconstruct_fasta -2 $output_dir/$group/$sample/database/$sample".fna" &>> $log_file
 
@@ -936,8 +943,12 @@ Additionally a summary image will be created to determine redundancy within rema
 
 draw_circos_images.sh -i $output_dir/$group/$sample \
 -d $config_dir \
+-C $config_file_individual \
 -o $output_dir/$group/$sample/images \
--g $group -s $sample -l $output_dir/$group/$sample/logs/draw_circos_images.log -c $vervose_option_circos
+-g $group \
+-s $sample \
+-l $output_dir/$group/$sample/logs/draw_circos_images.log \
+-c $vervose_option_circos
 
 
 echo -e "\n${YELLOW}ALL DONE WITH plasmidID${NC}\n \

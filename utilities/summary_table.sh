@@ -82,7 +82,7 @@ done
 
 if [ -f $group_directory/00_summary/sampleid_not_found_$group.txt ]; then \
 
-	echo "WARNING"
+	echo "WARNING: Sample(s):"
 	printf "%s," $(cat $group_directory/00_summary/sampleid_not_found_$group.txt) | sed 's/,$//g'
 	echo -e "\nNot found, using the rest for summary table"
 	
