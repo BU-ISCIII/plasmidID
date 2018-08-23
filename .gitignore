@@ -13,3 +13,4 @@ plasmid.database*
 ## Container images
 *.img
 *.simg
+log_*
