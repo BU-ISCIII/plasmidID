@@ -177,7 +177,7 @@ fi
 ########MAPPING#############
 ############################
 
-if [ -f $mappedDir/$sample.sorted.bam -a -f $mappedDir/$sample.sorted.bam.bai -o -f $mappedDir/$sample.sam ];then \
+if [ -f $mappedDir/$sample.sorted.bam -a -f $mappedDir/$sample.sorted.bam.bai ];then \
 	echo "Found a mapping file for sample" $sample;
 	echo "Omitting mapping"
 else

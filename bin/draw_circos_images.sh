@@ -34,10 +34,11 @@ usage() {
 
 draw_circos_image script that creates and execute a cicos config file for plasmidID
 
-usage : $0 <-i input_directory> <-d config_files_directory> <-s sample> <-g <group> <-o <output_directory> [-l <log_file>] [-V] [-c] [-v] [-h]
+usage : $0 <-i input_directory> <-d config_files_directory> <-C config_file> <-s sample> <-g <group> <-o <output_directory> [-l <log_file>] [-V] [-c] [-v] [-h]
 
 	-i input directory containing files to represent
 	-d directory containing config files
+	-C config file selected to draw
 	-s sample
 	-g group
 	-l log file
@@ -66,9 +67,10 @@ cwd="$(pwd)"
 clean=false
 vervose=false
 
+
 #PARSE VARIABLE ARGUMENTS WITH getops
 #common example with letters, for long options check longopts2getopts.sh
-options=":i:m:o:g:l:s:d:cVvh"
+options=":i:m:o:g:l:s:d:C:cVvh"
 while getopts $options opt; do
 	case $opt in
 		i )
@@ -79,6 +81,9 @@ while getopts $options opt; do
 			;;
 		d )
 			config_dir=$OPTARG
+			;;
+		C ) 
+			config_file_individual=$OPTARG
 			;;
 		l )
 			log_file=$OPTARG
@@ -135,8 +140,9 @@ cdsDdbb_file_reverse=$input_dir/database/$sample".gff.reverse.bed"
 
 
 circos_conf_summary="$config_dir/circos_summary_1_3_3.conf"
-circos_conf_individual="$config_dir/circos_individual_simple.conf"
+circos_conf_individual="$config_dir/$config_file_individual"
 circosDir="$output_dir"
+
 
 plasmidMapped=$imageDir/$sample".coverage_adapted_clustered_ac"
 
@@ -160,7 +166,7 @@ imageName=$sample"_summary.png"
 mkdir -p $circosDir
 
 
-echo "Creating config file for circos in SAMPLE $sample FILE $circosDir/$sample.circos.conf"
+echo "Creating individual config file for SAMPLE $sample using FILE $circos_conf_individual"
 
 awk '{gsub("PLASMID_KARYOTYPE","'$karyotype_file_individual'"); \
 gsub("PLASMID_SPECIFIC_TEXT","'$annotation_text_file'"); \
@@ -202,7 +208,7 @@ done
 
 if [ -s $karyotype_file_summary ]; then
 
-	echo "Creating summary image for in sample" $sample
+	echo "Creating summary image for in sample" $sample "from FILE" $circos_conf_summary
 
 	awk '{gsub("PLASMID_KARYOTYPE","'$karyotype_file_summary'"); \
 	gsub("PLASMID_SPECIFIC_TEXT","'$annotation_text_file'"); \
