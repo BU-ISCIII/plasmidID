@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Exit immediately if a pipeline, which may consist of a single simple command, a list, 
+# Exit immediately if a pipeline, which may consist of a single simple command, a list,
 #or a compound command returns a non-zero status: If errors are not handled by user
 set -e
 # Treat unset variables and parameters other than the special parameters ‘@’ or ‘*’ as an error when performing parameter expansion.
@@ -20,7 +20,7 @@ VERSION=1.3.3
 #
 #ACKNOLEDGE: longops2getops.sh: https://gist.github.com/adamhotep/895cebf290e95e613c006afbffef09d7
 #
-#DESCRIPTION: plasmidID is a computational pipeline tha reconstruct and annotate the most likely plasmids present in one sample		
+#DESCRIPTION: plasmidID is a computational pipeline tha reconstruct and annotate the most likely plasmids present in one sample
 #
 #
 #================================================================
@@ -52,7 +52,7 @@ usage : $0 <-1 R1> <-2 R2> <-d database(fasta)> <-s sample_name> [-g group_name]
 	--explore	Relaxes default parameters to find less reliable relationships within data supplied and database
 	--only-reconstruct	Database supplied will not be filtered and all sequences will be used as scaffold
 						This option does not require R1 and R2, instead a contig file can be supplied
-	
+
 	Trimming:
 	--trimmomatic-directory Indicate directory holding trimmomatic .jar executable
 	--no-trim	Reads supplied will not be quality trimmed
@@ -61,7 +61,7 @@ usage : $0 <-1 R1> <-2 R2> <-d database(fasta)> <-s sample_name> [-g group_name]
 	-C | --coverage-cutoff	<int>	minimun coverage percentage to select a plasmid as scafold (0-100), default 80
 	-S | --coverage-summary	<int>	minimun coverage percentage to include plasmids in summary image (0-100), default 90
 	-f | --cluster		<int>	identity percentage to cluster plasmids into the same representative sequence (0-100), default 80
-	
+
 	Contig local alignment
 	-i | --alignment-identity <int>	minimun identity percentage aligned for a contig to annotate, default 90
 	-l | --alignment-percentage <int>	minimun length percentage aligned for a contig to annotate, default 30
@@ -131,7 +131,7 @@ do
 		--memory)		set -- "$@"	-M ;;
 		--threads)		set -- "$@"	-T ;;
        	--help)    	set -- "$@" -h ;;
-		--vervose) 	set -- "$@" -V ;;
+		--verbose) 	set -- "$@" -V ;;
        	--version) 	set -- "$@" -v ;;
        # pass through anything else
        *)         set -- "$@" "$arg" ;;
@@ -156,8 +156,8 @@ only_reconstruct=false
 explore=false
 include_assembly=true
 annotation=false
-vervose_option_circos=""
-is_vervose=false
+verbose_option_circos=""
+is_verbose=false
 config_dir="config_files"
 trimmomatic_directory=/opt/Trimmomatic/
 config_file_individual="circos_individual_1_3_3.conf"
@@ -228,19 +228,19 @@ while getopts $options opt; do
 		S )
 			coverage_summary=$OPTARG
 			;;
-		f )			
+		f )
           	cluster_cutoff=$OPTARG
       		;;
       	i)
 			alignment_identity=$OPTARG
 			;;
-      	l )			
+      	l )
           	alignment_percentage=$OPTARG
       		;;
-      	L )			
+      	L )
           	alignment_total=$OPTARG
       		;;
-        T ) 
+        T )
 			threads=$OPTARG
             ;;
         M)
@@ -250,8 +250,8 @@ while getopts $options opt; do
 			output_dir=$OPTARG
 			;;
 		V)
-			vervose_option_circos="-V"
-			is_vervose=true
+			verbose_option_circos="-V"
+			is_verbose=true
 			log_file="/dev/stdout"
 			;;
         h )
@@ -262,7 +262,7 @@ while getopts $options opt; do
 		  	echo $VERSION
 		  	exit 1
 		  	;;
-		\?)  
+		\?)
 			echo "Invalid Option: -$OPTARG" 1>&2
 			usage
 			exit 1
@@ -271,7 +271,7 @@ while getopts $options opt; do
       		echo "Option -$OPTARG requires an argument." >&2
       		exit 1
       		;;
-      	* ) 
+      	* )
 			echo "Unimplemented option: -$OPTARG" >&2;
 			exit 1
 			;;
@@ -321,7 +321,7 @@ fi
 
 mkdir -p $output_dir/$group/$sample/logs
 
-if [ $is_vervose = false ]; then
+if [ $is_verbose = false ]; then
 	log_file=$output_dir/$group/$sample/logs/plasmidID.log
 	if [ -f $log_file ];then
 		rm $log_file
@@ -446,21 +446,21 @@ fi
 #############################################################################
 
 if [ $include_assembly = true ]; then
-	
+
 	if [ -f $output_dir/$group/$sample/assembly/scaffolds.fasta ]; then
 		echo -e "\nFound an assembled file for sample" $sample
 		echo "Omitting assembly"
 		contigs=$output_dir/$group/$sample/assembly/scaffolds.fasta
 	else
 		if [ $no_trim = true ]; then
-			
+
 			echo -e "\n${CYAN}ASSEMBLY READS${NC} ($(date))\n \
 Reads will be assembled using SPAdes with k-mers: 21,33,55,77,99,127. This might take a while. \n \
 I suggest compare other assembly methods and input the contigs with -c|--contig option\n"
 			check_dependencies.sh spades.py
 			spades_assembly.sh -p $r1_file_mapping -P $r2_file_mapping -c -T $threads -o $output_dir/$group/$sample/assembly &>> $log_file
 		else
-			
+
 			echo -e "\n${CYAN}ASSEMBLY READS${NC} ($(date))\n \
 Reads will be assembled using SPAdes with k-mers: 21,33,55,77,99,127. This might take a while. \n \
 I suggest compare other assembly methods and input the contigs with -c|--contigs option.\n"
@@ -484,7 +484,7 @@ fi
 if [ $only_reconstruct = false ]; then
 
 	reconstruct_fasta=$output_dir/$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff"_term.fasta"_$cluster_cutoff
-	
+
 
 ####### PREVIOUS SUMMARY OUTPUT########################
 #######################################################
@@ -517,7 +517,7 @@ variables[4]="$cluster_cutoff % identity"
 variables[5]="$filename_contigs"
 
 for i in $(seq 0 5)
-do 
+do
 
 #echo -e ${concepts[$i]} "\t" ${variables[$i]}
 length_concepts=$(echo "${concepts[$i]}" | wc -m)
@@ -594,7 +594,7 @@ will pass to further analysis"
 
 	#sample.coverage_adapted_filtered_50_term.fasta
 
-	
+
 	if [ ! -s  $output_dir/$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff ]; then \
 		echo -e "${RED}ERROR${NC}"
 		echo "NO PLASMIDS MATCHED MAPPING REQUERIMENTS, PLEASE, TRY WITH LOWER COVERAGE CUTOFF"
@@ -604,7 +604,7 @@ will pass to further analysis"
 
 	echo -e "\n${CYAN}CLUSTERING PUTATIVE PLASMIDS${NC} ($(date))\n \
 Clustering by homology removes database redundancy, taking the longest representative of each group.\n \
-Clusters will be composed by plasmids with an identity of" $cluster_cutoff"% or higher" 
+Clusters will be composed by plasmids with an identity of" $cluster_cutoff"% or higher"
 
 	if [ -f  $output_dir/$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff"_term.fasta_"$cluster_cutoff ];then \
 		echo -e "\nFound a clustered file for sample" $sample;
@@ -615,7 +615,7 @@ Clusters will be composed by plasmids with an identity of" $cluster_cutoff"% or 
 
 
 	process_cluster_output.sh -i $reconstruct_fasta -b  $output_dir/$group/$sample/mapping/$sample".coverage_adapted" -c $coverage_cutoff &>> $log_file
-	
+
 	mkdir -p $output_dir/$group/$sample/data
 	cp $output_dir/$group/$sample/mapping/$sample".coverage_adapted_clustered_ac" $output_dir/$group/$sample/data/$sample".coverage_adapted_clustered_ac"
 	#$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff"_term.fasta"_$cluster_cutoff >> FINAL CLUSTERED AND FILTERED FASTA FILE TO USE AS SCAFFOLD
@@ -664,7 +664,7 @@ else
 ##########################ONLY RECONSTRUCT###########################################################################################################
 #####################################################################################################################################################
 
-	
+
 	echo -e "\n${BLUE}ONLY RECONSTRUCT MODE SELECTED${NC} ($(date))\n \
 ${YELLOW}WARNING${NC}:PlasmidID will not filter the database supplied by coverage,\n \
 instead all sequences supplied by user will be used as scaffold.\n \
@@ -727,7 +727,7 @@ variables[4]="$alignment_identity % identity"
 variables[5]=" "
 
 for i in $(seq 0 5)
-do 
+do
 
 #echo -e ${concepts[$i]} "\t" ${variables[$i]}
 length_concepts=$(echo "${concepts[$i]}" | wc -m)
@@ -831,7 +831,7 @@ Each database supplied will be locally aligned against contigs and the coordinat
 	do
 
 		let database_number=database_number+1
-		
+
 		#check if config file exist with highlights and text
 
 		#Declare variables
@@ -881,7 +881,7 @@ Each database supplied will be locally aligned against contigs and the coordinat
 
 
 		printf '%s\n' "<highlight>" "file = ${coordinates_file}" "z= ${z_value}" "r1 = 0.90r" "r0 = 0.67r" "fill_color = ${color_highlight}" "</highlight>" >>  $output_dir/$group/$sample/data/pID_highlights.conf
-		
+
 		cat $output_dir/$group/$sample/data/$sample"."$ddbb_name".coordinates" >> $output_dir/$group/$sample/data/pID_text_annotation.coordinates
 
 	done
@@ -896,7 +896,7 @@ else
 	fi
 	touch $output_dir/$group/$sample/data/pID_highlights.conf
 	touch $output_dir/$group/$sample/data/pID_text_annotation.coordinates
-	
+
 fi
 
 
@@ -939,7 +939,7 @@ Additionally a summary image will be created to determine redundancy within rema
 #echo "draw_circos_images.sh -i $output_dir/$group/$sample \
 #-d $config_dir \
 #-o $output_dir/$group/$sample/images \
-#-g $group -s $sample -l $output_dir/$group/$sample/logs/draw_circos_images.log -c $vervose_option_circos" >> $command_log 
+#-g $group -s $sample -l $output_dir/$group/$sample/logs/draw_circos_images.log -c $verbose_option_circos" >> $command_log
 
 draw_circos_images.sh -i $output_dir/$group/$sample \
 -d $config_dir \
@@ -948,7 +948,7 @@ draw_circos_images.sh -i $output_dir/$group/$sample \
 -g $group \
 -s $sample \
 -l $output_dir/$group/$sample/logs/draw_circos_images.log \
--c $vervose_option_circos
+-c $verbose_option_circos
 
 
 echo -e "\n${YELLOW}ALL DONE WITH plasmidID${NC}\n \

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Exit immediately if a pipeline, which may consist of a single simple command, a list, 
+# Exit immediately if a pipeline, which may consist of a single simple command, a list,
 #or a compound command returns a non-zero status: If errors are not handled by user
 set -e
 #set -x
@@ -11,7 +11,7 @@ set -e
 #INSTITUTION:ISCIII
 #CENTRE:BU-ISCIII
 #AUTHOR: Pedro J. Sola
-VERSION=1.0 
+VERSION=1.0
 #CREATED: 01 May 2018
 #REVISION:
 #		11 July 2018: Apply good practices bash
@@ -19,7 +19,7 @@ VERSION=1.0
 #						Include several databases
 #		13 July 2018: Include log file
 #						manage directories
-#DESCRIPTION:Script that creates and execute a cicos config file for plasmidID 
+#DESCRIPTION:Script that creates and execute a cicos config file for plasmidID
 #
 #
 #
@@ -45,7 +45,7 @@ usage : $0 <-i input_directory> <-d config_files_directory> <-C config_file> <-s
 	-o output directory to create config and pictures
 	-c clean: remove config files
 	-v version
-	-V vervose
+	-V verbose
 	-h display usage message
 
 EOF
@@ -65,7 +65,7 @@ fi
 
 cwd="$(pwd)"
 clean=false
-vervose=false
+verbose=false
 
 
 #PARSE VARIABLE ARGUMENTS WITH getops
@@ -82,7 +82,7 @@ while getopts $options opt; do
 		d )
 			config_dir=$OPTARG
 			;;
-		C ) 
+		C )
 			config_file_individual=$OPTARG
 			;;
 		l )
@@ -102,13 +102,13 @@ while getopts $options opt; do
 		  	exit 1
 		  	;;
 		V )
-		  	vervose=true
+		  	verbose=true
 		  	;;
 		v )
 		  	echo $VERSION
 		  	exit 1
 		  	;;
-		\?)  
+		\?)
 			echo "Invalid Option: -$OPTARG" 1>&2
 			usage
 			exit 1
@@ -117,7 +117,7 @@ while getopts $options opt; do
       		echo "Option -$OPTARG requires an argument." >&2
       		exit 1
       		;;
-      	* ) 
+      	* )
 			echo "Unimplemented option: -$OPTARG" >&2;
 			exit 1
 			;;
@@ -198,12 +198,12 @@ do
 	awk '{gsub("SAMPLE_SHOWN","'$i'"); \
 	gsub("IMAGENAME_SAMPLE_PLASMID","'$sample'_'$i'.png"); \
 	print $0}' $circosDir/$sample"_individual.circos.conf" > $circosDir/$sample"_"$i"_individual.circos.conf"
-	if [ $vervose = true ]; then
+	if [ $verbose = true ]; then
 		circos -conf $circosDir/$sample"_"$i"_individual.circos.conf" |& tee -a $log_file
 	else
 		circos -conf $circosDir/$sample"_"$i"_individual.circos.conf" &>> $log_file
 	fi
-done 
+done
 
 
 if [ -s $karyotype_file_summary ]; then
@@ -224,7 +224,7 @@ if [ -s $karyotype_file_summary ]; then
 	gsub("IMAGENAME","'$imageName'"); \
 	print $0}' $circos_conf_summary > $circosDir/$sample"_summary.circos.conf"
 
-	if [ $vervose = true ]; then
+	if [ $verbose = true ]; then
 		circos -conf $circosDir/$sample"_summary.circos.conf" |& tee -a $log_file
 	else
 		circos -conf $circosDir/$sample"_summary.circos.conf" &>> $log_file
