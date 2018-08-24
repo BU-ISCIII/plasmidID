@@ -223,12 +223,11 @@ do
 	awk '{gsub("SAMPLE_SHOWN","'$i'"); \
 	gsub("IMAGENAME_SAMPLE_PLASMID","'$sample'_'$i'.png"); \
 	print $0}' $circosDir/$sample"_individual.circos.conf" > $circosDir/$sample"_"$i"_individual.circos.conf"
-	if [ $verbose = true ]; then
+	if [ $verbose = true ];then
 		$(circos -conf $circosDir/$sample"_"$i"_individual.circos.conf" |& tee -a $log_file) || error ${LINENO} $(basename $0) "Circos command for individual image has failed. See $output_dir/logs for more information"
 	else
 		$(circos -conf $circosDir/$sample"_"$i"_individual.circos.conf" &>> $log_file) || error ${LINENO} $(basename $0) "Circos command for individual image has failed. See $output_dir/logs for more information"
 	fi
-
 done
 
 
