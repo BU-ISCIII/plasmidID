@@ -950,6 +950,5 @@ draw_circos_images.sh -i $output_dir/$group/$sample \
 -l $output_dir/$group/$sample/logs/draw_circos_images.log \
 -c $verbose_option_circos
 
-
 echo -e "\n${YELLOW}ALL DONE WITH plasmidID${NC}\n \
 Thank you for using plasmidID\n"

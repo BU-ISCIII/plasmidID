@@ -60,6 +60,30 @@ if [ $# = 0 ] ; then
  exit 1
 fi
 
+# Error handling
+error(){
+  local parent_lineno="$1"
+  local script="$2"
+  local message="$3"
+  local code="${4:-1}"
+
+	RED='\033[0;31m'
+	NC='\033[0m'
+
+  if [[ -n "$message" ]] ; then
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "MESSAGE:\n"
+    echo -e "$message"
+    echo -e "\n---------------------------------------\n"
+  else
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "\n---------------------------------------\n"
+  fi
+
+  exit "${code}"
+}
 
 #DECLARE FLAGS AND VARIABLES
 
@@ -132,7 +156,11 @@ shift $((OPTIND-1))
 
 imageDir=$input_dir"/data"
 
-echo -e "\n#Executing" $0 "\n"
+if [ -f $log_file ]; then
+	rm $log_file
+fi
+
+echo -e "\n#Executing" $0 "\n" &>> $log_file
 
 cdsDdbb_file=$input_dir/database/$sample".gff.bed"
 cdsDdbb_file_forward=$input_dir/database/$sample".gff.forward.bed"
@@ -166,7 +194,7 @@ imageName=$sample"_summary.png"
 mkdir -p $circosDir
 
 
-echo "Creating individual config file for SAMPLE $sample using FILE $circos_conf_individual"
+echo "Creating individual config file for SAMPLE $sample using FILE $circos_conf_individual" &>> $log_file
 
 awk '{gsub("PLASMID_KARYOTYPE","'$karyotype_file_individual'"); \
 gsub("PLASMID_SPECIFIC_TEXT","'$annotation_text_file'"); \
@@ -183,32 +211,30 @@ gsub("PLASMID_CONTIGS","'$contig_file'"); \
 gsub("OUTPUTDIR","'$circosDir'"); \
 print $0}' $circos_conf_individual > $circosDir/$sample"_individual.circos.conf"
 
-echo "DONE Creating config file for circos in SAMPLE $sample"
+echo "DONE Creating config file for circos in SAMPLE $sample" &>> $log_file
 
-echo "Executing circos in SAMPLE $sample"
+echo "Executing circos in SAMPLE $sample" &>> $log_file
 
-if [ -f $log_file ]; then
-	rm $log_file
-fi
 
 
 for i in $(cat $plasmidMapped)
 do
-	echo "Creating image for plasmid" $i "in sample" $sample
+	echo "Creating image for plasmid $i in sample $sample" &>> $log_file
 	awk '{gsub("SAMPLE_SHOWN","'$i'"); \
 	gsub("IMAGENAME_SAMPLE_PLASMID","'$sample'_'$i'.png"); \
 	print $0}' $circosDir/$sample"_individual.circos.conf" > $circosDir/$sample"_"$i"_individual.circos.conf"
 	if [ $verbose = true ]; then
-		circos -conf $circosDir/$sample"_"$i"_individual.circos.conf" |& tee -a $log_file
+		$(circos -conf $circosDir/$sample"_"$i"_individual.circos.conf" |& tee -a $log_file) || error ${LINENO} $(basename $0) "Circos command for individual image has failed. See $output_dir/logs for more information"
 	else
-		circos -conf $circosDir/$sample"_"$i"_individual.circos.conf" &>> $log_file
+		$(circos -conf $circosDir/$sample"_"$i"_individual.circos.conf" &>> $log_file) || error ${LINENO} $(basename $0) "Circos command for individual image has failed. See $output_dir/logs for more information"
 	fi
+
 done
 
 
 if [ -s $karyotype_file_summary ]; then
 
-	echo "Creating summary image for in sample" $sample "from FILE" $circos_conf_summary
+	echo "Creating summary image for in sample" $sample "from FILE" $circos_conf_summary &>> $log_file
 
 	awk '{gsub("PLASMID_KARYOTYPE","'$karyotype_file_summary'"); \
 	gsub("PLASMID_SPECIFIC_TEXT","'$annotation_text_file'"); \
@@ -225,13 +251,14 @@ if [ -s $karyotype_file_summary ]; then
 	print $0}' $circos_conf_summary > $circosDir/$sample"_summary.circos.conf"
 
 	if [ $verbose = true ]; then
-		circos -conf $circosDir/$sample"_summary.circos.conf" |& tee -a $log_file
+		circos -conf $circosDir/$sample"_summary.circos.conf" |& tee -a $log_file || exit 1
 	else
-		circos -conf $circosDir/$sample"_summary.circos.conf" &>> $log_file
+		circos -conf $circosDir/$sample"_summary.circos.conf" &>> $log_file || exit 1
 	fi
+
 else
 
-	echo "No plasmid mathed requirements to draw the summary image"
+	echo "No plasmid matched requirements to draw the summary image"
 
 fi
 
