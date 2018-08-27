@@ -55,6 +55,7 @@ jobs:
           no_output_timeout: 60m
           command: |
             echo "Working directory is ${PWD}"
+            ls ${PWD}
             # If not set, define CONTAINER_NAME
             if [ ! -n "${CONTAINER_NAME:-}" ]
                 then
