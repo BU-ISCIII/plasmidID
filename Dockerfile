@@ -1,24 +1,19 @@
-FROM centos
+FROM centos:latest
 
-# Dependencies
-RUN	yum -y groupinstall "Development Tools"
-RUN yum -y update && yum -y install wget curl
-RUN yum -y install python-setuptools
-RUN easy_install pip
+ADD ./scif_app_recipes/*  /opt/
 
-# Install scif from pypi
-RUN pip install scif
+RUN echo "Install basic development tools" && \
+    yum -y groupinstall "Development Tools" && \
+    yum -y update && yum -y install wget curl && \
+    echo "Install python2.7 setuptools and pip" && \
+    yum -y install python-setuptools && \
+    easy_install pip && \
+    echo "Installing SCI-F" && \
+    pip install scif ipython && \
+    echo "Installing plasmidID app" && \
+    scif install /opt/plasmidid_v1.3.0_centos7.scif
+    # Executables must be exported for nextflow, if you use their singularity native integration.
+    # It would be cool to use $SCIF_APPBIN_bwa variable, but it must be set after PATH variable, because I tried to use it here and in %environment without success.
+RUN find /scif/apps -maxdepth 2 -name "bin" | while read in; do echo "export PATH=\${PATH}:$in" >> $SINGULARITY_ENVIRONMENT;done
 
-# Install the filesystem from the recipe
-ADD apps_recipes/*.scif /opt/
-RUN scif install /opt/bwa_v0.7.17_centos7.scif
-ENV PATH=${PATH}:/scif/apps/bwa/bin
-RUN scif install /opt/samtools_v1.9_centos7.scif
-ENV PATH=${PATH}:/scif/apps/samtools/bin
-RUN scif install /opt/bcftools_v1.9_centos7.scif
-ENV PATH=${PATH}:/scif/apps/bcftools/bin
-
-# SciF Entrypoint
-# Disabled because of compatibility with nextflow.
-#ENTRYPOINT ["scif"]
-CMD scif
+CMD ["scif"]
