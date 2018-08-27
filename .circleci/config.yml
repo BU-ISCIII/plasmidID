@@ -55,7 +55,6 @@ jobs:
           no_output_timeout: 60m
           command: |
             echo "Working directory is ${PWD}"
-            ls ${PWD}
             ls ${PWD}/scif_app_recipes
             # If not set, define CONTAINER_NAME
             if [ ! -n "${CONTAINER_NAME:-}" ]
