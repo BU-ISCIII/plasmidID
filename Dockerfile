@@ -11,9 +11,9 @@ RUN echo "Install basic development tools" && \
     echo "Installing SCI-F" && \
     pip install scif ipython && \
     echo "Installing plasmidID app" && \
-    scif install /opt/plasmidid_v1.3.0_centos7.scif
-    # Executables must be exported for nextflow, if you use their singularity native integration.
-    # It would be cool to use $SCIF_APPBIN_bwa variable, but it must be set after PATH variable, because I tried to use it here and in %environment without success.
-RUN find /scif/apps -maxdepth 2 -name "bin" | while read in; do echo "export PATH=\${PATH}:$in" >> $SINGULARITY_ENVIRONMENT;done
+    scif install /opt/samtools_v1.9_centos7.scif
+#ENV find /scif/apps -maxdepth 2 -name "bin" | while read in; do echo "PATH=\${PATH}:$in";done | tr '\n' ' '
 
-CMD ["scif"]
+
+ENTRYPOINT ["/opt/docker-entrypoint.sh"]
+CMD ["plasmidID.sh"]
