@@ -24,11 +24,6 @@ jobs:
       - run:
           name: Install parallel gzip, python3 and java
           command: apk add --no-cache pigz python3 openjdk8 bash
-      - run:
-          name: Install nextflow
-          command: |
-            cd /usr/bin
-            wget -qO- https://get.nextflow.io | bash
       - restore_cache:
           keys:
             - docker-v1-{{ .Branch }}-{{ epoch }}
@@ -78,9 +73,6 @@ jobs:
                 --build-arg VERSION="${CIRCLE_TAG:-$THISVERSION}" . \
               && e=0 && break || sleep 15
             done && [ "$e" -eq "0" ]
-            # Pipeline VERSION
-            THISVERSION=$(nextflow run ${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME} --version)
-            echo "Pipeline Version is ${THISVERSION}"
             echo "${CIRCLE_TAG:-$THISVERSION}"
       - run:
           name: Docker save
