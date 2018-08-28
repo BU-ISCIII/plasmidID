@@ -16,4 +16,4 @@ RUN echo "Install basic development tools" && \
 
 
 ENTRYPOINT ["/opt/docker-entrypoint.sh"]
-CMD ["plasmidID.sh"]
+CMD ["samtools"]

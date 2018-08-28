@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Exit immediately if a pipeline, which may consist of a single simple command, a list, 
+# Exit immediately if a pipeline, which may consist of a single simple command, a list,
 #or a compound command returns a non-zero status: If errors are not handled by user
 set -e
 
@@ -11,11 +11,11 @@ set -e
 #INSTITUTION:ISCIII
 #CENTRE:BU-ISCIII
 #AUTHOR: Pedro J. Sola
-VERSION=1.0 
+VERSION=1.0
 #CREATED: 20 March 2018
 #REVISION:
 #DESCRIPTION:Script that convert a supplied SAM file into compressed binary indexed BAM
-#AKNOWLEDGE: 
+#AKNOWLEDGE:
 #		-Adapted from klashxx: https://stackoverflow.com/questions/23992646/sequence-length-of-fasta-file/23992773
 #================================================================
 # END_OF_HEADER
@@ -30,14 +30,14 @@ Calculate_sequlen script calculates a supplied FASTA length
 
 usage : $0 <-i inputfile(.fasta)> [-o <directory>] [-n <string>] [-r] [-v] [-h]
 
-	-i input file 
+	-i input file
 	-o output directory (optional). By default the file is replaced in the same location
 	-n file name (optional). By default is the same name with .length extension
 	-r remove ">" (greater-than) symbol from fasta header
 	-v version
 	-h display usage message
 
-example: calculate_sequlen.sh -i ecoli.fasta 
+example: calculate_sequlen.sh -i ecoli.fasta
 
 EOF
 }
@@ -51,6 +51,30 @@ if [ $# = 0 ] ; then
  exit 1
 fi
 
+# Error handling
+error(){
+  local parent_lineno="$1"
+  local script="$2"
+  local message="$3"
+  local code="${4:-1}"
+
+	RED='\033[0;31m'
+	NC='\033[0m'
+
+  if [[ -n "$message" ]] ; then
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "MESSAGE:\n"
+    echo -e "$message"
+    echo -e "\n---------------------------------------\n"
+  else
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "\n---------------------------------------\n"
+  fi
+
+  exit "${code}"
+}
 
 #DECLARE FLAGS AND VARIABLES
 remove_head=remove_head_false
@@ -83,7 +107,7 @@ while getopts $options opt; do
 		  	echo $VERSION
 		  	exit 1
 		  	;;
-		\?)  
+		\?)
 			echo "Invalid Option: -$OPTARG" 1>&2
 			usage
 			exit 1
@@ -92,7 +116,7 @@ while getopts $options opt; do
       		echo "Option -$OPTARG requires an argument." >&2
       		exit 1
       		;;
-      	* ) 
+      	* )
 			echo "Unimplemented option: -$OPTARG" >&2;
 			exit 1
 			;;
@@ -127,8 +151,11 @@ awk '
 BEGIN {FS=="| "}
 /^>/ {if (seqlen)
 	print seqlen;printf "%s\t", $1; seqlen=0; next
-	} 
+	}
 {seqlen+=length($0)}
 END {print seqlen}' $input_file | sed 's/'$remove_head'//g' \
->$output_dir/$filename".length"
+>$output_dir/$filename".length" || error ${LINENO} $(basename $0) "Awk command for bedtools seqlen calculation in $filename\".length\" creation. See $output_dir/logs for more information."
 
+echo "$(date)"
+echo "Done seqlen calculation"
+echo "Files can be found at" $output_dir

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Exit immediately if a pipeline, which may consist of a single simple command, a list, 
+# Exit immediately if a pipeline, which may consist of a single simple command, a list,
 #or a compound command returns a non-zero status: If errors are not handled by user
 set -e
 #set -x
@@ -12,7 +12,7 @@ set -e
 #INSTITUTION:ISCIII
 #CENTRE:BU-ISCIII
 #AUTHOR: Pedro J. Sola
-VERSION=1.0 
+VERSION=1.0
 #CREATED: 12 April 2018
 #REVISION:
 #DESCRIPTION:process_cluster_output script obtain a list of ac from fasta, and estract their coverage value from a coverage file
@@ -30,7 +30,7 @@ process_cluster_output script obtain a list of ac from fasta, and estract their 
 
 usage : $0 <-i inputfile(.fasta)> <-b coverage_file> [-o <directory>] [-c <int(0-100)>] [-s <suffix>] [-v] [-h]
 
-	-i input file 
+	-i input file
 	-b file with coverage info
 	-o output directory (optional). By default the file is replaced in the same location
 	-c percentage value to filter >= values. If not supplied, all records will be outputted
@@ -52,6 +52,30 @@ if [ $# = 0 ] ; then
  exit 1
 fi
 
+# Error handling
+error(){
+  local parent_lineno="$1"
+  local script="$2"
+  local message="$3"
+  local code="${4:-1}"
+
+	RED='\033[0;31m'
+	NC='\033[0m'
+
+  if [[ -n "$message" ]] ; then
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "MESSAGE:\n"
+    echo -e "$message"
+    echo -e "\n---------------------------------------\n"
+  else
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "\n---------------------------------------\n"
+  fi
+
+  exit "${code}"
+}
 
 #DECLARE FLAGS AND VARIABLES
 cwd="$(pwd)"
@@ -92,7 +116,7 @@ while getopts $options opt; do
 		  	echo $VERSION
 		  	exit 1
 		  	;;
-		\?)  
+		\?)
 			echo "Invalid Option: -$OPTARG" 1>&2
 			usage
 			exit 1
@@ -101,7 +125,7 @@ while getopts $options opt; do
       		echo "Option -$OPTARG requires an argument." >&2
       		exit 1
       		;;
-      	* ) 
+      	* )
 			echo "Unimplemented option: -$OPTARG" >&2;
 			exit 1
 			;;
@@ -146,20 +170,20 @@ for i in $ac_input_file ;do
 	awk '
 		/^'"$i"'/
 		' $coverage_file
-done > $output_dir/$coverage_name$suffix
+done > $output_dir/$coverage_name$suffix || error ${LINENO} $(basename $0) "Awk command error in $coverage_name$suffix creation. See $output_dir/logs for more information."
 
 
 awk '
 	{if ($2 == 0 && $5 <= '"${coverage_cutoff}"')
 		{print $1}}
-	' $output_dir/$coverage_name$suffix > $output_dir/$coverage_name$suffix"_ac"
+	' $output_dir/$coverage_name$suffix > $output_dir/$coverage_name$suffix"_ac" || error ${LINENO} $(basename $0) "Awk command error in $coverage_name$suffix\"_ac\" creation. See $output_dir/logs for more information."
 
 
 awk '
 	{if ($2 == 0 && $5 <= '"${coverage_cutoff}"')
 	 	{print $1, ((1 - $5)*100)}
 	}
-	' $output_dir/$coverage_name$suffix > $output_dir/$coverage_name$suffix"_percentage"
+	' $output_dir/$coverage_name$suffix > $output_dir/$coverage_name$suffix"_percentage" || error ${LINENO} $(basename $0) "Awk command error in $coverage_name$suffix\"_percentage\" creation. See $output_dir/logs for more information."
 
 echo "$(date)"
 echo "DONE extracting coverage info from clustered sequences in" $file_name

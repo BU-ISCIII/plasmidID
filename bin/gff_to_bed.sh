@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Exit immediately if a pipeline, which may consist of a single simple command, a list, 
+# Exit immediately if a pipeline, which may consist of a single simple command, a list,
 #or a compound command returns a non-zero status: If errors are not handled by user
 #set -e
 #set -x
@@ -12,7 +12,7 @@
 #INSTITUTION:ISCIII
 #CENTRE:BU-ISCIII
 #AUTHOR: Pedro J. Sola
-VERSION=1.0 
+VERSION=1.0
 #CREATED: 16 May 2018
 #REVISION:
 #DESCRIPTION:gff_to_bed script obtain a list of genes with name from a gff. [Tested with prokka output]
@@ -34,7 +34,7 @@ gff_to_bed script obtain a list of genes with name from a GFF file. [Tested with
 
 usage : $0 <-i inputfile(.fasta)> [-o <directory>] [-C] [-L] [-q <character>] [-Q (l|r)] [-s <suffix>] [-u] [-v] [-h]
 
-	-i input file 
+	-i input file
 	-o output directory (optional). By default the file is placed in the same location as input
 	-C include a supplied word in cds
 	-L include locus tag in cds
@@ -59,6 +59,31 @@ if [ $# = 0 ] ; then
  exit 1
 fi
 
+
+# Error handling
+error(){
+  local parent_lineno="$1"
+  local script="$2"
+  local message="$3"
+  local code="${4:-1}"
+
+	RED='\033[0;31m'
+	NC='\033[0m'
+
+  if [[ -n "$message" ]] ; then
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "MESSAGE:\n"
+    echo -e "$message"
+    echo -e "\n---------------------------------------\n"
+  else
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "\n---------------------------------------\n"
+  fi
+
+  exit "${code}"
+}
 
 #DECLARE FLAGS AND VARIABLES
 cwd="$(pwd)"
@@ -107,7 +132,7 @@ while getopts $options opt; do
 		  	echo $VERSION
 		  	exit 1
 		  	;;
-		\?)  
+		\?)
 			echo "Invalid Option: -$OPTARG" 1>&2
 			usage
 			exit 1
@@ -116,7 +141,7 @@ while getopts $options opt; do
       		echo "Option -$OPTARG requires an argument." >&2
       		exit 1
       		;;
-      	* ) 
+      	* )
 			echo "Unimplemented option: -$OPTARG" >&2;
 			exit 1
 			;;
@@ -157,7 +182,7 @@ if [ $query_field == "l" ] || [ $query_field == "r" ]; then
 	else
 		query_field="length(query_name)"
 	fi
-	
+
 else
 
 	echo "Please introduce 0 or 1 for query"
@@ -185,7 +210,7 @@ awk '
 	}
 	' \
 	$input_file \
-	> $output_dir/$file_name".reverse.bed"$suffix
+	> $output_dir/$file_name".reverse.bed"$suffix || error ${LINENO} $(basename $0) "Awk command in $file_name\".reverse.bed\" creation. See $output_dir/logs for more information."
 
 awk '
 	BEGIN{OFS="\t"}
@@ -204,7 +229,7 @@ awk '
 	}
 	' \
 	$input_file \
-	> $output_dir/$file_name".forward.bed"$suffix
+	> $output_dir/$file_name".forward.bed"$suffix || error ${LINENO} $(basename $0) "Awk command in $file_name\".forward.bed\" creation. See $output_dir/logs for more information."
 
 
 awk '
@@ -224,7 +249,8 @@ awk '
 	}
 	' \
 	$input_file \
-	> $output_dir/$file_name".bed"$suffix
+	> $output_dir/$file_name".bed"$suffix || error ${LINENO} $(basename $0) "Awk command in $file_name\".bed$suffix\" creation. See $output_dir/logs for more information."
+
 
 
 
@@ -232,39 +258,39 @@ if [ "$unique" == "true" ]; then
     awk '
         (!x[$1$4]++)
     	' $output_dir/$file_name".bed"$suffix \
-		> $output_dir/$file_name".bed"$suffix".name"
+		> $output_dir/$file_name".bed"$suffix".name" || error ${LINENO} $(basename $0) "Awk command in $file_name\".bed\"$suffix\".name\" creation. See $output_dir/logs for more information."
+
 
 	awk '
         (!x[$1$4]++)
     	' $output_dir/$file_name".forward.bed"$suffix \
-		> $output_dir/$file_name".forward.bed"$suffix".name"
+		> $output_dir/$file_name".forward.bed"$suffix".name" || error ${LINENO} $(basename $0) "Awk command in $file_name\".forward.bed\"$suffix\".name\" creation. See $output_dir/logs for more information."
 
 	awk '
         (!x[$1$4]++)
     	' $output_dir/$file_name".reverse.bed"$suffix \
-		> $output_dir/$file_name".reverse.bed"$suffix".name"
+		> $output_dir/$file_name".reverse.bed"$suffix".name"|| error ${LINENO} $(basename $0) "Awk command in $file_name\".reverse.bed\"$suffix\".name\" creation. See $output_dir/logs for more information."
 
 	awk '
 		BEGIN{OFS="\t"}
-		{split($4, namelowbar, "_")} 
+		{split($4, namelowbar, "_")}
 		{$4=($4 !~ /CDS/) ? namelowbar[1] : $4}1
 		' $output_dir/$file_name".reverse.bed"$suffix".name" \
-		> $output_dir/$file_name".reverse.bed"
+		> $output_dir/$file_name".reverse.bed" || error ${LINENO} $(basename $0) "Awk command in $file_name\".reverse.bed\" creation. See $output_dir/logs for more information."
 
 	awk '
 		BEGIN{OFS="\t"}
-		{split($4, namelowbar, "_")} 
+		{split($4, namelowbar, "_")}
 		{$4=($4 !~ /CDS/) ? namelowbar[1] : $4}1
 		' $output_dir/$file_name".forward.bed"$suffix".name" \
-		> $output_dir/$file_name".forward.bed"
+		> $output_dir/$file_name".forward.bed" || error ${LINENO} $(basename $0) "Awk command in $file_name\".forward.bed\" creation. See $output_dir/logs for more information."
 
 	awk '
 		BEGIN{OFS="\t"}
-		{split($4, namelowbar, "_")} 
+		{split($4, namelowbar, "_")}
 		{$4=($4 !~ /CDS/) ? namelowbar[1] : $4}1
 		' $output_dir/$file_name".bed"$suffix".name" \
-		> $output_dir/$file_name".bed"
-		
+		> $output_dir/$file_name".bed" || error ${LINENO} $(basename $0) "Awk command in $file_name\".bed\" creation. See $output_dir/logs for more information."
 
 		rm $output_dir/$file_name".bed"$suffix
 		rm $output_dir/$file_name".bed"$suffix".name"

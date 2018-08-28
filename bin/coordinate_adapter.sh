@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Exit immediately if a pipeline, which may consist of a single simple command, a list, 
+# Exit immediately if a pipeline, which may consist of a single simple command, a list,
 #or a compound command returns a non-zero status: If errors are not handled by user
 #set -e
 #set -x
@@ -12,7 +12,7 @@
 #INSTITUTION:ISCIII
 #CENTRE:BU-ISCIII
 #AUTHOR: Pedro J. Sola
-VERSION=1.0 
+VERSION=1.0
 #CREATED: 17 May 2018
 #REVISION:
 #DESCRIPTION:coordinate_adapter script adapt coordinates obtained with a bed file to a reference sequences in a link file
@@ -37,7 +37,7 @@ usage : $0 <-i inputfile(.bed)> <-l link_file> [-o <directory>] [-n <number>] [-
 	-n length to extend annotation, default 5000
 	-f file name
 	-u uniq mode. Remove duplicates
-	-p prokka mode. Remove suffix of prokka 
+	-p prokka mode. Remove suffix of prokka
 	-v version
 	-h display usage message
 
@@ -55,6 +55,30 @@ if [ $# = 0 ] ; then
  exit 1
 fi
 
+# Error handling
+error(){
+  local parent_lineno="$1"
+  local script="$2"
+  local message="$3"
+  local code="${4:-1}"
+
+	RED='\033[0;31m'
+	NC='\033[0m'
+
+  if [[ -n "$message" ]] ; then
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "MESSAGE:\n"
+    echo -e "$message"
+    echo -e "\n---------------------------------------\n"
+  else
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "\n---------------------------------------\n"
+  fi
+
+  exit "${code}"
+}
 
 #DECLARE FLAGS AND VARIABLES
 cwd="$(pwd)"
@@ -101,7 +125,7 @@ while getopts $options opt; do
 		  	echo $VERSION
 		  	exit 1
 		  	;;
-		\?)  
+		\?)
 			echo "Invalid Option: -$OPTARG" 1>&2
 			usage
 			exit 1
@@ -110,7 +134,7 @@ while getopts $options opt; do
       		echo "Option -$OPTARG requires an argument." >&2
       		exit 1
       		;;
-      	* ) 
+      	* )
 			echo "Unimplemented option: -$OPTARG" >&2;
 			exit 1
 			;;
@@ -147,16 +171,15 @@ fi
 echo "$(date)"
 echo "adapting coordinates from" $input_file and $link_file
 echo "file name is:" $file_name
+
 #Create a dictionary file with all posibilities: Column 1 and 5 must have some common terms
-
-
 awk 'NR==FNR{a[NR]=$1;b[NR]=$0;next}{for(i = 1; i <= NR; ++i){if (a[i] == $1) print b[i],"\t", $0}}' \
-$input_file $link_file > $output_dir/$file_name".coordinates.tmp"
-
+$input_file $link_file > $output_dir/$file_name".coordinates.tmp" || error ${LINENO} $(basename $0) "Awk command in $file_name\".coordinates.tmp\" creation. See $output_dir/logs for more information."
 
 awk '(($2 >= $6 - '"${number_extension}"' && $2 <= $7) || ($3 >= $6 && $3 <= $7 + '"${number_extension}"')) {{isInverted=($10-$9); \
 genelength=($3-$2)};{if (isInverted < 0) {coordChr1=(($7-$3)+$10);} else {coordChr1=(($2-$6)+$9)}}; \
-coordChr2=(coordChr1+genelength); {print $8, coordChr1, coordChr2, $4}}' $output_dir/$file_name".coordinates.tmp" > $output_dir/$file_name".coordinates.negatives"
+coordChr2=(coordChr1+genelength); {print $8, coordChr1, coordChr2, $4}}' $output_dir/$file_name".coordinates.tmp" > $output_dir/$file_name".coordinates.negatives"|| error ${LINENO} $(basename $0) "Awk command in $file_name\".coordinates.negatives\" creation. See $output_dir/logs for more information."
+
 
 #resulting in a bed file with coordinated of plasmid bur refering to contig annotation:
 #NZ_CP010574.1 34820 33528 arsB_1
@@ -166,17 +189,17 @@ coordChr2=(coordChr1+genelength); {print $8, coordChr1, coordChr2, $4}}' $output
 #NZ_CP008930.1 144220 145707 ltrA_1
 
 
-#Remove duplicate of several matches 
+#Remove duplicate of several matches
 
 awk '($2 > 0) && ($3 > 0)' $output_dir/$file_name".coordinates.negatives" \
-> $output_dir/$file_name".coordinates"$suffix
+> $output_dir/$file_name".coordinates"$suffix || error ${LINENO} $(basename $0) "Awk command in $file_name\".coordinates$suffix\" creation. See $output_dir/logs for more information."
 
 
 if [ "$unique" == "true" ]; then
     awk '
         (!x[$1$4]++)
     	' $output_dir/$file_name".coordinates"$suffix \
-		> $output_dir/$file_name".coordinates"
+		> $output_dir/$file_name".coordinates" || error ${LINENO} $(basename $0) "Awk command in $file_name\".coordinates\" creation. See $output_dir/logs for more information."
 
 		rm $output_dir/$file_name".coordinates"$suffix
 fi
@@ -186,16 +209,17 @@ if [ "$prokka_mode" == "true" ]; then
 	awk '
 		(!uniq[$1$4]++)
 		' $output_dir/$file_name".coordinates"$suffix \
-		> $output_dir/$file_name".coordinates.prokka.unique.tmp"
+		> $output_dir/$file_name".coordinates.prokka.unique.tmp"|| error ${LINENO} $(basename $0) "Awk command in $file_name\".coordinates.prokka.unique.tmp\" creation. See $output_dir/logs for more information."
+
 
 	awk '
 		BEGIN{OFS="\t"}{split($4, namelowbar, "_")} {$4=($4 !~ /CDS/) ? namelowbar[1] : $4}1
 		' $output_dir/$file_name".coordinates.prokka.unique.tmp" \
-		> $output_dir/$file_name".coordinates"
+		> $output_dir/$file_name".coordinates" || error ${LINENO} $(basename $0) "Awk command in $file_name\".coordinates\" creation. See $output_dir/logs for more information."
 
 	rm $output_dir/$file_name".coordinates.prokka.unique.tmp"
 	rm $output_dir/$file_name".coordinates"$suffix
-    
+
 fi
 
 rm $output_dir/$file_name".coordinates.tmp"

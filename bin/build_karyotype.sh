@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Exit immediately if a pipeline, which may consist of a single simple command, a list, 
+# Exit immediately if a pipeline, which may consist of a single simple command, a list,
 #or a compound command returns a non-zero status: If errors are not handled by user
 set -e
 #set -x
@@ -12,10 +12,10 @@ set -e
 #INSTITUTION:ISCIII
 #CENTRE:BU-ISCIII
 #AUTHOR: Pedro J. Sola
-VERSION=1.0 
+VERSION=1.0
 #CREATED: 13 April 2018
 #REVISION:
-#DESCRIPTION:build_karyotype script that creates karyotype file for CIRCOS either for summary and individual image 
+#DESCRIPTION:build_karyotype script that creates karyotype file for CIRCOS either for summary and individual image
 
 #================================================================
 # END_OF_HEADER
@@ -26,11 +26,11 @@ VERSION=1.0
 usage() {
 	cat << EOF
 
-build_karyotype script that creates karyotype file for CIRCOS either for summary and individual image 
+build_karyotype script that creates karyotype file for CIRCOS either for summary and individual image
 
 usage : $0 <-i inputfile(coverage)> [-o <directory>] [-f <file_name>] [-g <group_name>] <-k int(0-100)> <-K int(0-100)> [-v] [-h]
 
-	-i input file 
+	-i input file
 	-o output directory (optional). By default the file is replaced in the same location
 	-f file name for identification
 	-g group name for identification
@@ -55,6 +55,31 @@ if [ $# = 0 ] ; then
 fi
 
 
+# Error handling
+error(){
+  local parent_lineno="$1"
+  local script="$2"
+  local message="$3"
+  local code="${4:-1}"
+
+	RED='\033[0;31m'
+	NC='\033[0m'
+
+  if [[ -n "$message" ]] ; then
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "MESSAGE:\n"
+    echo -e "$message"
+    echo -e "\n---------------------------------------\n"
+  else
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "\n---------------------------------------\n"
+  fi
+
+  exit "${code}"
+}
+
 #DECLARE FLAGS AND VARIABLES
 cwd="$(pwd)"
 input_file="Input_file"
@@ -76,7 +101,7 @@ while getopts $options opt; do
 			;;
 		g ) group_name=$OPTARG
 			;;
-		R ) reconstruct=true 
+		R ) reconstruct=true
 			;;
 		K )
 			if [ $OPTARG -lt 0 ] || [ $OPTARG -gt 100 ]; then
@@ -104,7 +129,7 @@ while getopts $options opt; do
 		  	echo $VERSION
 		  	exit 1
 		  	;;
-		\?)  
+		\?)
 			echo "Invalid Option: -$OPTARG" 1>&2
 			usage
 			exit 1
@@ -113,7 +138,7 @@ while getopts $options opt; do
       		echo "Option -$OPTARG requires an argument." >&2
       		exit 1
       		;;
-      	* ) 
+      	* )
 			echo "Unimplemented option: -$OPTARG" >&2;
 			exit 1
 			;;
@@ -157,10 +182,10 @@ echo "Generating summary karyotype file with plasmids that mapped more than" $co
 if [ $reconstruct = true ];then
 
 	awk '{print "chr -", $1, $1, "0", $2, "id="$1}' $input_file \
-	>$output_dir/$file_name".karyotype_summary.txt"
+	>$output_dir/$file_name".karyotype_summary.txt" || error ${LINENO} $(basename $0) "Awk command for karyotype summary in $file_name\".karyotype_summary.txt\" creation. See $output_dir/logs for more information"
 
 	awk '{print "chr -", $1, $1, "0", $2, "id="$1}' $input_file \
-	>$output_dir/$file_name".karyotype_individual.txt"
+	>$output_dir/$file_name".karyotype_individual.txt" || error ${LINENO} $(basename $0) "Awk command for karyotype individual in $file_name\".karyotype_individual.txt\" creation. See $output_dir/logs for more information."
 
 else
 	awk '
@@ -168,7 +193,7 @@ else
 			{print "chr -", $1, $1, "0", $4, "id="$1}
 		}
 		' $input_file \
-		> $output_dir/$file_name".karyotype_summary.txt"
+		> $output_dir/$file_name".karyotype_summary.txt" || error ${LINENO} $(basename $0) "Awk command for karyotype summary in $file_name\".karyotype_summary.txt\" creation. See $output_dir/logs for more information."
 
 
 	echo "Generating individual karyotype file with plasmids that mapped more than" $coverage_cutoff_individual_percentage"%"
@@ -178,7 +203,8 @@ else
 			{print "chr -", $1, $1, "0", $4, "id="$1}
 		}
 		' $input_file \
-		> $output_dir/$file_name".karyotype_individual.txt"
+		> $output_dir/$file_name".karyotype_individual.txt" || error ${LINENO} $(basename $0) "Awk command for karyotype individual in $file_name\".karyotype_individual.txt\" creation. See $output_dir/logs for more information"
+
 fi
 
 echo "$(date)"

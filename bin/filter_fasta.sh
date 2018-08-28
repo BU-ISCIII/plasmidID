@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Exit immediately if a pipeline, which may consist of a single simple command, a list, 
+# Exit immediately if a pipeline, which may consist of a single simple command, a list,
 #or a compound command returns a non-zero status: If errors are not handled by user
 set -e
 #set -x
@@ -11,13 +11,13 @@ set -e
 #INSTITUTION:ISCIII
 #CENTRE:BU-ISCIII
 #AUTHOR: Pedro J. Sola
-VERSION=1.0 
+VERSION=1.0
 #CREATED: 21 March 2018
 #REVISION:
 #		22 March 2018: Handle output directory by default the same as -f file
 #		13 April 2018: Include -G option to filter any file by term with both file or term
 #DESCRIPTION:Script that extract sequences by term, either by key or file with a list
-#AKNOWLEDGE: 
+#AKNOWLEDGE:
 #		-Multiple arguments in one flag: https://stackoverflow.com/questions/7529856/retrieving-multiple-arguments-for-a-single-option-using-getopts-in-bash
 #TODO:
 #		-Add and remove sequences in the same execution
@@ -60,6 +60,30 @@ if [ $# = 0 ] ; then
  exit 1
 fi
 
+# Error handling
+error(){
+  local parent_lineno="$1"
+  local script="$2"
+  local message="$3"
+  local code="${4:-1}"
+
+	RED='\033[0;31m'
+	NC='\033[0m'
+
+  if [[ -n "$message" ]] ; then
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "MESSAGE:\n"
+    echo -e "$message"
+    echo -e "\n---------------------------------------\n"
+  else
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "\n---------------------------------------\n"
+  fi
+
+  exit "${code}"
+}
 
 #DECLARE FLAGS AND VARIABLES
 term_option=false
@@ -106,7 +130,7 @@ while getopts $options opt; do
 		  	echo $VERSION
 		  	exit 1
 		  	;;
-		\?)  
+		\?)
 			echo "Invalid Option: -$OPTARG" 1>&2
 			usage
 			exit 1
@@ -115,7 +139,7 @@ while getopts $options opt; do
       		echo "Option -$OPTARG requires an argument." >&2
       		exit 1
       		;;
-      	* ) 
+      	* )
 			echo "Unimplemented option: -$OPTARG" >&2;
 			exit 1
 			;;
@@ -157,7 +181,7 @@ if [ $file_option = true ] && [ ! $file_name ]; then
 	file_name=$(echo $(basename $file_for_filtering))
 elif [ $file_option = false ] && [ ! $file_name  ]; then
  	file_name=$terms_for_filtering #First term supplied by -l
-else 
+else
 	echo "File name is=" $file_name
 fi
 
@@ -193,7 +217,7 @@ if [ $general_filter = true ]; then
 	awk '
 		/'"${final_list_terms_regexp}"'/ {print $0}
 		' $input_file \
-		> $output_dir/$file_name"_term"
+		> $output_dir/$file_name"_term" || error ${LINENO} $(basename $0) "Awk command for fasta filtering in $file_name\"_term\" creation. See $output_dir/logs for more information."
 
 	echo "$(date)"
 	echo "Done general filtering terms on file" $(basename $input_file)
@@ -205,10 +229,10 @@ else
 	seq_number_prev=$(cat $input_file | grep ">" | wc -l)
 
 	awk '
-		BEGIN {RS=">"} 
+		BEGIN {RS=">"}
 		'"${negative_filter}"'/'"${final_list_terms_regexp}"'/ {print ">"$0}
 		' $input_file \
-		> $output_dir/$file_name"_term.fasta"
+		> $output_dir/$file_name"_term.fasta" || error ${LINENO} $(basename $0) "Awk command for fasta filtering in $file_name\"_term.fata\" creation. See $output_dir/logs for more information."
 
 	echo "$(date)"
 	echo "DONE Filtering terms on file" $(basename $input_file)
