@@ -305,6 +305,6 @@ workflows:
             - test_apps
           filters:
             branches:
-              only: master
+              only: feature/circle-testing
             tags:
               only: /.*/
