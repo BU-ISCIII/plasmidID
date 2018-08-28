@@ -275,4 +275,4 @@ if [ clean = true ];then
 		rm $circosDir/$sample"_individual.circos.conf"
 fi
 
-echo "DONE, files can be found at" $circosDir
+echo "DONE, files can be found at $circosDir"

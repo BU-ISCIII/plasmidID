@@ -453,7 +453,7 @@ Reads will be quality trimmed with a window of 4 and an average quality of 20"
 		echo -e "\nFound trimmed files for this sample" $sample;
 		echo "Omitting trimming"
 	else
-		quality_trim.sh -1 $r1_file -2 $r2_file -s $sample -g $group -o $output_dir/$group/$sample/trimmed -d $trimmomatic_directory -T $threads &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information."
+		quality_trim.sh -1 $r1_file -2 $r2_file -s $sample -g $group -o $output_dir/$group/$sample/trimmed -d $trimmomatic_directory -T $threads &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information. \ncommand: \n quality_trim.sh -1 $r1_file -2 $r2_file -s $sample -g $group -o $output_dir/$group/$sample/trimmed -d $trimmomatic_directory -T $threads"
 	fi
 else
 	echo -e "\nNo trim selected, skipping trimming step"
@@ -482,14 +482,14 @@ if [ $include_assembly = true ]; then
 Reads will be assembled using SPAdes with k-mers: 21,33,55,77,99,127. This might take a while. \n \
 I suggest compare other assembly methods and input the contigs with -c|--contig option\n"
 			check_dependencies.sh spades.py
-			spades_assembly.sh -p $r1_file_mapping -P $r2_file_mapping -c -T $threads -o $output_dir/$group/$sample/assembly &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information."
+			spades_assembly.sh -p $r1_file_mapping -P $r2_file_mapping -c -T $threads -o $output_dir/$group/$sample/assembly &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\n command:\n spades_assembly.sh -p $r1_file_mapping -P $r2_file_mapping -c -T $threads -o $output_dir/$group/$sample/assembly"
 		else
 
 			echo -e "\n${CYAN}ASSEMBLY READS${NC} ($(date))\n \
 Reads will be assembled using SPAdes with k-mers: 21,33,55,77,99,127. This might take a while. \n \
 I suggest compare other assembly methods and input the contigs with -c|--contigs option.\n"
 			check_dependencies.sh spades.py
-			spades_assembly.sh -q $output_dir/$group/$sample/trimmed/ -c -T $threads -o $output_dir/$group/$sample/assembly &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information."
+			spades_assembly.sh -q $output_dir/$group/$sample/trimmed/ -c -T $threads -o $output_dir/$group/$sample/assembly &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\n command: \n spades_assembly.sh -q $output_dir/$group/$sample/trimmed/ -c -T $threads -o $output_dir/$group/$sample/assembly"
 
 		fi
 		contigs=$output_dir/$group/$sample/assembly/scaffolds.fasta
@@ -944,7 +944,7 @@ else
 	#database/sample.gff
 	#echo "rename_from_fasta.sh -i $output_dir/$group/$sample/database/$sample.gff -1 $reconstruct_fasta -2 $output_dir/$group/$sample/database/$sample.fna" >> $command_log
 
-	rename_from_fasta.sh -i $output_dir/$group/$sample/database/$sample".gff" -1 $reconstruct_fasta -2 $output_dir/$group/$sample/database/$sample".fna" &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information."
+	rename_from_fasta.sh -i $output_dir/$group/$sample/database/$sample".gff" -1 $reconstruct_fasta -2 $output_dir/$group/$sample/database/$sample".fna" &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\n command:\n rename_from_fasta.sh -i $output_dir/$group/$sample/database/$sample\".gff\" -1 $reconstruct_fasta -2 $output_dir/$group/$sample/database/$sample\".fna\""
 
 	#sample.gff.renamed
 
@@ -975,5 +975,4 @@ draw_circos_images.sh -i $output_dir/$group/$sample \
 -l $output_dir/$group/$sample/logs/draw_circos_images.log \
 -c $verbose_option_circos || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information."
 
-echo -e "\n${YELLOW}ALL DONE WITH plasmidID${NC}\n \
-Thank you for using plasmidID\n"
+echo -e "\n${YELLOW}ALL DONE WITH plasmidID${NC}\nThank you for using plasmidID\n"
