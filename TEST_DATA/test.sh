@@ -135,3 +135,6 @@ echo "Contigs: $contigs"
 echo "Options: --no-trim"
 
 $script_dir/../plasmidID.sh -1 $script_dir/$R1 -2 $script_dir/$R2 -d $script_dir/$database -c $script_dir/$contigs -s KPN --no-trim
+
+
+echo "ALL DONE. TEST COMPLETED SUCCESSFULLY YOUR INSTALLATION SHOULD BE CORRECT."
