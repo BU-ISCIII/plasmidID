@@ -200,6 +200,12 @@ jobs:
                     echo "Testing ${app}"
                     docker run --rm=false ${CONTAINER_NAME}:latest scif test ${app}
                 done
+      - run:
+          name: Run plasmidID test
+          no_output_timeout: 2h
+          command: |
+            /tmp/src/TEST_DATA/test.sh
+
       - store_test_results:
           path: /home/circleci/out/tests
 
