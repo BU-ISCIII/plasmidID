@@ -11,7 +11,8 @@ RUN echo "Install basic development tools" && \
     echo "Installing SCI-F" && \
     pip install scif ipython && \
     echo "Installing plasmidID app" && \
-    scif install /opt/samtools_v1.9_centos7.scif
+    #scif install /opt/samtools_v1.9_centos7.scif
+    scif install /opt/plasmidid_vdev_centos7.scif
 #ENV find /scif/apps -maxdepth 2 -name "bin" | while read in; do echo "PATH=\${PATH}:$in";done | tr '\n' ' '
 
 
