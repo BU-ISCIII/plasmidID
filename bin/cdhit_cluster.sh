@@ -244,7 +244,7 @@ else
 	if [ $cd_hit_command  == "psi-cd-hit.pl" ]; then
 		
 		check_dependencies.sh psi-cd-hit.pl 
-		$cd_hit_command -i $(basename $input_file) -o $file_name""_""$cluster_cutoff_input -c $cluster_cutoff -G $global_psi_cd_hit -g 1 -prog $psi_cd_hit_program -circle $is_circle
+		$cd_hit_command -i $(basename $input_file) -o $file_name""_""$cluster_cutoff_input -c $cluster_cutoff -G $global_psi_cd_hit -g 1 -prog $psi_cd_hit_program -circle $is_circle -core $threads
 	
 	else
 

@@ -539,7 +539,7 @@ done
 Reads will be mapped against database supplied for further coverage calculation,\n \
 this will determine the most likely plasmids in the sample" $sample
 
-	if [ -f  $output_dir/$group/$sample/mapping/$sample.sorted.bam -a -f  $output_dir/$group/$sample/mapping/$sample.sorted.bam.bai -o -f  $output_dir/$group/$sample/mapping/$sample.sam ];then
+	if [ -f  $output_dir/$group/$sample/mapping/$sample.sorted.bam -a -f  $output_dir/$group/$sample/mapping/$sample.sorted.bam.bai ];then
 		echo -e "\nFound a mapping file for sample" $sample;
 		echo "Omitting mapping"
 	else
@@ -782,15 +782,15 @@ gff_to_bed.sh -i $output_dir/$group/$sample/data/$sample".gff" -L &>> $log_file
 #sample.gff.forward.bed
 #sample.gff.reverse.bed
 
-coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 10000 &>> $log_file
+coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 1500 &>> $log_file
 
 #sample.gff.coordinates
 
-coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.forward.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 10000 -f $sample".gff.forward" &>> $log_file
+coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.forward.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 1500 -f $sample".gff.forward" &>> $log_file
 
 #sample.gff.forward.coordinates
 
-coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.reverse.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 10000 -f $sample".gff.reverse" &>> $log_file
+coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.reverse.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 1500 -f $sample".gff.reverse" &>> $log_file
 
 #sample.gff.reverse.coordinates
 
