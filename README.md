@@ -12,4 +12,4 @@ PlasmidID is a **computational pipeline** implemented in **BASH** that maps Illu
 This image sumarizes PlasmidID pipeline, including the most important steps.
 For furder details, including database download, dependencies and execution, please visit: <br> [**PLASMIDID WIKI**](https://github.com/BU-ISCIII/plasmidID/wiki)
 
-<img align="center" src="https://github.com/BU-ISCIII/plasmidID/blob/master/img/Short_pipeline.png"  width="300">
+<p align="center"><img src="https://github.com/BU-ISCIII/plasmidID/blob/master/img/Short_pipeline.png" alt="workflow_small"  width="400"><\p>
