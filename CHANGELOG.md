@@ -1,6 +1,15 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 1.3.3 - 2018-09-17
+### Added
+- Automatically annotated genes/cds are displayed differently depending on whether they are located in forward or reverse 
+- Psi-cd-hit and blast now handle threads
+
+###Fixed
+- Some plasmids from the database were not annotated
+- Limit sample name to 37 characters, capped by prokka
+
 ## 1.3.1
 ### Added
 - Quick staus of values applied to plasmid reconstruction
