@@ -141,14 +141,14 @@ cat $input_file | sed 's/|/-/g' > $output_dir/$file_name".nopipe.tmp"
 
 
 #Paste colums to relate names in a dictionary
-awk 'NR==FNR{ac[NR]=$0;next}{print ac[FNR], "\t", $0 }' $output_dir/$fasta_file_old_name".ac" $output_dir/$fasta_file_new_name".ac" > $output_dir/dictionary.txt
+awk 'NR==FNR{ac[NR]=$0;next}{print ac[FNR], "\t", $0"\\t" }' $output_dir/$fasta_file_old_name".ac" $output_dir/$fasta_file_new_name".ac" > $output_dir/dictionary.txt
 
 #Rename fields
 
 #cat $output_dir/dictionary.txt | while read -r line; do word1=$(cut -f1); word2=$(cut -f2); echo "##########word 1="$word1;echo "###########word 2="$word2; sed 's/$word2/$word1/g' $input_file; done > $output_dir/$file_name".renamed"
 
 
-awk 'FNR==NR {dict[$2]=$1; next} {for (i in dict) gsub(i, dict[i])}1' $output_dir/dictionary.txt $output_dir/$file_name".nopipe.tmp" > $output_dir/$file_name".renamed"
+awk 'FNR==NR {dict[$2]=$1"\t"; next} {for (i in dict) gsub(i, dict[i])}1' $output_dir/dictionary.txt $output_dir/$file_name".nopipe.tmp" > $output_dir/$file_name".renamed"
 #awk 'NR==FNR{dict[$2]=$1;next}{$1=dict[$1]}1' $output_dir/dictionary.txt $input_file #> $output_dir/$file_name".renamed"
 
 

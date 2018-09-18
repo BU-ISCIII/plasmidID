@@ -34,7 +34,7 @@ usage : $0 <-i inputfile(.bed)> <-l link_file> [-o <directory>] [-n <number>] [-
 	-i input file in bed format
 	-l link file with coordinates relationship within bed file ddbb and link reference
 	-o output directory (optional). By default the file is placed in the same location as input
-	-n length to extend annotation, default 5000
+	-n length to extend annotation, default 2000
 	-f file name
 	-u uniq mode. Remove duplicates
 	-p prokka mode. Remove suffix of prokka 
@@ -60,7 +60,7 @@ fi
 cwd="$(pwd)"
 input_file="Bed_file"
 link_file="Link_file"
-number_extension=5000
+number_extension=2000
 unique=false
 prokka_mode=false
 suffix=""

@@ -199,6 +199,7 @@ blastn -query $input_file \
 -db $database_dir/$database_name".blast.tmp" \
 -out $output_dir/$file_name"."$prefix".blast" \
 -evalue $evalue \
+-num_threads $threads \
 -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen slen"
 
 
