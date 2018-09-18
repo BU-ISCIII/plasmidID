@@ -15,7 +15,7 @@ For furder details, including:
 - [Dependencies](https://github.com/BU-ISCIII/plasmidID/wiki/Installation-and-Dependencies)
 - [Execution](https://github.com/BU-ISCIII/plasmidID/wiki/Execution)
 - [Results interpretation](https://github.com/BU-ISCIII/plasmidID/wiki/Understanding-the-image:-track-by-track)
-- and more, please visit: <br> [**PLASMIDID WIKI**](https://github.com/BU-ISCIII/plasmidID/wiki)
+- and more, please visit: [**PLASMIDID WIKI**](https://github.com/BU-ISCIII/plasmidID/wiki)
 
 <p align="center"><img src="https://github.com/BU-ISCIII/plasmidID/blob/master/img/Short_pipeline.png" alt="workflow_small"  width="500">
 
