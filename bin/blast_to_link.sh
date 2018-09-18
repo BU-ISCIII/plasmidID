@@ -222,7 +222,7 @@ awk '
 	{split($2, database_name, "'"${database_delimiter}"'")
 	split($1, query_name, "'"${query_delimiter}"'")
 	header=$1$2}
-	{if ((header in contigPlasmid) && ($3>='"${blast_id_cutoff}"') && (($4/$13)>=0.05)) 
+	{if ((header in contigPlasmid) && ($3>='"${blast_id_cutoff}"') && (($4/$13)>=0.02)) 
 		print query_name['"$query_field"'], $7,$8,database_name['"$database_field"'],$9,$10'"$id_output"'}' \
 	$output_dir/$file_name".dict_length_percentage" $input_file \
 	> $output_dir/$file_name."blast.links"
