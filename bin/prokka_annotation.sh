@@ -9,7 +9,7 @@
 #INSTITUTION:ISCIII
 #CENTRE:BU-ISCIII
 #AUTHOR: Pedro J. Sola
-VERSION=1.0 
+VERSION=1.0
 #CREATED: 30 April 2018
 #REVISION:
 #12 June 2018: Handled cleaning process without hard coded paths
@@ -55,7 +55,7 @@ usage : $0 <-i inputfile(FASTA)> <-p prefix> [-o <directory>] [-k <kingdom>]
 Output directory is the same as input directory by default
 
 example: prokka_annotation -i ecoli.fasta -p ECO -T 5
-		 
+
 
 EOF
 }
@@ -70,6 +70,30 @@ if [ $# = 0 ] ; then
  exit 1
 fi
 
+# Error handling
+error(){
+  local parent_lineno="$1"
+  local script="$2"
+  local message="$3"
+  local code="${4:-1}"
+
+	RED='\033[0;31m'
+	NC='\033[0m'
+
+  if [[ -n "$message" ]] ; then
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "MESSAGE:\n"
+    echo -e "$message"
+    echo -e "\n---------------------------------------\n"
+  else
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "\n---------------------------------------\n"
+  fi
+
+  exit "${code}"
+}
 
 #DECLARE FLAGS AND VARIABLES
 cwd="$(pwd)"
@@ -89,7 +113,7 @@ while getopts $options opt; do
 		i )
 			input_file=$OPTARG
 			;;
-		
+
 		o )
 			output_dir=$OPTARG
 			;;
@@ -97,25 +121,25 @@ while getopts $options opt; do
 			prefix=$OPTARG
 			file_name=$OPTARG
 			;;
-		k )			
+		k )
           	kingdom=$OPTARG
           	;;
-        g )			
+        g )
           	group=$OPTARG
           	;;
-        S )			
+        S )
           	species=$OPTARG
           	;;
-        G)			
+        G)
           	genus=$OPTARG
           	;;
-		c )			
+		c )
           	clean=true
           	;;
-        T)			
+        T)
           	threads=$OPTARG
           	;;
-        	
+
         h )
 		  	usage
 		  	exit 1
@@ -124,7 +148,7 @@ while getopts $options opt; do
 		  	echo $VERSION
 		  	exit 1
 		  	;;
-		\?)  
+		\?)
 			echo "Invalid Option: -$OPTARG" 1>&2
 			usage
 			exit 1
@@ -133,7 +157,7 @@ while getopts $options opt; do
       		echo "Option -$OPTARG requires an argument." >&2
       		exit 1
       		;;
-      	* ) 
+      	* )
 			echo "Unimplemented option: -$OPTARG" >&2;
 			exit 1
 			;;
@@ -190,7 +214,7 @@ prokka --force --outdir $output_dir \
 --locustag $prefix \
 --compliant \
 --cpus $threads \
-$input_file
+$input_file || error ${LINENO} $(basename $0) "Prokka command failed. See $output_dir/logs for more information."
 
 echo "$(date)"
 echo "done annotating $input_file with prokka"

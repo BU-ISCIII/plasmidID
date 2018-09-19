@@ -3,6 +3,7 @@ TEST/
 TEST_DATA/*.bt2
 TEST_DATA/*.length
 TEST_DATA/*.blast*
+NO_GROUP/
 psi_cd_hit_may_2018_log.txt
 plasmid.database*
 

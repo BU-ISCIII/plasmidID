@@ -1,24 +1,18 @@
-FROM centos
+FROM centos:latest
 
-# Dependencies
-RUN	yum -y groupinstall "Development Tools"
-RUN yum -y update && yum -y install wget curl
-RUN yum -y install python-setuptools
-RUN easy_install pip
+COPY ./scif_app_recipes/*  /opt/
 
-# Install scif from pypi
-RUN pip install scif
+RUN echo "Install basic development tools" && \
+    yum -y groupinstall "Development Tools" && \
+    yum -y update && yum -y install wget curl && \
+    echo "Install python2.7 setuptools and pip" && \
+    yum -y install python-setuptools && \
+    easy_install pip && \
+    echo "Installing SCI-F" && \
+    pip install scif ipython && \
+    echo "Installing plasmidID app" && \
+    scif install /opt/plasmidid_vdev_centos7.scif
 
-# Install the filesystem from the recipe
-ADD apps_recipes/*.scif /opt/
-RUN scif install /opt/bwa_v0.7.17_centos7.scif
-ENV PATH=${PATH}:/scif/apps/bwa/bin
-RUN scif install /opt/samtools_v1.9_centos7.scif
-ENV PATH=${PATH}:/scif/apps/samtools/bin
-RUN scif install /opt/bcftools_v1.9_centos7.scif
-ENV PATH=${PATH}:/scif/apps/bcftools/bin
 
-# SciF Entrypoint
-# Disabled because of compatibility with nextflow.
-#ENTRYPOINT ["scif"]
-CMD scif
+ENTRYPOINT ["/opt/docker-entrypoint.sh"]
+CMD ["plasmidID.sh"]

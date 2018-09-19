@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Exit immediately if a pipeline, which may consist of a single simple command, a list, 
+# Exit immediately if a pipeline, which may consist of a single simple command, a list,
 #or a compound command returns a non-zero status: If errors are not handled by user
 set -e
 # Treat unset variables and parameters other than the special parameters ‘@’ or ‘*’ as an error when performing parameter expansion.
@@ -20,7 +20,7 @@ VERSION=1.3.3
 #
 #ACKNOLEDGE: longops2getops.sh: https://gist.github.com/adamhotep/895cebf290e95e613c006afbffef09d7
 #
-#DESCRIPTION: plasmidID is a computational pipeline tha reconstruct and annotate the most likely plasmids present in one sample		
+#DESCRIPTION: plasmidID is a computational pipeline tha reconstruct and annotate the most likely plasmids present in one sample
 #
 #
 #================================================================
@@ -52,7 +52,7 @@ usage : $0 <-1 R1> <-2 R2> <-d database(fasta)> <-s sample_name> [-g group_name]
 	--explore	Relaxes default parameters to find less reliable relationships within data supplied and database
 	--only-reconstruct	Database supplied will not be filtered and all sequences will be used as scaffold
 						This option does not require R1 and R2, instead a contig file can be supplied
-	
+
 	Trimming:
 	--trimmomatic-directory Indicate directory holding trimmomatic .jar executable
 	--no-trim	Reads supplied will not be quality trimmed
@@ -61,7 +61,7 @@ usage : $0 <-1 R1> <-2 R2> <-d database(fasta)> <-s sample_name> [-g group_name]
 	-C | --coverage-cutoff	<int>	minimun coverage percentage to select a plasmid as scafold (0-100), default 80
 	-S | --coverage-summary	<int>	minimun coverage percentage to include plasmids in summary image (0-100), default 90
 	-f | --cluster		<int>	identity percentage to cluster plasmids into the same representative sequence (0-100), default 80
-	
+
 	Contig local alignment
 	-i | --alignment-identity <int>	minimun identity percentage aligned for a contig to annotate, default 90
 	-l | --alignment-percentage <int>	minimun length percentage aligned for a contig to annotate, default 30
@@ -93,6 +93,30 @@ if [ $# = 0 ]; then
 	exit 1
 fi
 
+# Error handling
+error(){
+  local parent_lineno="$1"
+  local script="$2"
+  local message="$3"
+  local code="${4:-1}"
+
+	RED='\033[0;31m'
+	NC='\033[0m'
+
+  if [[ -n "$message" ]] ; then
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "MESSAGE:\n"
+    echo -e "$message"
+    echo -e "\n---------------------------------------\n"
+  else
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "\n---------------------------------------\n"
+  fi
+
+  exit "${code}"
+}
 
 # translate long options to short
 reset=true
@@ -131,7 +155,7 @@ do
 		--memory)		set -- "$@"	-M ;;
 		--threads)		set -- "$@"	-T ;;
        	--help)    	set -- "$@" -h ;;
-		--vervose) 	set -- "$@" -V ;;
+		--verbose) 	set -- "$@" -V ;;
        	--version) 	set -- "$@" -v ;;
        # pass through anything else
        *)         set -- "$@" "$arg" ;;
@@ -139,6 +163,7 @@ do
 done
 
 #DECLARE FLAGS AND VARIABLES
+script_dir=$(dirname $(readlink -f $0))
 threads=1
 max_memory=4000
 cwd="$(pwd)"
@@ -156,9 +181,9 @@ only_reconstruct=false
 explore=false
 include_assembly=true
 annotation=false
-vervose_option_circos=""
-is_vervose=false
-config_dir="config_files"
+verbose_option_circos=""
+is_verbose=false
+config_dir="$script_dir/config_files"
 trimmomatic_directory=/opt/Trimmomatic/
 config_file_individual="circos_individual_1_3_3.conf"
 #SET COLORS
@@ -228,19 +253,19 @@ while getopts $options opt; do
 		S )
 			coverage_summary=$OPTARG
 			;;
-		f )			
+		f )
           	cluster_cutoff=$OPTARG
       		;;
       	i)
 			alignment_identity=$OPTARG
 			;;
-      	l )			
+      	l )
           	alignment_percentage=$OPTARG
       		;;
-      	L )			
+      	L )
           	alignment_total=$OPTARG
       		;;
-        T ) 
+        T )
 			threads=$OPTARG
             ;;
         M)
@@ -250,8 +275,8 @@ while getopts $options opt; do
 			output_dir=$OPTARG
 			;;
 		V)
-			vervose_option_circos="-V"
-			is_vervose=true
+			verbose_option_circos="-V"
+			is_verbose=true
 			log_file="/dev/stdout"
 			;;
         h )
@@ -262,7 +287,7 @@ while getopts $options opt; do
 		  	echo $VERSION
 		  	exit 1
 		  	;;
-		\?)  
+		\?)
 			echo "Invalid Option: -$OPTARG" 1>&2
 			usage
 			exit 1
@@ -271,7 +296,7 @@ while getopts $options opt; do
       		echo "Option -$OPTARG requires an argument." >&2
       		exit 1
       		;;
-      	* ) 
+      	* )
 			echo "Unimplemented option: -$OPTARG" >&2;
 			exit 1
 			;;
@@ -329,7 +354,7 @@ fi
 
 mkdir -p $output_dir/$group/$sample/logs
 
-if [ $is_vervose = false ]; then
+if [ $is_verbose = false ]; then
 	log_file=$output_dir/$group/$sample/logs/plasmidID.log
 	if [ -f $log_file ];then
 		rm $log_file
@@ -437,7 +462,7 @@ Reads will be quality trimmed with a window of 4 and an average quality of 20"
 		echo -e "\nFound trimmed files for this sample" $sample;
 		echo "Omitting trimming"
 	else
-		quality_trim.sh -1 $r1_file -2 $r2_file -s $sample -g $group -o $output_dir/$group/$sample/trimmed -d $trimmomatic_directory -T $threads &>> $log_file
+		quality_trim.sh -1 $r1_file -2 $r2_file -s $sample -g $group -o $output_dir/$group/$sample/trimmed -d $trimmomatic_directory -T $threads &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information. \ncommand: \n quality_trim.sh -1 $r1_file -2 $r2_file -s $sample -g $group -o $output_dir/$group/$sample/trimmed -d $trimmomatic_directory -T $threads"
 	fi
 else
 	echo -e "\nNo trim selected, skipping trimming step"
@@ -454,26 +479,27 @@ fi
 #############################################################################
 
 if [ $include_assembly = true ]; then
-	
+
 	if [ -f $output_dir/$group/$sample/assembly/scaffolds.fasta ]; then
 		echo -e "\nFound an assembled file for sample" $sample
 		echo "Omitting assembly"
 		contigs=$output_dir/$group/$sample/assembly/scaffolds.fasta
 	else
 		if [ $no_trim = true ]; then
-			
+
 			echo -e "\n${CYAN}ASSEMBLY READS${NC} ($(date))\n \
 Reads will be assembled using SPAdes with k-mers: 21,33,55,77,99,127. This might take a while. \n \
 I suggest compare other assembly methods and input the contigs with -c|--contig option\n"
 			check_dependencies.sh spades.py
-			spades_assembly.sh -p $r1_file_mapping -P $r2_file_mapping -c -T $threads -o $output_dir/$group/$sample/assembly &>> $log_file
+			spades_assembly.sh -p $r1_file_mapping -P $r2_file_mapping -c -T $threads -o $output_dir/$group/$sample/assembly &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\n command:\n spades_assembly.sh -p $r1_file_mapping -P $r2_file_mapping -c -T $threads -o $output_dir/$group/$sample/assembly"
 		else
-			
+
 			echo -e "\n${CYAN}ASSEMBLY READS${NC} ($(date))\n \
 Reads will be assembled using SPAdes with k-mers: 21,33,55,77,99,127. This might take a while. \n \
 I suggest compare other assembly methods and input the contigs with -c|--contigs option.\n"
 			check_dependencies.sh spades.py
-			spades_assembly.sh -q $output_dir/$group/$sample/trimmed/ -c -T $threads -o $output_dir/$group/$sample/assembly &>> $log_file
+			spades_assembly.sh -q $output_dir/$group/$sample/trimmed/ -c -T $threads -o $output_dir/$group/$sample/assembly &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\n command: \n spades_assembly.sh -q $output_dir/$group/$sample/trimmed/ -c -T $threads -o $output_dir/$group/$sample/assembly"
+
 		fi
 		contigs=$output_dir/$group/$sample/assembly/scaffolds.fasta
 	fi
@@ -492,7 +518,7 @@ fi
 if [ $only_reconstruct = false ]; then
 
 	reconstruct_fasta=$output_dir/$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff"_term.fasta"_$cluster_cutoff
-	
+
 
 ####### PREVIOUS SUMMARY OUTPUT########################
 #######################################################
@@ -525,7 +551,7 @@ variables[4]="$cluster_cutoff % identity"
 variables[5]="$filename_contigs"
 
 for i in $(seq 0 5)
-do 
+do
 
 #echo -e ${concepts[$i]} "\t" ${variables[$i]}
 length_concepts=$(echo "${concepts[$i]}" | wc -m)
@@ -557,11 +583,11 @@ this will determine the most likely plasmids in the sample" $sample
 	 	-s $sample \
 	 	-1 $r1_file_mapping \
 	 	-2 $r2_file_mapping \
-		-o $output_dir/$group/$sample/mapping &>> $log_file
+		-o $output_dir/$group/$sample/mapping &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\n command:\n bowtie_mapper.sh -a -d $database -T $threads -g $group -s $sample -1 $r1_file_mapping -2 $r2_file_mappint -o $output_dir/$group/$sample/mapping"
 
  	#group/sample/mapping/sample.sam
 
-	 	sam_to_bam.sh -i  $output_dir/$group/$sample/mapping/$sample.sam &>> $log_file
+	 	sam_to_bam.sh -i  $output_dir/$group/$sample/mapping/$sample.sam &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\n command: \nsam_to_bam.sh -i  $output_dir/$group/$sample/mapping/$sample.sam"
 
  	#group/sample/mapping/sample.bam
  	#group/sample/mapping/sample.bam.bai
@@ -577,7 +603,7 @@ will pass to further analysis"
 		echo -e "\nFound a coverage file for sample" $sample;
 		echo "Omitting coverage calculation"
 	else
-		get_coverage.sh -i  $output_dir/$group/$sample/mapping/$sample".sorted.bam" -d $database &>> $log_file
+		get_coverage.sh -i  $output_dir/$group/$sample/mapping/$sample".sorted.bam" -d $database &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\nget_coverage.sh -i  $output_dir/$group/$sample/mapping/$sample\".sorted.bam\" -d $database"
  	fi
  	#group/sample/mapping/sample.coverage
 
@@ -593,16 +619,16 @@ will pass to further analysis"
 		done
 	fi
 
- 	adapt_filter_coverage.sh -i  $output_dir/$group/$sample/mapping/$sample".coverage" -c $coverage_cutoff &>> $log_file
+ 	adapt_filter_coverage.sh -i  $output_dir/$group/$sample/mapping/$sample".coverage" -c $coverage_cutoff &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\nadapt_filter_coverage.sh -i  $output_dir/$group/$sample/mapping/$sample\".coverage\" -c $coverage_cutoff"
 
  	#sample.coverage_adapted
  	#sample.coverage_adapted_filtered_80
 
-	filter_fasta.sh -i $database -f  $output_dir/$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff &>> $log_file
+	filter_fasta.sh -i $database -f  $output_dir/$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\nfilter_fasta.sh -i $database -f  $output_dir/$group/$sample/mapping/$sample\".coverage_adapted_filtered_\"$coverage_cutoff"
 
 	#sample.coverage_adapted_filtered_50_term.fasta
 
-	
+
 	if [ ! -s  $output_dir/$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff ]; then \
 		echo -e "${RED}ERROR${NC}"
 		echo "NO PLASMIDS MATCHED MAPPING REQUERIMENTS, PLEASE, TRY WITH LOWER COVERAGE CUTOFF"
@@ -612,18 +638,19 @@ will pass to further analysis"
 
 	echo -e "\n${CYAN}CLUSTERING PUTATIVE PLASMIDS${NC} ($(date))\n \
 Clustering by homology removes database redundancy, taking the longest representative of each group.\n \
-Clusters will be composed by plasmids with an identity of" $cluster_cutoff"% or higher" 
+Clusters will be composed by plasmids with an identity of" $cluster_cutoff"% or higher"
 
 	if [ -f  $output_dir/$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff"_term.fasta_"$cluster_cutoff ];then \
 		echo -e "\nFound a clustered file for sample" $sample;
 		echo "Omitting clustering"
 	else
-		cdhit_cluster.sh -i  $output_dir/$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff"_term.fasta" -c $cluster_cutoff -M $max_memory -T $threads &>> $log_file
+		cdhit_cluster.sh -i  $output_dir/$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff"_term.fasta" -c $cluster_cutoff -M $max_memory -T $threads &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\ncdhit_cluster.sh -i  $output_dir/$group/$sample/mapping/$sample\".coverage_adapted_filtered_\"$coverage_cutoff\"_term.fasta\" -c $cluster_cutoff -M $max_memory -T $threads"
+
 	fi
 
 
-	process_cluster_output.sh -i $reconstruct_fasta -b  $output_dir/$group/$sample/mapping/$sample".coverage_adapted" -c $coverage_cutoff &>> $log_file
-	
+	process_cluster_output.sh -i $reconstruct_fasta -b  $output_dir/$group/$sample/mapping/$sample".coverage_adapted" -c $coverage_cutoff &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\nprocess_cluster_output.sh -i $reconstruct_fasta -b  $output_dir/$group/$sample/mapping/$sample\".coverage_adapted\" -c $coverage_cutoff"
+
 	mkdir -p $output_dir/$group/$sample/data
 	cp $output_dir/$group/$sample/mapping/$sample".coverage_adapted_clustered_ac" $output_dir/$group/$sample/data/$sample".coverage_adapted_clustered_ac"
 	#$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff"_term.fasta"_$cluster_cutoff >> FINAL CLUSTERED AND FILTERED FASTA FILE TO USE AS SCAFFOLD
@@ -647,7 +674,7 @@ Clusters will be composed by plasmids with an identity of" $cluster_cutoff"% or 
 	echo -e "\n${CYAN}OBTAINING KARYOTYPE TRACKS${NC} ($(date))\n \
 A file with the informatin of putative plasmid and its length will be generated.\n"
 
-	build_karyotype.sh -i  $output_dir/$group/$sample/mapping/$sample".coverage_adapted_clustered" -K $coverage_summary -k $coverage_cutoff -o  $output_dir/$group/$sample/data &>> $log_file
+	build_karyotype.sh -i  $output_dir/$group/$sample/mapping/$sample".coverage_adapted_clustered" -K $coverage_summary -k $coverage_cutoff -o  $output_dir/$group/$sample/data &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\nbuild_karyotype.sh -i  $output_dir/$group/$sample/mapping/$sample\".coverage_adapted_clustered\" -K $coverage_summary -k $coverage_cutoff -o  $output_dir/$group/$sample/data"
 
 	#group/sample/data
 	#sample.karyotype_individual.txt
@@ -660,11 +687,11 @@ A bedgraph file containing mapping information for filtered plasmids will be gen
 		echo "Found a coverage file for sample" $sample;
 		echo "Omitting coverage calculation"
 	else
-		get_coverage.sh -i $output_dir/$group/$sample/mapping/$sample".sorted.bam" -p -o $output_dir/$group/$sample/data &>> $log_file
+		get_coverage.sh -i $output_dir/$group/$sample/mapping/$sample".sorted.bam" -p -o $output_dir/$group/$sample/data &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\nget_coverage.sh -i $output_dir/$group/$sample/mapping/$sample\".sorted.bam\" -p -o $output_dir/$group/$sample/data"
 	fi
 	#sample.bedgraph
 
-	filter_fasta.sh -i $output_dir/$group/$sample/data/$sample".bedgraph" -f $output_dir/$group/$sample/mapping/$sample".coverage_adapted_clustered_ac" -G &>> $log_file
+	filter_fasta.sh -i $output_dir/$group/$sample/data/$sample".bedgraph" -f $output_dir/$group/$sample/mapping/$sample".coverage_adapted_clustered_ac" -G &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\nfilter_fasta.sh -i $output_dir/$group/$sample/data/$sample\".bedgraph\" -f $output_dir/$group/$sample/mapping/$sample\".coverage_adapted_clustered_ac\" -G"
 
 	#sample.bedgraph_term
 else
@@ -672,7 +699,7 @@ else
 ##########################ONLY RECONSTRUCT###########################################################################################################
 #####################################################################################################################################################
 
-	
+
 	echo -e "\n${BLUE}ONLY RECONSTRUCT MODE SELECTED${NC} ($(date))\n \
 ${YELLOW}WARNING${NC}:PlasmidID will not filter the database supplied by coverage,\n \
 instead all sequences supplied by user will be used as scaffold.\n \
@@ -688,12 +715,12 @@ Please use a fasta file with limited ammount of sequences."
 
 
 
-	calculate_seqlen.sh -i $database -r -o $output_dir/$group/$sample/data -n "database_reconstruct_"$sample &>> $log_file
+	calculate_seqlen.sh -i $database -r -o $output_dir/$group/$sample/data -n "database_reconstruct_"$sample &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\ncalculate_seqlen.sh -i $database -r -o $output_dir/$group/$sample/data -n "database_reconstruct_"$sample"
 	#"database_reconstruct_"$sample.length
 
-	awk '{print $1}' $output_dir/$group/$sample/data/"database_reconstruct_"$sample".length" > $output_dir/$group/$sample/data/$sample".coverage_adapted_clustered_ac"
+	awk '{print $1}' $output_dir/$group/$sample/data/"database_reconstruct_"$sample".length" > $output_dir/$group/$sample/data/$sample".coverage_adapted_clustered_ac" || error ${LINENO} $(basename $0) "AWK command fail when creating $sample\".coverage_adapted_clustered_ac\" file .See $output_dir/logs/plasmidID.log for more information.\ncommand:\nawk '{print $1}' $output_dir/$group/$sample/data/\"database_reconstruct_\"$sample\".length\" > $output_dir/$group/$sample/data/$sample\".coverage_adapted_clustered_ac\""
 
-	build_karyotype.sh -i $output_dir/$group/$sample/data/"database_reconstruct_"$sample".length" -R -o $output_dir/$group/$sample/data -f $sample &>> $log_file
+	build_karyotype.sh -i $output_dir/$group/$sample/data/"database_reconstruct_"$sample".length" -R -o $output_dir/$group/$sample/data -f $sample &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\nbuild_karyotype.sh -i $output_dir/$group/$sample/data/\"database_reconstruct_\"$sample\".length\" -R -o $output_dir/$group/$sample/data -f $sample"
 	#sample.karyotype_individual.txt
 	#sample.karyotype_individual.txt
 
@@ -735,7 +762,7 @@ variables[4]="$alignment_identity % identity"
 variables[5]=" "
 
 for i in $(seq 0 5)
-do 
+do
 
 #echo -e ${concepts[$i]} "\t" ${variables[$i]}
 length_concepts=$(echo "${concepts[$i]}" | wc -m)
@@ -756,7 +783,7 @@ if [ -f  $output_dir/$group/$sample/data/$sample".fna" -a -f  $output_dir/$group
 	echo "Omitting automatic annotation"
 else
 	#echo "prokka_annotation.sh -i $contigs -p $sample -T $threads -o  $output_dir/$group/$sample/data -c &>> $log_fil" >> $command_log
-	prokka_annotation.sh -i $contigs -p $sample -T $threads -o  $output_dir/$group/$sample/data -c &>> $log_file
+	prokka_annotation.sh -i $contigs -p $sample -T $threads -o  $output_dir/$group/$sample/data -c &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\nprokka_annotation.sh -i $contigs -p $sample -T $threads -o  $output_dir/$group/$sample/data -c"
 fi
 #sample.fna
 #sample.gff
@@ -766,39 +793,39 @@ echo -e "\n${CYAN}ALIGNING CONTIGS TO FILTERED PLASMIDS${NC} ($(date))\n \
 Contigs are aligned to filtered plasmids and those are selected by alignment identity and alignment percentage \
 in order to create links, full length and annotation tracks\n"
 
-blast_align.sh -i  $output_dir/$group/$sample/data/$sample".fna" -d $reconstruct_fasta -o  $output_dir/$group/$sample/data -p plasmids &>> $log_file
+blast_align.sh -i  $output_dir/$group/$sample/data/$sample".fna" -d $reconstruct_fasta -o  $output_dir/$group/$sample/data -p plasmids &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\nblast_align.sh -i  $output_dir/$group/$sample/data/$sample\".fna\" -d $reconstruct_fasta -o  $output_dir/$group/$sample/data -p plasmids"
 
 #sample.plasmids.blast
 
 
-blast_to_bed.sh -i  $output_dir/$group/$sample/data/$sample".plasmids.blast" -b $alignment_identity -l 0 -L 500 -d - -q _ -Q r -I &>> $log_file
+blast_to_bed.sh -i  $output_dir/$group/$sample/data/$sample".plasmids.blast" -b $alignment_identity -l 0 -L 500 -d - -q _ -Q r -I &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\nblast_to_bed.sh -i  $output_dir/$group/$sample/data/$sample\".plasmids.blast\" -b $alignment_identity -l 0 -L 500 -d - -q _ -Q r -I"
 
 #sample.plasmids.bed
 
-blast_to_complete.sh -i  $output_dir/$group/$sample/data/$sample".plasmids.blast" -l $alignment_percentage -b $alignment_identity &>> $log_file
+blast_to_complete.sh -i  $output_dir/$group/$sample/data/$sample".plasmids.blast" -l $alignment_percentage -b $alignment_identity &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\nblast_to_complete.sh -i  $output_dir/$group/$sample/data/$sample\".plasmids.blast\" -l $alignment_percentage -b $alignment_identity"
 
 #sample.plasmids.complete
 
-blast_to_link.sh -i  $output_dir/$group/$sample/data/$sample".plasmids.blast" -I -l $alignment_percentage -b $alignment_identity &>> $log_file
+blast_to_link.sh -i  $output_dir/$group/$sample/data/$sample".plasmids.blast" -I -l $alignment_percentage -b $alignment_identity &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\nblast_to_link.sh -i  $output_dir/$group/$sample/data/$sample\".plasmids.blast\" -I -l $alignment_percentage -b $alignment_identity"
 
 #sample.plasmids.links
 #sample.plasmids.blast.links
 
-gff_to_bed.sh -i $output_dir/$group/$sample/data/$sample".gff" -L &>> $log_file
+gff_to_bed.sh -i $output_dir/$group/$sample/data/$sample".gff" -L &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\ngff_to_bed.sh -i $output_dir/$group/$sample/data/$sample\".gff\" -L"
 
 #sample.gff.bed
 #sample.gff.forward.bed
 #sample.gff.reverse.bed
 
-coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 1500 &>> $log_file
+coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 1500 &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\ncoordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample\".gff.bed\" -l  $output_dir/$group/$sample/data/$sample\".plasmids.blast.links\" -p -n 1500"
 
 #sample.gff.coordinates
 
-coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.forward.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 1500 -f $sample".gff.forward" &>> $log_file
+coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.forward.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 1500 -f $sample".gff.forward" &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\ncoordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample\".gff.forward.bed\" -l  $output_dir/$group/$sample/data/$sample\".plasmids.blast.links\" -p -n 1500 -f $sample\".gff.forward\""
 
 #sample.gff.forward.coordinates
 
-coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.reverse.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 1500 -f $sample".gff.reverse" &>> $log_file
+coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.reverse.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 1500 -f $sample".gff.reverse" &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\ncoordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample\".gff.reverse.bed\" -l  $output_dir/$group/$sample/data/$sample\".plasmids.blast.links\" -p -n 1500 -f $sample\".gff.reverse\""
 
 #sample.gff.reverse.coordinates
 
@@ -839,7 +866,7 @@ Each database supplied will be locally aligned against contigs and the coordinat
 	do
 
 		let database_number=database_number+1
-		
+
 		#check if config file exist with highlights and text
 
 		#Declare variables
@@ -869,15 +896,15 @@ Each database supplied will be locally aligned against contigs and the coordinat
 		fi
 
 		#echo "blast_align.sh -i $ddbb_file -d $output_dir/$group/$sample/data/$sample".fna" -o $output_dir/$group/$sample/data -p $ddbb_name -f $sample -t $database_type &>> $log_file >> $command_log
-		blast_align.sh -i $ddbb_file -d $output_dir/$group/$sample/data/$sample".fna" -o $output_dir/$group/$sample/data -p $ddbb_name -f $sample -t $database_type &>> $log_file
+		blast_align.sh -i $ddbb_file -d $output_dir/$group/$sample/data/$sample".fna" -o $output_dir/$group/$sample/data -p $ddbb_name -f $sample -t $database_type &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\nblast_align.sh -i $ddbb_file -d $output_dir/$group/$sample/data/$sample\".fna\" -o $output_dir/$group/$sample/data -p $ddbb_name -f $sample -t $database_type"
 		#sample.annotation.blast
 
 		#echo "		blast_to_bed.sh -i $output_dir/$group/$sample/data/$sample"."$ddbb_name".blast" -b $percent_identity -l $percent_aligment -d _ -D r -q "$query_divisor" -Q $query_side $double_unique_command &>> $log_file"
-		blast_to_bed.sh -i $output_dir/$group/$sample/data/$sample"."$ddbb_name".blast" -b $percent_identity -l $percent_aligment -d _ -D r -q "$query_divisor" -Q $query_side $double_unique_command &>> $log_file
+		blast_to_bed.sh -i $output_dir/$group/$sample/data/$sample"."$ddbb_name".blast" -b $percent_identity -l $percent_aligment -d _ -D r -q "$query_divisor" -Q $query_side $double_unique_command &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\nblast_to_bed.sh -i $output_dir/$group/$sample/data/$sample\".\"$ddbb_name\".blast\" -b $percent_identity -l $percent_aligment -d _ -D r -q "$query_divisor" -Q $query_side $double_unique_command"
 		#sample.annotation.bed
 
 		#echo "coordinate_adapter.sh -i $output_dir/$group/$sample/data/$sample"."$ddbb_name".bed" -l $output_dir/$group/$sample/data/$sample".plasmids.blast.links" $is_unique_command &>> $log_file"
-		coordinate_adapter.sh -i $output_dir/$group/$sample/data/$sample"."$ddbb_name".bed" -l $output_dir/$group/$sample/data/$sample".plasmids.blast.links" $is_unique_command -n 1500 &>> $log_file
+		coordinate_adapter.sh -i $output_dir/$group/$sample/data/$sample"."$ddbb_name".bed" -l $output_dir/$group/$sample/data/$sample".plasmids.blast.links" $is_unique_command -n 1500 &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\ncoordinate_adapter.sh -i $output_dir/$group/$sample/data/$sample"."$ddbb_name\".bed\" -l $output_dir/$group/$sample/data/$sample\".plasmids.blast.links\" $is_unique_command"
 
 		#coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample"."$ddbb_name".forward.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 1000 -f $ddbb".gff.forward" &>> $log_file
 
@@ -889,7 +916,7 @@ Each database supplied will be locally aligned against contigs and the coordinat
 
 
 		printf '%s\n' "<highlight>" "file = ${coordinates_file}" "z= ${z_value}" "r1 = 0.90r" "r0 = 0.67r" "fill_color = ${color_highlight}" "</highlight>" >>  $output_dir/$group/$sample/data/pID_highlights.conf
-		
+
 		cat $output_dir/$group/$sample/data/$sample"."$ddbb_name".coordinates" >> $output_dir/$group/$sample/data/pID_text_annotation.coordinates
 
 	done
@@ -904,7 +931,7 @@ else
 	fi
 	touch $output_dir/$group/$sample/data/pID_highlights.conf
 	touch $output_dir/$group/$sample/data/pID_text_annotation.coordinates
-	
+
 fi
 
 
@@ -921,21 +948,21 @@ else
 	echo "Executing prokka for plasmids from database"
 
 	#echo "prokka_annotation.sh -i $reconstruct_fasta -p $sample -o $output_dir/$group/$sample/database -c" >> $command_log
-	prokka_annotation.sh -i $reconstruct_fasta -p $sample -T $threads -o $output_dir/$group/$sample/database -c &>> $log_file
+	prokka_annotation.sh -i $reconstruct_fasta -p $sample -T $threads -o $output_dir/$group/$sample/database -c &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\nprokka_annotation.sh -i $reconstruct_fasta -p $sample -T $threads -o $output_dir/$group/$sample/database -c"
 
 	#database/sample.fna
 	#database/sample.gff
 	#echo "rename_from_fasta.sh -i $output_dir/$group/$sample/database/$sample.gff -1 $reconstruct_fasta -2 $output_dir/$group/$sample/database/$sample.fna" >> $command_log
 
-	
+
 fi
-	rename_from_fasta.sh -i $output_dir/$group/$sample/database/$sample".gff" -1 $reconstruct_fasta -2 $output_dir/$group/$sample/database/$sample".fna" &>> $log_file
+	rename_from_fasta.sh -i $output_dir/$group/$sample/database/$sample".gff" -1 $reconstruct_fasta -2 $output_dir/$group/$sample/database/$sample".fna" &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\n command:\n rename_from_fasta.sh -i $output_dir/$group/$sample/database/$sample\".gff\" -1 $reconstruct_fasta -2 $output_dir/$group/$sample/database/$sample\".fna\""
 
 	#sample.gff.renamed
 
 	#echo "gff_to_bed.sh -i $output_dir/$group/$sample/database/$sample.gff.renamed -q " " -u -L" >> $command_log
 
-	gff_to_bed.sh -i $output_dir/$group/$sample/database/$sample".gff.renamed" -q " " -u -L &>> $log_file
+	gff_to_bed.sh -i $output_dir/$group/$sample/database/$sample".gff.renamed" -q " " -u -L &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\ngff_to_bed.sh -i $output_dir/$group/$sample/database/$sample\".gff.renamed\" -q \" \" -u -L"
 
 	#database/sample.gff.bed
 
@@ -949,7 +976,7 @@ Additionally a summary image will be created to determine redundancy within rema
 #echo "draw_circos_images.sh -i $output_dir/$group/$sample \
 #-d $config_dir \
 #-o $output_dir/$group/$sample/images \
-#-g $group -s $sample -l $output_dir/$group/$sample/logs/draw_circos_images.log -c $vervose_option_circos" >> $command_log 
+#-g $group -s $sample -l $output_dir/$group/$sample/logs/draw_circos_images.log -c $verbose_option_circos" >> $command_log
 
 draw_circos_images.sh -i $output_dir/$group/$sample \
 -d $config_dir \
@@ -958,8 +985,6 @@ draw_circos_images.sh -i $output_dir/$group/$sample \
 -g $group \
 -s $sample \
 -l $output_dir/$group/$sample/logs/draw_circos_images.log \
--c $vervose_option_circos
+-c $verbose_option_circos || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\ndraw_circos_images.sh -i $output/$group/$sample -d $config_dir -C $config_file_individual -o $output_dir/$group/$sample/images -g $group -s $sample -l $output_dir/$group/$sample/logs/draw_circos_images.log -c $verbose_option_circos"
 
-
-echo -e "\n${YELLOW}ALL DONE WITH plasmidID${NC}\n \
-Thank you for using plasmidID\n"
+echo -e "\n${YELLOW}ALL DONE WITH plasmidID${NC}\nThank you for using plasmidID\n"

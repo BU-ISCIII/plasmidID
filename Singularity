@@ -2,8 +2,7 @@ Bootstrap: docker
 From: centos:latest
 
 %files
-	./scif_app_recipes/plasmidid_v1.3.0_centos7.scif /opt
-
+	./scif_app_recipes/* /opt/
 %post
 	echo "Install basic development tools"
 	yum -y groupinstall "Development Tools"

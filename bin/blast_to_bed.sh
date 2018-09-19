@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Exit immediately if a pipeline, which may consist of a single simple command, a list, 
+# Exit immediately if a pipeline, which may consist of a single simple command, a list,
 #or a compound command returns a non-zero status: If errors are not handled by user
 #set -e
 #set -x
@@ -12,9 +12,9 @@
 #INSTITUTION:ISCIII
 #CENTRE:BU-ISCIII
 #AUTHOR: Pedro J. Sola
-VERSION=1.0 
+VERSION=1.0
 #CREATED: 4 May 2018
-#REVISION: 
+#REVISION:
 #06 May 2018: add id optiopn in bed output
 #04 June 2018: add an option for an aditional division mostly for ABR sort
 #
@@ -33,7 +33,7 @@ blast_to_bed is a script than obtain a BED file with coordinates of local blast 
 usage : $0 <-i inputfile(.blast)> <-b id cutoff> [-o <directory>] [-b <int(0-100)>] [-l <int(0-100)>] [-L <int>]
 		[-p <prefix>] [-d <delimiter>] [-D (l|r)] [-q <delimiter>] [-Q (l|r)] [-U <delimiter>] [-I] [-u] [-v] [-h]
 
-	-i input file 
+	-i input file
 	-b blast identity cutoff (0 - 100), default 90
 	-l blast length percentage cutoff (0 - 100), default 20, use 90 for genes
 	-L blast length alignment cutoff, default 0, use 200 or 500 for contigs
@@ -62,6 +62,29 @@ if [ $# = 0 ] ; then
  exit 1
 fi
 
+error(){
+  local parent_lineno="$1"
+  local script="$2"
+  local message="$3"
+  local code="${4:-1}"
+
+	RED='\033[0;31m'
+	NC='\033[0m'
+
+  if [[ -n "$message" ]] ; then
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "MESSAGE:\n"
+    echo -e "$message"
+    echo -e "\n---------------------------------------\n"
+  else
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "\n---------------------------------------\n"
+  fi
+
+  exit "${code}"
+}
 
 #DECLARE FLAGS AND VARIABLES
 cwd="$(pwd)"
@@ -143,7 +166,7 @@ while getopts $options opt; do
 		  	echo $VERSION
 		  	exit 1
 		  	;;
-		\?)  
+		\?)
 			echo "Invalid Option: -$OPTARG" 1>&2
 			usage
 			exit 1
@@ -152,7 +175,7 @@ while getopts $options opt; do
       		echo "Option -$OPTARG requires an argument." >&2
       		exit 1
       		;;
-      	* ) 
+      	* )
 			echo "Unimplemented option: -$OPTARG" >&2;
 			exit 1
 			;;
@@ -198,7 +221,7 @@ if [ "$database_field" == "l" ] || [ "$database_field" == "r" ]; then
 	else
 		database_field="length(database_name)"
 	fi
-	
+
 else
 	echo "Please introduce r or l for database"
 	exit 1
@@ -211,7 +234,7 @@ if [ $query_field == "l" ] || [ $query_field == "r" ]; then
 	else
 		query_field="length(query_name)"
 	fi
-	
+
 else
 
 	echo "Please introduce 0 or 1 for query"
@@ -233,7 +256,7 @@ awk '
 	(($3 >= '"${blast_id_cutoff}"')&&(($4/$13) >= '"${blast_len_percentage_value}"')&&($4 >= '"${blast_len_alignment}"')) \
 	{print database_name['"$database_field"'], $9, $10, query_name['"$query_field"']'"$id_output"'}
 	' \
-> $output_dir/$file_name".bed"$suffix
+> $output_dir/$file_name".bed"$suffix || error ${LINENO} $(basename $0) "AWK command fail in $file_name\".bed\"$suffix. See $output_dir/logs for more information."
 
 
 if [ "$unique" == "true" ]; then
@@ -241,7 +264,7 @@ if [ "$unique" == "true" ]; then
     awk '
         (!x[$1$4]++)
     	' $output_dir/$file_name".bed"$suffix \
-	> $output_dir/$file_name".bed"
+	> $output_dir/$file_name".bed" || error ${LINENO} $(basename $0) "AWK command fail in $file_name\".bed\". See $output_dir/logs for more information."
 	rm $output_dir/$file_name".bed"$suffix
 fi
 
@@ -252,7 +275,7 @@ if [ "$unique_divider" == "true" ]; then
     	{split($4,query,"'"${divider_delimiter}"'")}
         (!x[query[1]$1]++)
     	' $output_dir/$file_name".bed"$suffix \
-	> $output_dir/$file_name".bed"
+	> $output_dir/$file_name".bed" || error ${LINENO} $(basename $0) "AWK command fail in $file_name\".bed\"$suffix. See $output_dir/logs for more information."
 	rm $output_dir/$file_name".bed"$suffix
 fi
 

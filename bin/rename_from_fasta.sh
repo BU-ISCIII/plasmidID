@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Exit immediately if a pipeline, which may consist of a single simple command, a list, 
+# Exit immediately if a pipeline, which may consist of a single simple command, a list,
 #or a compound command returns a non-zero status: If errors are not handled by user
 set -e
 #set -x
@@ -12,7 +12,7 @@ set -e
 #INSTITUTION:ISCIII
 #CENTRE:BU-ISCIII
 #AUTHOR: Pedro J. Sola
-VERSION=1.0 
+VERSION=1.0
 #CREATED: 06 June 2018
 #REVISION:
 #DESCRIPTION:rename_from_fasta script rename any field in a file by either providing two fasta files or a dictionary file
@@ -52,6 +52,30 @@ if [ $# = 0 ] ; then
  exit 1
 fi
 
+# Error handling
+error(){
+  local parent_lineno="$1"
+  local script="$2"
+  local message="$3"
+  local code="${4:-1}"
+
+	RED='\033[0;31m'
+	NC='\033[0m'
+
+  if [[ -n "$message" ]] ; then
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "MESSAGE:\n"
+    echo -e "$message"
+    echo -e "\n---------------------------------------\n"
+  else
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "\n---------------------------------------\n"
+  fi
+
+  exit "${code}"
+}
 
 #DECLARE FLAGS AND VARIABLES
 cwd="$(pwd)"
@@ -88,7 +112,7 @@ while getopts $options opt; do
 		  	echo $VERSION
 		  	exit 1
 		  	;;
-		\?)  
+		\?)
 			echo "Invalid Option: -$OPTARG" 1>&2
 			usage
 			exit 1
@@ -97,7 +121,7 @@ while getopts $options opt; do
       		echo "Option -$OPTARG requires an argument." >&2
       		exit 1
       		;;
-      	* ) 
+      	* )
 			echo "Unimplemented option: -$OPTARG" >&2;
 			exit 1
 			;;
@@ -141,14 +165,15 @@ cat $input_file | sed 's/|/-/g' > $output_dir/$file_name".nopipe.tmp"
 
 
 #Paste colums to relate names in a dictionary
-awk 'NR==FNR{ac[NR]=$0;next}{print ac[FNR], "\t", $0"\\t" }' $output_dir/$fasta_file_old_name".ac" $output_dir/$fasta_file_new_name".ac" > $output_dir/dictionary.txt
+awk 'NR==FNR{ac[NR]=$0;next}{print ac[FNR], "\t", $0"\\t" }' $output_dir/$fasta_file_old_name".ac" $output_dir/$fasta_file_new_name".ac" > $output_dir/dictionary.txt || error ${LINENO} $(basename $0) "AWK command failed in dictionary.txt creation. See $output_dir/logs for more information."
 
 #Rename fields
 
 #cat $output_dir/dictionary.txt | while read -r line; do word1=$(cut -f1); word2=$(cut -f2); echo "##########word 1="$word1;echo "###########word 2="$word2; sed 's/$word2/$word1/g' $input_file; done > $output_dir/$file_name".renamed"
 
 
-awk 'FNR==NR {dict[$2]=$1"\t"; next} {for (i in dict) gsub(i, dict[i])}1' $output_dir/dictionary.txt $output_dir/$file_name".nopipe.tmp" > $output_dir/$file_name".renamed"
+awk 'FNR==NR {dict[$2]=$1"\t"; next} {for (i in dict) gsub(i, dict[i])}1' $output_dir/dictionary.txt $output_dir/$file_name".nopipe.tmp" > $output_dir/$file_name".renamed" || error ${LINENO} $(basename $0) "AWK command failed in $file_name\".renamed\" creation. See $output_dir/logs for more information."
+
 #awk 'NR==FNR{dict[$2]=$1;next}{$1=dict[$1]}1' $output_dir/dictionary.txt $input_file #> $output_dir/$file_name".renamed"
 
 
