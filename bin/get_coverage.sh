@@ -9,7 +9,7 @@ set -e
 #INSTITUTION:ISCIII
 #CENTRE:BU-ISCIII
 #AUTHOR: Pedro J. Sola
-VERSION=1.0 
+VERSION=1.0
 #CREATED: 20 March 2018
 #REVISION:
 #DESCRIPTION:Script that uses bedtool to obtain coverage data from a BAMm file
@@ -79,6 +79,30 @@ if [ $# = 0 ] ; then
  exit 1
 fi
 
+# Error handling
+error(){
+  local parent_lineno="$1"
+  local script="$2"
+  local message="$3"
+  local code="${4:-1}"
+
+	RED='\033[0;31m'
+	NC='\033[0m'
+
+  if [[ -n "$message" ]] ; then
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "MESSAGE:\n"
+    echo -e "$message"
+    echo -e "\n---------------------------------------\n"
+  else
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "\n---------------------------------------\n"
+  fi
+
+  exit "${code}"
+}
 
 #DECLARE FLAGS AND VARIABLES
 cwd="$(pwd)"
@@ -111,7 +135,7 @@ while getopts $options opt; do
 		m )
 			max_coverage=$OPTARG
 			;;
-		p )			
+		p )
           	positional=true
       		;;
         h )
@@ -122,7 +146,7 @@ while getopts $options opt; do
 		  	echo $VERSION
 		  	exit 1
 		  	;;
-		\?)  
+		\?)
 			echo "Invalid Option: -$OPTARG" 1>&2
 			usage
 			exit 1
@@ -131,7 +155,7 @@ while getopts $options opt; do
       		echo "Option -$OPTARG requires an argument." >&2
       		exit 1
       		;;
-      	* ) 
+      	* )
 			echo "Unimplemented option: -$OPTARG" >&2;
 			exit 1
 			;;
@@ -166,7 +190,7 @@ fi
 
 
 
-if [ $positional = true ]; then 
+if [ $positional = true ]; then
 	if [ -f $imageDir/$sample".plasmid.bedgraph" ];then \
 		echo "Found a bedgraph file for sample" $sample;
 		echo "Omitting bedgraph step"
@@ -174,7 +198,7 @@ if [ $positional = true ]; then
 		echo "$(date)"
 		echo "Obtaining coverage coordinates from sequences"
 
-		bedtools genomecov -ibam $input_file -bga -max $max_coverage > $output_dir/$filename".bedgraph"
+		bedtools genomecov -ibam $input_file -bga -max $max_coverage > $output_dir/$filename".bedgraph"|| error ${LINENO} $(basename $0) "Bedtools genomecov command failed. See $output_dir/logs for more information."
 
 		echo "$(date)"
 		echo "DONE obtaining coverage coordinates from sequences"
@@ -190,7 +214,7 @@ else
 	else
 		echo "$(date)"
 		echo "Creating a length file for" $(basename $database)
-		calculate_seqlen.sh -r -i $database > $database".length"
+		calculate_seqlen.sh -r -i $database > $database".length"|| error ${LINENO} $(basename $0) "calculate_seqlen script failed. See $output_dir/logs for more information."
 	fi
 
 	if [ -f $output_dir/$filename".coverage" ];then \
@@ -200,7 +224,7 @@ else
 		echo "$(date)"
 		echo "Calculating coverage for every position that mapped $filename"
 
-		bedtools genomecov -ibam $input_file -g $database".length" > $output_dir/$filename".coverage"
+		bedtools genomecov -ibam $input_file -g $database".length" > $output_dir/$filename".coverage"|| error ${LINENO} $(basename $0) "Bedtools genomecov command failed. See $output_dir/logs for more information."
 
 		echo "$(date)"
 		echo "DONE Calculating coverage for every plamid that mapped $sample"
@@ -208,31 +232,3 @@ else
 fi
 
 echo -e "\n"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

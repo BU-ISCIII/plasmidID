@@ -9,7 +9,7 @@ set -e
 #INSTITUTION:ISCIII
 #CENTRE:BU-ISCIII
 #AUTHOR: Pedro J. Sola
-VERSION=1.0 
+VERSION=1.0
 #CREATED: 1 May 2018
 #REVISION:
 #DESCRIPTION:Script that blast a query against a database
@@ -64,7 +64,7 @@ usage : $0 <-i inputfile(query)> <-d inputfile(database)> [-p <prefix>] [-o <dir
 Output directory is the same as input directory by default
 
 example: blast_align -i ecoli.fasta -d plasmid_ddbb.fasta -p plasmid
-		 
+
 
 EOF
 }
@@ -78,6 +78,31 @@ if [ $# = 0 ] ; then
  usage >&2
  exit 1
 fi
+
+# Error handling
+error(){
+  local parent_lineno="$1"
+  local script="$2"
+  local message="$3"
+  local code="${4:-1}"
+
+	RED='\033[0;31m'
+	NC='\033[0m'
+
+  if [[ -n "$message" ]] ; then
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "MESSAGE:\n"
+    echo -e "$message"
+    echo -e "\n---------------------------------------\n"
+  else
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "\n---------------------------------------\n"
+  fi
+
+  exit "${code}"
+}
 
 #DECLARE FLAGS AND VARIABLES
 cwd="$(pwd)"
@@ -108,16 +133,16 @@ while getopts $options opt; do
 		f)
 			file_name=$OPTARG
 			;;
-		t )			
+		t )
           	database_type=$OPTARG
           	;;
-        g )			
+        g )
           	group=$OPTARG
           	;;
-		e )			
+		e )
           	evalue=$OPTARG
           	;;
-        T)			
+        T)
           	threads=$OPTARG
           	;;
         h )
@@ -128,7 +153,7 @@ while getopts $options opt; do
 		  	echo $VERSION
 		  	exit 1
 		  	;;
-		\?)  
+		\?)
 			echo "Invalid Option: -$OPTARG" 1>&2
 			usage
 			exit 1
@@ -137,7 +162,7 @@ while getopts $options opt; do
       		echo "Option -$OPTARG requires an argument." >&2
       		exit 1
       		;;
-      	* ) 
+      	* )
 			echo "Unimplemented option: -$OPTARG" >&2;
 			exit 1
 			;;
@@ -155,7 +180,7 @@ echo -e "\n#Executing" $0 "\n"
 
 check_mandatory_files.sh $input_file $database
 
-#check_dependencies.sh blastn 
+#check_dependencies.sh blastn
 
 
 if [ ! $prefix ]; then
@@ -193,13 +218,15 @@ database_dir=$(dirname $database)
 echo "$(date)"
 echo "Blasting" $file_name "agaist" $database_name
 
-makeblastdb -in $database -out $database_dir/$database_name".blast.tmp" -dbtype $database_type
+makeblastdb -in $database -out $database_dir/$database_name".blast.tmp" -dbtype $database_type || error ${LINENO} $(basename $0) "Makeblastdb command failed. See $output_dir/logs for more information."
+
 
 blastn -query $input_file \
 -db $database_dir/$database_name".blast.tmp" \
 -out $output_dir/$file_name"."$prefix".blast" \
 -evalue $evalue \
--outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen slen"
+-num_threads $threads \
+-outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen slen" || error ${LINENO} $(basename $0) "Blastn command failed. See $output_dir/logs for more information"
 
 
 echo "$(date)"

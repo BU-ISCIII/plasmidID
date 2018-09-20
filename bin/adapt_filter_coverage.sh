@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Exit immediately if a pipeline, which may consist of a single simple command, a list, 
+# Exit immediately if a pipeline, which may consist of a single simple command, a list,
 #or a compound command returns a non-zero status: If errors are not handled by user
 set -e
 #~set -x
@@ -12,7 +12,7 @@ set -e
 #INSTITUTION:ISCIII
 #CENTRE:BU-ISCIII
 #AUTHOR: Pedro J. Sola
-VERSION=1.0 
+VERSION=1.0
 #CREATED: 21 March 2018
 #REVISION:
 #DESCRIPTION:adapt_filter_coverage script that adapt percentages and filter coverage info from bedtools genomecov output
@@ -30,7 +30,7 @@ adapt_filter_coverage script that adapt percentages and filter coverage info fro
 
 usage : $0 <-i inputfile(.fasta)> [-o <directory>] [-c <int(0-100)>] [-s <suffix>] [-v] [-h]
 
-	-i input file 
+	-i input file
 	-o output directory (optional). By default the file is replaced in the same location
 	-c percentage value to filter >= values. If not supplied, all records will be outputted
 	-s string to ad at the end of the outputted file (list of accession numbers)
@@ -51,6 +51,30 @@ if [ $# = 0 ] ; then
  exit 1
 fi
 
+# Error handling
+error(){
+  local parent_lineno="$1"
+  local script="$2"
+  local message="$3"
+  local code="${4:-1}"
+
+	RED='\033[0;31m'
+	NC='\033[0m'
+
+  if [[ -n "$message" ]] ; then
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "MESSAGE:\n"
+    echo -e "$message"
+    echo -e "\n---------------------------------------\n"
+  else
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "\n---------------------------------------\n"
+  fi
+
+  exit "${code}"
+}
 
 #DECLARE FLAGS AND VARIABLES
 cwd="$(pwd)"
@@ -88,7 +112,7 @@ while getopts $options opt; do
 		  	echo $VERSION
 		  	exit 1
 		  	;;
-		\?)  
+		\?)
 			echo "Invalid Option: -$OPTARG" 1>&2
 			usage
 			exit 1
@@ -97,7 +121,7 @@ while getopts $options opt; do
       		echo "Option -$OPTARG requires an argument." >&2
       		exit 1
       		;;
-      	* ) 
+      	* )
 			echo "Unimplemented option: -$OPTARG" >&2;
 			exit 1
 			;;
@@ -141,23 +165,24 @@ if [ -f $input_file"_adapted" ]; then
 	rm $input_file"_adapted"
 fi
 
+## Keep information about positions with 0 coverage. If no 0 coverage positions for a plasmid, create line including this info.
 awk '
 BEGIN{OFS="\t"}
-(!x[$1]++) {if ($1 != "genome") 
-				{if ($2 == 0) 
-					{print $0} 
-				else 
+(!x[$1]++) {if ($1 != "genome")
+				{if ($2 == 0)
+					{print $0}
+				else
 					{print $1, 0, $4, $4, 0.0000000001}
 				}
 			}
-	' $input_file > $input_file"_adapted"
+	' $input_file > $input_file"_adapted" || error ${LINENO} $(basename $0) "Awk command for bedtools coverage output parsing in $input_file\"_adapted\" creation. See $output_dir/logs for more information"
 
+## Keep plasmids with coverage < 1-coverage_cutoff_input/100
 awk '
 {if ($2 == 0 && $5 < '"${coverage_cutoff}"')
 	 {print $1}
 }
-	' $input_file"_adapted" > $input_file$suffix
-
+	' $input_file"_adapted" > $input_file$suffix || error ${LINENO} $(basename $0) "Awk command for coverage filtering in $input_file$suffix creation. See $output_dir/logs for more information."
 
 echo "$(date)"
 echo "Done filtering sequences with" $coverage_cutoff_input"% and greater coverage"

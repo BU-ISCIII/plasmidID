@@ -9,7 +9,7 @@ set -e
 #INSTITUTION:ISCIII
 #CENTRE:BU-ISCIII
 #AUTHOR: Pedro J. Sola
-VERSION=1.0 
+VERSION=1.0
 #CREATED: 6 April 2018
 #REVISION:
 #DESCRIPTION:Script that uses cd-hit/psi-cd-hit to clusterize a FASTA file
@@ -25,7 +25,7 @@ VERSION=1.0
 #	echo "NO"
 #fi
 #
-#-d length of description in .clstr file, default 20. if set to 0, 
+#-d length of description in .clstr file, default 20. if set to 0,
 #	it takes the fasta defline and stops at first space
 #-s length difference cutoff, default 0.0
 #	if set to 0.9, the shorter sequences need to be
@@ -81,7 +81,7 @@ usage : $0 <-i inputfile(FASTA)> [-o <directory>] [-n <filename>] [-c <percentag
 Output directory is the same as input directory
 
 example: cdhit_cluster -i ecoli.fasta -c 90 -M 50000 -T 0
-		 
+
 
 EOF
 }
@@ -95,6 +95,30 @@ if [ $# = 0 ] ; then
  exit 1
 fi
 
+# Error handling
+error(){
+  local parent_lineno="$1"
+  local script="$2"
+  local message="$3"
+  local code="${4:-1}"
+
+	RED='\033[0;31m'
+	NC='\033[0m'
+
+  if [[ -n "$message" ]] ; then
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "MESSAGE:\n"
+    echo -e "$message"
+    echo -e "\n---------------------------------------\n"
+  else
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "\n---------------------------------------\n"
+  fi
+
+  exit "${code}"
+}
 
 #DECLARE FLAGS AND VARIABLES
 cwd="$(pwd)"
@@ -118,7 +142,7 @@ while getopts $options opt; do
 		i )
 			input_file=$OPTARG
 			;;
-		
+
 		c )
 			cluster_cutoff_input=$OPTARG
 			;;
@@ -131,24 +155,24 @@ while getopts $options opt; do
 		n )
 			file_name=$OPTARG
 			;;
-		s )			
+		s )
           	length_cutoff=$OPTARG
           	;;
-        p )			
+        p )
           	cd_hit_command=psi-cd-hit.pl
           	;;
-        C )			
+        C )
           	is_circle=$OPTARG
           	;;
-        G)			
+        G)
           	global_psi_cd_hit=$OPTARG
           	;;
-        T)			
+        T)
           	threads=$OPTARG
           	;;
-        b)			
+        b)
           	psi_cd_hit_program=$OPTARG
-          	;;  	
+          	;;
         h )
 		  	usage
 		  	exit 1
@@ -157,7 +181,7 @@ while getopts $options opt; do
 		  	echo $VERSION
 		  	exit 1
 		  	;;
-		\?)  
+		\?)
 			echo "Invalid Option: -$OPTARG" 1>&2
 			usage
 			exit 1
@@ -166,7 +190,7 @@ while getopts $options opt; do
       		echo "Option -$OPTARG requires an argument." >&2
       		exit 1
       		;;
-      	* ) 
+      	* )
 			echo "Unimplemented option: -$OPTARG" >&2;
 			exit 1
 			;;
@@ -185,7 +209,7 @@ echo -e "\n#Executing" $0 "\n"
 
 check_mandatory_files.sh $input_file
 
-check_dependencies.sh cd-hit-est 
+check_dependencies.sh cd-hit-est
  #psi-cd-hit.pl
 
 
@@ -242,13 +266,14 @@ if [ -f $output_dir/$file_name""_""$cluster_cutoff_input ]; then \
 	exit 1
 else
 	if [ $cd_hit_command  == "psi-cd-hit.pl" ]; then
-		
-		check_dependencies.sh psi-cd-hit.pl 
-		$cd_hit_command -i $(basename $input_file) -o $file_name""_""$cluster_cutoff_input -c $cluster_cutoff -G $global_psi_cd_hit -g 1 -prog $psi_cd_hit_program -circle $is_circle
-	
+
+		check_dependencies.sh psi-cd-hit.pl
+		$cd_hit_command -i $(basename $input_file) -o $file_name""_""$cluster_cutoff_input -c $cluster_cutoff -G $global_psi_cd_hit -g 1 -prog $psi_cd_hit_program -circle $is_circle -core $threads || error ${LINENO} $(basename $0) "PSI-CD-HIT command failed. See $output_dir/logs for more information."
+
 	else
 
-		$cd_hit_command -i $(basename $input_file) -o $file_name""_""$cluster_cutoff_input -c $cluster_cutoff -n $word_size -d 0 -s $length_cutoff -B 1 -M $max_memory -T $threads
+		$cd_hit_command -i $(basename $input_file) -o $file_name""_""$cluster_cutoff_input -c $cluster_cutoff -n $word_size -d 0 -s $length_cutoff -B 1 -M $max_memory -T $threads|| error ${LINENO} $(basename $0) "CD-HIT command failed. See $output_dir/logs for more information"
+
 	fi
 fi
 

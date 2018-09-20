@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Exit immediately if a pipeline, which may consist of a single simple command, a list, 
+# Exit immediately if a pipeline, which may consist of a single simple command, a list,
 #or a compound command returns a non-zero status: If errors are not handled by user
 #set -e
 #set -x
@@ -12,7 +12,7 @@
 #INSTITUTION:ISCIII
 #CENTRE:BU-ISCIII
 #AUTHOR: Pedro J. Sola
-VERSION=1.0 
+VERSION=1.0
 #CREATED: 13 May 2018
 #
 #DESCRIPTION:blast_to_complete script obtain full length of sequences from blast and adapt it to circos
@@ -30,7 +30,7 @@ blast_to_complete is a script that obtain  full length of sequences from blast a
 usage : $0 <-i inputfile(.blast)> <-b id cutoff> [-o <directory>] [-b <int(0-100)>] [-l <int(0-100)>]
 		[-p <prefix>] [-d <delimiter>] [-D (l|r)] [-q <delimiter>] [-Q (l|r)] [-I] [-u] [-v] [-h]
 
-	-i input file 
+	-i input file
 	-b blast identity cutoff (0 - 100), default 90
 	-l blast length percentage cutoff (0 - 100), default 50, use 90 for genes
 	-o output directory (optional). By default the file is replaced in the same location
@@ -56,6 +56,30 @@ if [ $# = 0 ] ; then
  exit 1
 fi
 
+# Error handling
+error(){
+  local parent_lineno="$1"
+  local script="$2"
+  local message="$3"
+  local code="${4:-1}"
+
+	RED='\033[0;31m'
+	NC='\033[0m'
+
+  if [[ -n "$message" ]] ; then
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "MESSAGE:\n"
+    echo -e "$message"
+    echo -e "\n---------------------------------------\n"
+  else
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "\n---------------------------------------\n"
+  fi
+
+  exit "${code}"
+}
 
 #DECLARE FLAGS AND VARIABLES
 cwd="$(pwd)"
@@ -126,7 +150,7 @@ while getopts $options opt; do
 		  	echo $VERSION
 		  	exit 1
 		  	;;
-		\?)  
+		\?)
 			echo "Invalid Option: -$OPTARG" 1>&2
 			usage
 			exit 1
@@ -135,7 +159,7 @@ while getopts $options opt; do
       		echo "Option -$OPTARG requires an argument." >&2
       		exit 1
       		;;
-      	* ) 
+      	* )
 			echo "Unimplemented option: -$OPTARG" >&2;
 			exit 1
 			;;
@@ -181,7 +205,7 @@ if [ "$database_field" == "l" ] || [ "$database_field" == "r" ]; then
 	else
 		database_field="length(database_name)"
 	fi
-	
+
 else
 	echo "Please introduce r or l for database"
 	exit 1
@@ -194,7 +218,7 @@ if [ $query_field == "l" ] || [ $query_field == "r" ]; then
 	else
 		query_field="length(query_name)"
 	fi
-	
+
 else
 
 	echo "Please introduce 0 or 1 for query"
@@ -215,14 +239,14 @@ awk '
 	(($3 >= '"${blast_id_cutoff}"') && (($4/$13)>='"${blast_len_percentage_value}"') && (!x[$1$2]++)) \
 	{{isInverted=($10-$9)
 		ext2=($13-$8)}
-		{if (isInverted < 0) 
-			{pos1 = $10 
-			pos2 = $9} 
-		else 
+		{if (isInverted < 0)
+			{pos1 = $10
+			pos2 = $9}
+		else
 			{pos1 =$9
 			pos2 = $10}
 		{if ((isInverted < 0) && (($14 - pos2) > $7))
-			{coordChr2 = (pos2 + $7)} 
+			{coordChr2 = (pos2 + $7)}
 		else if ((isInverted < 0) && (($14 - pos2) <= $7))
 			{coordChr2=$14}
 		{if ((isInverted < 0) && (ext2 <= pos1))
@@ -239,7 +263,8 @@ awk '
 			{coordChr2= (pos2 + ext2)}
 	{print database_name['"$database_field"'], coordChr1, coordChr2, query_name['"$query_field"'], "id="$13} }}}}}}
 	' \
-	>$output_dir/$file_name".complete"
+	>$output_dir/$file_name".complete "|| error ${LINENO} $(basename $0) "Awk command parsing blast output for circos input in $file_name\".complete\" creation failed. See $output_dir/logs for more information"
+
 
 cat $input_file |\
 awk '
@@ -249,7 +274,7 @@ awk '
 	(($3 >= '"${blast_id_cutoff}"') && (($4/$13)>='"${blast_len_percentage_value}"') && (!x[$2$1]++)) \
 	{{isInverted=($10-$9)
 	ext2=($13-$8)}
-	{if (isInverted < 0) 
+	{if (isInverted < 0)
 		{pos1=$10
 		pos2=$9}
 	else
@@ -274,7 +299,8 @@ awk '
 		}
 	}}}}}}
 	' \
-	>>$output_dir/$file_name".complete"
+	>>$output_dir/$file_name".complete" || error ${LINENO} $(basename $0) "Awk command parsing blast output for circos input in $file_name\".complete\" second step creation failed. See $output_dir/logs for more information"
+
 
 
 echo "$(date)"

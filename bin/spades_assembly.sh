@@ -10,7 +10,7 @@ set -e
 #INSTITUTION:ISCIII
 #CENTRE:BU-ISCIII
 #AUTHOR: Pedro J. Sola
-VERSION=1.0 
+VERSION=1.0
 #CREATED: 21 May 2018
 #REVISION:
 #DESCRIPTION:Script that assemble illumina sequences using SPAdes
@@ -59,6 +59,30 @@ if [ $# = 0 ] ; then
  exit 1
 fi
 
+# Error handling
+error(){
+  local parent_lineno="$1"
+  local script="$2"
+  local message="$3"
+  local code="${4:-1}"
+
+	RED='\033[0;31m'
+	NC='\033[0m'
+
+  if [[ -n "$message" ]] ; then
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "MESSAGE:\n"
+    echo -e "$message"
+    echo -e "\n---------------------------------------\n"
+  else
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "\n---------------------------------------\n"
+  fi
+
+  exit "${code}"
+}
 
 #DECLARE FLAGS AND VARIABLES
 cwd="$(pwd)"
@@ -132,7 +156,7 @@ while getopts $options opt; do
 		  	echo $VERSION
 		  	exit 1
 		  	;;
-		\?)  
+		\?)
 			echo "Invalid Option: -$OPTARG" 1>&2
 			usage
 			exit 1
@@ -141,7 +165,7 @@ while getopts $options opt; do
       		echo "Option -$OPTARG requires an argument." >&2
       		exit 1
       		;;
-      	* ) 
+      	* )
 			echo "Unimplemented option: -$OPTARG" >&2;
 			exit 1
 			;;
@@ -193,7 +217,7 @@ if [ $quick_mode = true ]; then
 	r2_unpaired_file=$(find $directory_reads -name  "*2_unpaired.fastq.gz" -type f)
 	r2_unpaired_command=$(echo "--s2" $r2_unpaired_file)
 fi
-			
+
 
 check_mandatory_files.sh $r1_paired_file $r2_paired_file
 
@@ -219,7 +243,7 @@ spades.py \
 --pe1-2 $r2_paired_file \
 $r1_unpaired_command \
 $r2_unpaired_command \
--o $output_dir
+-o $output_dir || error ${LINENO} $(basename $0) "Spades command failed. See $output_dir/logs for more information."
 
 
 
@@ -228,7 +252,7 @@ echo "DONE. Assembled contigs can be found at $output_dir/contigs.fasta:"
 echo "DONE. Assembled scaffolds can be found at $output_dir/scaffolds.fasta:"
 
 if [ $clean_mode = true ]; then
-	echo "Removing unnecesary folders" 
+	echo "Removing unnecesary folders"
 	rm -rf $(find $output_dir -maxdepth 1 -mindepth 1 -type d)
 	echo "DONE removing unwanted folders"
 fi

@@ -9,7 +9,7 @@ set -e
 #INSTITUTION:ISCIII
 #CENTRE:BU-ISCIII
 #AUTHOR: Pedro J. Sola
-VERSION=1.0 
+VERSION=1.0
 #CREATED: 15 March 2018
 #REVISION:
 #		19 March 2018: Complete usage info
@@ -28,7 +28,7 @@ usage() {
 
 Bowtie_mapper script index a database and map a supplied pair-end sequences
 
-usage : $0 [-i <inputfile>] [-o <directory>] <-d database(fasta)> <-s sample_name> <-1 R1> <-2 R2> 
+usage : $0 [-i <inputfile>] [-o <directory>] <-d database(fasta)> <-s sample_name> <-1 R1> <-2 R2>
 		[-g group_name] [-f <int>] [-T <int>] [-a] [-v] [-h]
 
 	-i input directory (optional)
@@ -58,6 +58,30 @@ if [ $# = 0 ] ; then
  exit 1
 fi
 
+# Error handling
+error(){
+  local parent_lineno="$1"
+  local script="$2"
+  local message="$3"
+  local code="${4:-1}"
+
+	RED='\033[0;31m'
+	NC='\033[0m'
+
+  if [[ -n "$message" ]] ; then
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "MESSAGE:\n"
+    echo -e "$message"
+    echo -e "\n---------------------------------------\n"
+  else
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "\n---------------------------------------\n"
+  fi
+
+  exit "${code}"
+}
 
 #DECLARE FLAGS AND VARIABLES
 threads=1
@@ -95,10 +119,10 @@ while getopts $options opt; do
 		2 )
 			R2=$OPTARG
 			;;
-		f )			
+		f )
           	offrate=$OPTARG
       		;;
-        T ) 
+        T )
 			threads=$OPTARG
             ;;
         a)
@@ -112,7 +136,7 @@ while getopts $options opt; do
 		  	echo $VERSION
 		  	exit 1
 		  	;;
-		\?)  
+		\?)
 			echo "Invalid Option: -$OPTARG" 1>&2
 			usage
 			exit 1
@@ -121,7 +145,7 @@ while getopts $options opt; do
       		echo "Option -$OPTARG requires an argument." >&2
       		exit 1
       		;;
-      	* ) 
+      	* )
 			echo "Unimplemented option: -$OPTARG" >&2;
 			exit 1
 			;;
@@ -171,13 +195,13 @@ else
 	echo "Building index of " $(basename $database);
 	bowtie2-build \
 	--offrate $offrate \
-	$database $database
+	$database $database || error ${LINENO} $(basename $0) "Bowtie2-build command failed. See $output_dir/logs for more information"
 fi
 
 ########MAPPING#############
 ############################
 
-if [ -f $mappedDir/$sample.sorted.bam -a -f $mappedDir/$sample.sorted.bam.bai -o -f $mappedDir/$sample.sam ];then \
+if [ -f $mappedDir/$sample.sorted.bam -a -f $mappedDir/$sample.sorted.bam.bai ];then \
 	echo "Found a mapping file for sample" $sample;
 	echo "Omitting mapping"
 else
@@ -193,7 +217,8 @@ else
 	--very-sensitive-local \
 	$a_mapping \
 	-p $threads \
-	-x $database
+	-x $database || error ${LINENO} $(basename $0) "Bowtie2 command failed. See $output_dir/logs for more information"
+
 
 	echo "$(date)"
 	echo -e "DONE Mapping $sample of $group Group" "\n"

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Exit immediately if a pipeline, which may consist of a single simple command, a list, 
+# Exit immediately if a pipeline, which may consist of a single simple command, a list,
 #or a compound command returns a non-zero status: If errors are not handled by user
 #set -e
 #set -x
@@ -12,10 +12,10 @@
 #INSTITUTION:ISCIII
 #CENTRE:BU-ISCIII
 #AUTHOR: Pedro J. Sola
-VERSION=1.0 
+VERSION=1.0
 #CREATED: 14 May 2018
 #
-#DESCRIPTION:blast_to_link script to obtain a link file that represent duplications between all members of the query 
+#DESCRIPTION:blast_to_link script to obtain a link file that represent duplications between all members of the query
 #================================================================
 # END_OF_HEADER
 #================================================================
@@ -30,7 +30,7 @@ blast_to_bed is a script than obtain a BED file with coordinates of local blast 
 usage : $0 <-i inputfile(.blast)> <-b id cutoff> [-o <directory>] [-b <int(0-100)>] [-l <int(0-100)>] [-L <int>]
 		[-p <prefix>] [-d <delimiter>] [-D (l|r)] [-q <delimiter>] [-Q (l|r)] [-I] [-u] [-v] [-h]
 
-	-i input file 
+	-i input file
 	-b blast identity cutoff (0 - 100), default 90
 	-l blast length percentage cutoff (0 - 100), default 20, use 90 for genes
 	-o output directory (optional). By default the file is replaced in the same location
@@ -55,6 +55,30 @@ if [ $# = 0 ] ; then
  exit 1
 fi
 
+# Error handling
+error(){
+  local parent_lineno="$1"
+  local script="$2"
+  local message="$3"
+  local code="${4:-1}"
+
+	RED='\033[0;31m'
+	NC='\033[0m'
+
+  if [[ -n "$message" ]] ; then
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "MESSAGE:\n"
+    echo -e "$message"
+    echo -e "\n---------------------------------------\n"
+  else
+    echo -e "\n---------------------------------------\n"
+    echo -e "${RED}ERROR${NC} in Script $script on or near line ${parent_lineno}; exiting with status ${code}"
+    echo -e "\n---------------------------------------\n"
+  fi
+
+  exit "${code}"
+}
 
 #DECLARE FLAGS AND VARIABLES
 cwd="$(pwd)"
@@ -126,7 +150,7 @@ while getopts $options opt; do
 		  	echo $VERSION
 		  	exit 1
 		  	;;
-		\?)  
+		\?)
 			echo "Invalid Option: -$OPTARG" 1>&2
 			usage
 			exit 1
@@ -135,7 +159,7 @@ while getopts $options opt; do
       		echo "Option -$OPTARG requires an argument." >&2
       		exit 1
       		;;
-      	* ) 
+      	* )
 			echo "Unimplemented option: -$OPTARG" >&2;
 			exit 1
 			;;
@@ -182,7 +206,7 @@ if [ "$database_field" == "l" ] || [ "$database_field" == "r" ]; then
 	else
 		database_field="length(database_name)"
 	fi
-	
+
 else
 	echo "Please introduce r or l for database"
 	exit 1
@@ -195,7 +219,7 @@ if [ $query_field == "l" ] || [ $query_field == "r" ]; then
 	else
 		query_field="length(query_name)"
 	fi
-	
+
 else
 
 	echo "Please introduce 0 or 1 for query"
@@ -213,7 +237,8 @@ awk '
 	(($4/$13) >= '"${blast_len_percentage_value}"') && !contigPlasmid[$1$2]++ \
 	{print $1$2}
 	' $input_file \
-	> $output_dir/$file_name".dict_length_percentage"
+	> $output_dir/$file_name".dict_length_percentage" || error ${LINENO} $(basename $0) "Awk command in $file_name\".dict_length_percentage\" creation failed. See $output_dir/logs for more information."
+
 
 ##Obtain coordinates query --> ddbb
 
@@ -222,10 +247,10 @@ awk '
 	{split($2, database_name, "'"${database_delimiter}"'")
 	split($1, query_name, "'"${query_delimiter}"'")
 	header=$1$2}
-	{if ((header in contigPlasmid) && ($3>='"${blast_id_cutoff}"') && (($4/$13)>=0.05)) 
+	{if ((header in contigPlasmid) && ($3>='"${blast_id_cutoff}"') && (($4/$13)>=0.02))
 		print query_name['"$query_field"'], $7,$8,database_name['"$database_field"'],$9,$10'"$id_output"'}' \
 	$output_dir/$file_name".dict_length_percentage" $input_file \
-	> $output_dir/$file_name."blast.links"
+	> $output_dir/$file_name."blast.links" || error ${LINENO} $(basename $0) "Awk command in $file_name\".blast.links\" creation failed. See $output_dir/logs for more information"
 
 ##Change coordinates from query --> ddbb to ddbb-->ddbb in order to represent them in CIRCOSS
 
@@ -233,13 +258,14 @@ awk '
 	BEGIN{OFS="\t"}
 	{
 	if($1 != savedNode)
-		{savedNode= $1; delete chr} 
+		{savedNode= $1; delete chr}
 	else{for(i in chr)
 		{print $4" "$5" "$6" "chr[i]" id="savedNode}
 	}
 	chr[$4$5$6] = $4" "$5" "$6}' \
 	$output_dir/$file_name."blast.links" \
-	> $output_dir/$file_name."links"
+	> $output_dir/$file_name."links" || error ${LINENO} $(basename $0) "Awk command in $file_name\".links\" creation failed. See $output_dir/logs for more information"
+
 
 rm $output_dir/$file_name".dict_length_percentage"
 
