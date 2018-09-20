@@ -987,18 +987,18 @@ done
 for i in $(cat $reconstruct_fasta | grep ">" | awk 'gsub(">","",$1) {print $1}')
 do
 	cat $output_dir/$group/$sample/data/$sample".plasmids.complete" \
-	| awk '/'$i'/ && !x[$4]++ {print "_"$4}' > $output_dir/$group/$sample/fasta_files/$i.ac
-done 
+	| awk '/'$i'/ && !x[$4]++ {print "_"$4}' > $output_dir/$group/$sample/fasta_files/$i.ac || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\n cat $output_dir/$group/$sample/data/$sample\".plasmids.complete\" | awk \'/\'$i\'/ && !x[$4]++ {print \"_\"$4}\' > $output_dir/$group/$sample/fasta_files/$i.ac"
+done
 
 #Extract fasta from contig file, oe per plasmid
 for i in $(ls $output_dir/$group/$sample/fasta_files/*.ac)
 do
 	if [ -s $i ]; then
-		filter_fasta.sh -i $output_dir/$group/$sample/data/$sample".fna" -f $i -n $(basename $i .ac) -o $output_dir/$group/$sample/fasta_files
+		filter_fasta.sh -i $output_dir/$group/$sample/data/$sample".fna" -f $i -n $(basename $i .ac) -o $output_dir/$group/$sample/fasta_files || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\nfilter_fasta.sh -i $output_dir/$group/$sample/data/$sample\".fna\" -f $i -n $(basename $i .ac) -o $output_dir/$group/$sample/fasta_files"
 	fi
 done
 
-#Remove previous 
+#Remove previous
 for i in $(ls $output_dir/$group/$sample/fasta_files/*.ac)
 do
 	rm $i
@@ -1025,8 +1025,4 @@ draw_circos_images.sh -i $output_dir/$group/$sample \
 -c $verbose_option_circos || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\ndraw_circos_images.sh -i $output/$group/$sample -d $config_dir -C $config_file_individual -o $output_dir/$group/$sample/images -g $group -s $sample -l $output_dir/$group/$sample/logs/draw_circos_images.log -c $verbose_option_circos"
 
 
-
-
 echo -e "\n${YELLOW}ALL DONE WITH plasmidID${NC}\nThank you for using plasmidID\n"
-
-
