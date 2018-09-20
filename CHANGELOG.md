@@ -1,20 +1,21 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## 1.3.3 - 2018-09-17
+## 1.4 - 2018-09-20
 ### Added
 - Automatically annotated genes/cds are displayed differently depending on whether they are located in forward or reverse 
 - Psi-cd-hit and blast now handle threads
+- Improved error handling
+- Doocker/Singularity compatibility
+- One multifasta file per reference plasmid is generated with all the similar contigs from the sample 
+- Quick staus of values applied to plasmid reconstruction
 
 ###Fixed
 - Some plasmids from the database were not annotated
 - Limit sample name to 37 characters, capped by prokka
-
-## 1.3.1
-### Added
-- Quick staus of values applied to plasmid reconstruction
-###Fixed
 - Bug in complete contig track generator that took the wrong value and couldn't draw sequences that matched the position 0 of plasmid
+
+
 
 ## 1.3.0 - 2018-07-11
 ### New

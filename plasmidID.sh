@@ -968,6 +968,43 @@ fi
 
 
 
+echo -e "\n${CYAN}EXTRACTING CONTIGS FOUND ON EACH PLASMID${NC} ($(date))\n \
+Every contig that is highly likely to be part of the same plasmid is found on a single file per plasmid.\n \
+Repeated contigs are present only once\n"
+
+
+mkdir -p $output_dir/$group/$sample/fasta_files
+
+#Remove previous analysis
+for i in $(ls $output_dir/$group/$sample/fasta_files/*)
+do
+	if [ -f $i ]; then
+		rm $is
+	fi
+done
+
+#obtain list of contigs per plasmid in a separate file
+for i in $(cat $reconstruct_fasta | grep ">" | awk 'gsub(">","",$1) {print $1}')
+do
+	cat $output_dir/$group/$sample/data/$sample".plasmids.complete" \
+	| awk '/'$i'/ && !x[$4]++ {print "_"$4}' > $output_dir/$group/$sample/fasta_files/$i.ac
+done 
+
+#Extract fasta from contig file, oe per plasmid
+for i in $(ls $output_dir/$group/$sample/fasta_files/*.ac)
+do
+	if [ -s $i ]; then
+		filter_fasta.sh -i $output_dir/$group/$sample/data/$sample".fna" -f $i -n $(basename $i .ac) -o $output_dir/$group/$sample/fasta_files
+	fi
+done
+
+#Remove previous 
+for i in $(ls $output_dir/$group/$sample/fasta_files/*.ac)
+do
+	rm $i
+done
+
+
 
 echo -e "\n${CYAN}DRAWING CIRCOS IMAGES${NC} ($(date))\n \
 An image per putative plasmid will be drawn having into account all data supplied.\n \
@@ -987,4 +1024,9 @@ draw_circos_images.sh -i $output_dir/$group/$sample \
 -l $output_dir/$group/$sample/logs/draw_circos_images.log \
 -c $verbose_option_circos || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\ndraw_circos_images.sh -i $output/$group/$sample -d $config_dir -C $config_file_individual -o $output_dir/$group/$sample/images -g $group -s $sample -l $output_dir/$group/$sample/logs/draw_circos_images.log -c $verbose_option_circos"
 
+
+
+
 echo -e "\n${YELLOW}ALL DONE WITH plasmidID${NC}\nThank you for using plasmidID\n"
+
+
