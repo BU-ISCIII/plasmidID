@@ -24,14 +24,11 @@ jobs:
       - run:
           name: Install parallel gzip, python3 and java
           command: apk add --no-cache pigz python3 openjdk8 bash
-<<<<<<< HEAD
       - run:
           name: Install nextflow
           command: |
             cd /usr/bin
             wget -qO- https://get.nextflow.io | bash
-=======
->>>>>>> release/1.4.0
       - restore_cache:
           keys:
             - docker-v1-{{ .Branch }}-{{ epoch }}
@@ -42,14 +39,11 @@ jobs:
             - /tmp/cache/container.tar.gz
 
       - checkout
-<<<<<<< HEAD
-=======
       - run:
           name: "Pull Submodules"
           command: |
             git submodule init
             git submodule update --remote
->>>>>>> release/1.4.0
       - setup_remote_docker
       - run:
           name: Load Docker image layer cache
@@ -66,10 +60,7 @@ jobs:
           no_output_timeout: 60m
           command: |
             echo "Working directory is ${PWD}"
-<<<<<<< HEAD
-=======
             ls ${PWD}/scif_app_recipes
->>>>>>> release/1.4.0
             # If not set, define CONTAINER_NAME
             if [ ! -n "${CONTAINER_NAME:-}" ]
                 then
@@ -87,12 +78,9 @@ jobs:
                 --build-arg VERSION="${CIRCLE_TAG:-$THISVERSION}" . \
               && e=0 && break || sleep 15
             done && [ "$e" -eq "0" ]
-<<<<<<< HEAD
             # Pipeline VERSION
             THISVERSION=$(nextflow run ${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME} --version)
             echo "Pipeline Version is ${THISVERSION}"
-=======
->>>>>>> release/1.4.0
             echo "${CIRCLE_TAG:-$THISVERSION}"
       - run:
           name: Docker save
@@ -331,10 +319,6 @@ workflows:
             - test_apps
           filters:
             branches:
-<<<<<<< HEAD
               only: master
-=======
-              only: feature/circle-testing
->>>>>>> release/1.4.0
             tags:
               only: /.*/
