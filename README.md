@@ -1,7 +1,7 @@
 
 [![CircleCI Build Status](https://circleci.com/gh/circleci/circleci-docs.svg?style=shield)](https://circleci.com/gh/BU-ISCIII/plasmidID) [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![CircleCi Community](https://img.shields.io/badge/community-CircleCI%20Discuss-343434.svg)](https://discuss.circleci.com) [![Scif](https://img.shields.io/badge/Filesystem-Scientific-brightgreen.svg)](https://sci-f.github.io)
 
-# plasmidID <img align="left" src="https://github.com/BU-ISCIII/plasmidID/blob/develop/img/plasmidID_logo.png" alt="Logo" width="100"> 
+# plasmidID <img align="left" src="https://github.com/BU-ISCIII/plasmidID/blob/develop/img/plasmidID_logo.png" alt="Logo" width="100">
 
 <br>
 <br>
@@ -30,7 +30,7 @@ docker run buisciii/plasmidid plasmidID.sh \
      -2 TEST_DATA/KPN_TEST_R2.fastq.gz \
      -d TEST_DATA/plasmids_TEST_database.fasta \
      -c TEST_DATA/contigs_KPN_TEST.fasta \
-     --no-trim \ 
+     --no-trim \
      -s KPN
 ```
 Or you can use Singularity instead:
@@ -40,6 +40,6 @@ singularity exec buisciii/plasmidid plasmidID.sh \
      -2 TEST_DATA/KPN_TEST_R2.fastq.gz \
      -d TEST_DATA/plasmids_TEST_database.fasta \
      -c TEST_DATA/contigs_KPN_TEST.fasta \
-     --no-trim \ 
+     --no-trim \
      -s KPN
 ```
