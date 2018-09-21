@@ -206,7 +206,7 @@ jobs:
           name: Run plasmidID test
           no_output_timeout: 2h
           command: |
-            docker run --rm=false ${CONTAINER_NAME}:latest /scif/apps/plasmidid/plasmidID*/TEST_DATA/test.sh
+            docker run --rm=false ${CONTAINER_NAME}:latest /scif/apps/plasmidid/plasmidID/TEST_DATA/test.sh
 
       - store_test_results:
           path: /home/circleci/out/tests
