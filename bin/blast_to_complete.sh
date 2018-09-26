@@ -263,7 +263,7 @@ awk '
 			{coordChr2= (pos2 + ext2)}
 	{print database_name['"$database_field"'], coordChr1, coordChr2, query_name['"$query_field"'], "id="$13} }}}}}}
 	' \
-	>$output_dir/$file_name".complete "|| error ${LINENO} $(basename $0) "Awk command parsing blast output for circos input in $file_name\".complete\" creation failed. See $output_dir/logs for more information"
+	>$output_dir/$file_name".complete"|| error ${LINENO} $(basename $0) "Awk command parsing blast output for circos input in $file_name\".complete\" creation failed. See $output_dir/logs for more information"
 
 
 cat $input_file |\

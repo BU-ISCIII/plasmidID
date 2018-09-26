@@ -15,7 +15,7 @@ set -e
 #INSTITUTION:ISCIII
 #CENTRE:BU-ISCIII
 #AUTHOR: Pedro J. Sola (pedroscampoy@gmail.com)
-VERSION=1.3.3
+VERSION=1.4.1
 #CREATED: 15 March 2018
 #
 #ACKNOLEDGE: longops2getops.sh: https://gist.github.com/adamhotep/895cebf290e95e613c006afbffef09d7
@@ -975,13 +975,15 @@ Repeated contigs are present only once\n"
 
 mkdir -p $output_dir/$group/$sample/fasta_files
 
+
 #Remove previous analysis
-for i in $(ls $output_dir/$group/$sample/fasta_files/*)
+for i in $(ls $output_dir/$group/$sample/fasta_files)
 do
 	if [ -f $i ]; then
-		rm $is
+		rm $i
 	fi
 done
+
 
 #obtain list of contigs per plasmid in a separate file
 for i in $(cat $reconstruct_fasta | grep ">" | awk 'gsub(">","",$1) {print $1}')
@@ -1001,9 +1003,10 @@ done
 #Remove previous
 for i in $(ls $output_dir/$group/$sample/fasta_files/*.ac)
 do
-	rm $i
+	if [ -e $i ]; then
+		rm $i
+	fi
 done
-
 
 
 echo -e "\n${CYAN}DRAWING CIRCOS IMAGES${NC} ($(date))\n \
