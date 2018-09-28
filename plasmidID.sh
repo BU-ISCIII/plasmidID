@@ -396,7 +396,7 @@ if [ $annotation = true ]; then
 		query_side=$(cat $annotation_config_file | awk 'BEGIN{FS=","} NR == "'$i'" {print $6}')
 		is_unique=$(cat $annotation_config_file | awk 'BEGIN{FS=","} NR == "'$i'" {print $7}')
 		double_unique=$(cat $annotation_config_file | awk 'BEGIN{FS=","} NR == "'$i'" {print $8}')
-		database_type=$(cat $annotation_config_file | awk 'BEGIN{FS=","} NR == "'$i'" {print $9}')
+		query_type=$(cat $annotation_config_file | awk 'BEGIN{FS=","} NR == "'$i'" {print $9}')
 		color_highlight=$(cat $annotation_config_file | awk 'BEGIN{FS=","} NR == "'$i'" {print $10}')
 
 
@@ -713,7 +713,7 @@ Please use a fasta file with limited ammount of sequences."
 
 	check_mandatory_files.sh $contigs $database
 
-
+	config_file_individual="circos_individual_OR.conf"
 
 	calculate_seqlen.sh -i $database -r -o $output_dir/$group/$sample/data -n "database_reconstruct_"$sample &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\ncalculate_seqlen.sh -i $database -r -o $output_dir/$group/$sample/data -n "database_reconstruct_"$sample"
 	#"database_reconstruct_"$sample.length
@@ -793,7 +793,7 @@ echo -e "\n${CYAN}ALIGNING CONTIGS TO FILTERED PLASMIDS${NC} ($(date))\n \
 Contigs are aligned to filtered plasmids and those are selected by alignment identity and alignment percentage \
 in order to create links, full length and annotation tracks\n"
 
-blast_align.sh -i  $output_dir/$group/$sample/data/$sample".fna" -d $reconstruct_fasta -o  $output_dir/$group/$sample/data -p plasmids &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\nblast_align.sh -i  $output_dir/$group/$sample/data/$sample\".fna\" -d $reconstruct_fasta -o  $output_dir/$group/$sample/data -p plasmids"
+blast_align.sh -i  $output_dir/$group/$sample/data/$sample".fna" -d $reconstruct_fasta -o $output_dir/$group/$sample/data -p plasmids &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\nblast_align.sh -i  $output_dir/$group/$sample/data/$sample\".fna\" -d $reconstruct_fasta -o  $output_dir/$group/$sample/data -p plasmids"
 
 #sample.plasmids.blast
 
@@ -878,7 +878,7 @@ Each database supplied will be locally aligned against contigs and the coordinat
 		query_side=$(cat $annotation_config_file | awk 'BEGIN{FS=","} NR == "'$i'" {print $6}')
 		is_unique=$(cat $annotation_config_file | awk 'BEGIN{FS=","} NR == "'$i'" {print $7}')
 		double_unique=$(cat $annotation_config_file | awk 'BEGIN{FS=","} NR == "'$i'" {print $8}')
-		database_type=$(cat $annotation_config_file | awk 'BEGIN{FS=","} NR == "'$i'" {print $9}')
+		query_type=$(cat $annotation_config_file | awk 'BEGIN{FS=","} NR == "'$i'" {print $9}')
 		color_highlight=$(cat $annotation_config_file | awk 'BEGIN{FS=","} NR == "'$i'" {print $10}')
 
 		echo "Annotating database" $database_number":" $ddbb_name
@@ -895,8 +895,8 @@ Each database supplied will be locally aligned against contigs and the coordinat
 			double_unique_command="-U ${double_unique}"
 		fi
 
-		#echo "blast_align.sh -i $ddbb_file -d $output_dir/$group/$sample/data/$sample".fna" -o $output_dir/$group/$sample/data -p $ddbb_name -f $sample -t $database_type &>> $log_file >> $command_log
-		blast_align.sh -i $ddbb_file -d $output_dir/$group/$sample/data/$sample".fna" -o $output_dir/$group/$sample/data -p $ddbb_name -f $sample -t $database_type &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\nblast_align.sh -i $ddbb_file -d $output_dir/$group/$sample/data/$sample\".fna\" -o $output_dir/$group/$sample/data -p $ddbb_name -f $sample -t $database_type"
+		#echo "blast_align.sh -i $ddbb_file -d $output_dir/$group/$sample/data/$sample".fna" -o $output_dir/$group/$sample/data -p $ddbb_name -f $sample -t $query_type &>> $log_file >> $command_log
+		blast_align.sh -i $ddbb_file -d $output_dir/$group/$sample/data/$sample".fna" -o $output_dir/$group/$sample/data -p $ddbb_name -f $sample -q $query_type &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\nblast_align.sh -i $ddbb_file -d $output_dir/$group/$sample/data/$sample\".fna\" -o $output_dir/$group/$sample/data -p $ddbb_name -f $sample -q $query_type"
 		#sample.annotation.blast
 
 		#echo "		blast_to_bed.sh -i $output_dir/$group/$sample/data/$sample"."$ddbb_name".blast" -b $percent_identity -l $percent_aligment -d _ -D r -q "$query_divisor" -Q $query_side $double_unique_command &>> $log_file"
@@ -914,8 +914,11 @@ Each database supplied will be locally aligned against contigs and the coordinat
 		coordinates_file=$(echo  $output_dir/$group/$sample/data/$sample"."$ddbb_name".coordinates")
 		z_value="10${database_number}"
 
-
-		printf '%s\n' "<highlight>" "file = ${coordinates_file}" "z= ${z_value}" "r1 = 0.90r" "r0 = 0.67r" "fill_color = ${color_highlight}" "</highlight>" >>  $output_dir/$group/$sample/data/pID_highlights.conf
+		if [ $only_reconstruct = true ]; then
+			printf '%s\n' "<highlight>" "file = ${coordinates_file}" "z= ${z_value}" "r1 = 1r" "r0 = 0.77r" "fill_color = ${color_highlight}" "</highlight>" >>  $output_dir/$group/$sample/data/pID_highlights.conf
+		else
+			printf '%s\n' "<highlight>" "file = ${coordinates_file}" "z= ${z_value}" "r1 = 0.90r" "r0 = 0.67r" "fill_color = ${color_highlight}" "</highlight>" >>  $output_dir/$group/$sample/data/pID_highlights.conf
+		fi
 
 		cat $output_dir/$group/$sample/data/$sample"."$ddbb_name".coordinates" >> $output_dir/$group/$sample/data/pID_text_annotation.coordinates
 
