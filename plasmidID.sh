@@ -817,15 +817,15 @@ gff_to_bed.sh -i $output_dir/$group/$sample/data/$sample".gff" -L &>> $log_file 
 #sample.gff.forward.bed
 #sample.gff.reverse.bed
 
-coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 1500 &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\ncoordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample\".gff.bed\" -l  $output_dir/$group/$sample/data/$sample\".plasmids.blast.links\" -p -n 1500"
+coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 500 &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\ncoordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample\".gff.bed\" -l  $output_dir/$group/$sample/data/$sample\".plasmids.blast.links\" -p -n 1500"
 
 #sample.gff.coordinates
 
-coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.forward.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 1500 -f $sample".gff.forward" &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\ncoordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample\".gff.forward.bed\" -l  $output_dir/$group/$sample/data/$sample\".plasmids.blast.links\" -p -n 1500 -f $sample\".gff.forward\""
+coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.forward.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 500 -f $sample".gff.forward" &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\ncoordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample\".gff.forward.bed\" -l  $output_dir/$group/$sample/data/$sample\".plasmids.blast.links\" -p -n 1500 -f $sample\".gff.forward\""
 
 #sample.gff.forward.coordinates
 
-coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.reverse.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 1500 -f $sample".gff.reverse" &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\ncoordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample\".gff.reverse.bed\" -l  $output_dir/$group/$sample/data/$sample\".plasmids.blast.links\" -p -n 1500 -f $sample\".gff.reverse\""
+coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.reverse.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 500 -f $sample".gff.reverse" &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\ncoordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample\".gff.reverse.bed\" -l  $output_dir/$group/$sample/data/$sample\".plasmids.blast.links\" -p -n 1500 -f $sample\".gff.reverse\""
 
 #sample.gff.reverse.coordinates
 
@@ -904,7 +904,7 @@ Each database supplied will be locally aligned against contigs and the coordinat
 		#sample.annotation.bed
 
 		#echo "coordinate_adapter.sh -i $output_dir/$group/$sample/data/$sample"."$ddbb_name".bed" -l $output_dir/$group/$sample/data/$sample".plasmids.blast.links" $is_unique_command &>> $log_file"
-		coordinate_adapter.sh -i $output_dir/$group/$sample/data/$sample"."$ddbb_name".bed" -l $output_dir/$group/$sample/data/$sample".plasmids.blast.links" $is_unique_command -n 1500 &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\ncoordinate_adapter.sh -i $output_dir/$group/$sample/data/$sample"."$ddbb_name\".bed\" -l $output_dir/$group/$sample/data/$sample\".plasmids.blast.links\" $is_unique_command"
+		coordinate_adapter.sh -i $output_dir/$group/$sample/data/$sample"."$ddbb_name".bed" -l $output_dir/$group/$sample/data/$sample".plasmids.blast.links" $is_unique_command -n 500 &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\ncoordinate_adapter.sh -i $output_dir/$group/$sample/data/$sample"."$ddbb_name\".bed\" -l $output_dir/$group/$sample/data/$sample\".plasmids.blast.links\" $is_unique_command"
 
 		#coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample"."$ddbb_name".forward.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 1000 -f $ddbb".gff.forward" &>> $log_file
 
