@@ -66,6 +66,7 @@ usage : $0 <-1 R1> <-2 R2> <-d database(fasta)> <-s sample_name> [-g group_name]
 	-i | --alignment-identity <int>	minimun identity percentage aligned for a contig to annotate, default 90
 	-l | --alignment-percentage <int>	minimun length percentage aligned for a contig to annotate, default 30
 	-L | --length-total	<int>	minimun alignment length to filter blast analysis
+	--extend-annotation <int>	look for annotation over regions with no homology found (base pairs), default 500bp
 
 	Draw images:
 	--config-directory <dir>	directory holding config files, default config_files/
@@ -151,6 +152,8 @@ do
 		--cluster)	set -- "$@"	-f ;;
 		--alignment-percentage)	set -- "$@"	-l ;;
 		--length-total)	set -- "$@"	-L ;;
+		
+		--extend-annotation) set -- "$@"	-x ;;
 ##ADDITIONAL-
 		--memory)		set -- "$@"	-M ;;
 		--threads)		set -- "$@"	-T ;;
@@ -174,6 +177,7 @@ coverage_summary=80
 cluster_cutoff=80
 alignment_identity=90
 alignment_percentage=30
+extend_annotation=500
 R1="R1_file"
 R2="R2_file"
 no_trim=false
@@ -198,7 +202,7 @@ NC='\033[0m'
 
 #PARSE VARIABLE ARGUMENTS WITH getops
 #common example with letters, for long options check longopts2getopts.sh
-options=":1:2:d:s:g:c:a:i:o:C:S:f:l:L:T:M:X:y:Y:RVtvh"
+options=":1:2:d:s:g:c:a:i:o:C:S:f:l:L:T:M:X:x:y:Y:RVtvh"
 while getopts $options opt; do
 	case $opt in
 		1 )
@@ -232,6 +236,9 @@ while getopts $options opt; do
 			;;
 		X)
 			trimmomatic_directory=$OPTARG
+			;;
+		x)
+			extend_annotation=$OPTARG
 			;;
 		Y)
 			config_dir=$OPTARG
@@ -817,15 +824,15 @@ gff_to_bed.sh -i $output_dir/$group/$sample/data/$sample".gff" -L &>> $log_file 
 #sample.gff.forward.bed
 #sample.gff.reverse.bed
 
-coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 500 &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\ncoordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample\".gff.bed\" -l  $output_dir/$group/$sample/data/$sample\".plasmids.blast.links\" -p -n 1500"
+coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n $extend_annotation &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\ncoordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample\".gff.bed\" -l  $output_dir/$group/$sample/data/$sample\".plasmids.blast.links\" -p -n 1500"
 
 #sample.gff.coordinates
 
-coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.forward.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 500 -f $sample".gff.forward" &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\ncoordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample\".gff.forward.bed\" -l  $output_dir/$group/$sample/data/$sample\".plasmids.blast.links\" -p -n 1500 -f $sample\".gff.forward\""
+coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.forward.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n $extend_annotation -f $sample".gff.forward" &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\ncoordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample\".gff.forward.bed\" -l  $output_dir/$group/$sample/data/$sample\".plasmids.blast.links\" -p -n 1500 -f $sample\".gff.forward\""
 
 #sample.gff.forward.coordinates
 
-coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.reverse.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 500 -f $sample".gff.reverse" &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\ncoordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample\".gff.reverse.bed\" -l  $output_dir/$group/$sample/data/$sample\".plasmids.blast.links\" -p -n 1500 -f $sample\".gff.reverse\""
+coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample".gff.reverse.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n $extend_annotation -f $sample".gff.reverse" &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\ncoordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample\".gff.reverse.bed\" -l  $output_dir/$group/$sample/data/$sample\".plasmids.blast.links\" -p -n 1500 -f $sample\".gff.reverse\""
 
 #sample.gff.reverse.coordinates
 
@@ -904,7 +911,7 @@ Each database supplied will be locally aligned against contigs and the coordinat
 		#sample.annotation.bed
 
 		#echo "coordinate_adapter.sh -i $output_dir/$group/$sample/data/$sample"."$ddbb_name".bed" -l $output_dir/$group/$sample/data/$sample".plasmids.blast.links" $is_unique_command &>> $log_file"
-		coordinate_adapter.sh -i $output_dir/$group/$sample/data/$sample"."$ddbb_name".bed" -l $output_dir/$group/$sample/data/$sample".plasmids.blast.links" $is_unique_command -n 500 &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\ncoordinate_adapter.sh -i $output_dir/$group/$sample/data/$sample"."$ddbb_name\".bed\" -l $output_dir/$group/$sample/data/$sample\".plasmids.blast.links\" $is_unique_command"
+		coordinate_adapter.sh -i $output_dir/$group/$sample/data/$sample"."$ddbb_name".bed" -l $output_dir/$group/$sample/data/$sample".plasmids.blast.links" $is_unique_command -n $extend_annotation &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\ncoordinate_adapter.sh -i $output_dir/$group/$sample/data/$sample"."$ddbb_name\".bed\" -l $output_dir/$group/$sample/data/$sample\".plasmids.blast.links\" $is_unique_command"
 
 		#coordinate_adapter.sh -i  $output_dir/$group/$sample/data/$sample"."$ddbb_name".forward.bed" -l  $output_dir/$group/$sample/data/$sample".plasmids.blast.links" -p -n 1000 -f $ddbb".gff.forward" &>> $log_file
 
