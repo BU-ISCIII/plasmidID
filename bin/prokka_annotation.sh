@@ -214,7 +214,7 @@ prokka --force --outdir $output_dir \
 --locustag $prefix \
 --compliant \
 --cpus $threads \
-$input_file || error ${LINENO} $(basename $0) "Prokka command failed. See $output_dir/logs for more information."
+$input_file #|| error ${LINENO} $(basename $0) "Prokka command failed. See $output_dir/logs for more information."
 
 echo "$(date)"
 echo "done annotating $input_file with prokka"
@@ -224,7 +224,7 @@ echo "done annotating $input_file with prokka"
 if [ $clean = true ]; then
 
 	echo "Removing unwanted files"
-	for i in $(ls $output_dir/$prefix.??? | awk '!/fna|gff|log|err/')
+	for i in $(ls $output_dir/$prefix.??? | awk '!/fna|gff|log|err|gb/')
 	do
 		rm $i
 	done

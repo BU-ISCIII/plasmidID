@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+
+## 1.4.2 - 2018-09-29
+### Added
+- Specific config file for only reconstruct parameter
+
+###Fixed
+- Protein databases can be properly used
+
 ## 1.4 - 2018-09-20
 ### Added
 - Automatically annotated genes/cds are displayed differently depending on whether they are located in forward or reverse 

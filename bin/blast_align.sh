@@ -55,6 +55,7 @@ usage : $0 <-i inputfile(query)> <-d inputfile(database)> [-p <prefix>] [-o <dir
     -d database to blast against
 	-o output directory, default same directory as query
 	-p prefix for blast identification (mandatory) and output file name
+	-q type of query, nucl by default
 	-t type of database, nucl by default
     -e evalue for blast analysis, default 0.0001
 	-T number of threads
@@ -109,13 +110,15 @@ cwd="$(pwd)"
 group="NO_GROUP"
 input_file="Input_file"
 database="Database"
+query_type="nucl"
 database_type="nucl"
 evalue=0.0001
 threads=1
+blast_command="blastn"
 
 #PARSE VARIABLE ARGUMENTS WITH getops
 #common example with letters, for long options check longopts2getopts.sh
-options=":i:o:p:f:d:t:e:T:vh"
+options=":i:o:p:f:d:q:t:e:T:vh"
 while getopts $options opt; do
 	case $opt in
 		i )
@@ -135,6 +138,9 @@ while getopts $options opt; do
 			;;
 		t )
           	database_type=$OPTARG
+          	;;
+        q )
+          	query_type=$OPTARG
           	;;
         g )
           	group=$OPTARG
@@ -188,13 +194,16 @@ if [ ! $prefix ]; then
 	exit 1
 fi
 
-if [ $database_type == "prot" ] || [ $database_type == "nucl" ]; then
-	echo "database type selected as" $database_type
+if [ $query_type == "prot" ] || [ $query_type == "nucl" ]; then
+	echo "query type selected as" $database_type
 else
-	echo "please provide a proper database type"
+	echo "please provide a proper query type"
     exit 1
 fi
 
+if [ $query_type == "prot" ]; then
+	blast_command="tblastn"
+fi
 
 if [ ! $output_dir ]; then
 	output_dir=$(dirname $input_file)
@@ -220,8 +229,9 @@ echo "Blasting" $file_name "agaist" $database_name
 
 makeblastdb -in $database -out $database_dir/$database_name".blast.tmp" -dbtype $database_type || error ${LINENO} $(basename $0) "Makeblastdb command failed. See $output_dir/logs for more information."
 
+echo "BLAST command is" $blast_command
 
-blastn -query $input_file \
+$blast_command -query $input_file \
 -db $database_dir/$database_name".blast.tmp" \
 -out $output_dir/$file_name"."$prefix".blast" \
 -evalue $evalue \
