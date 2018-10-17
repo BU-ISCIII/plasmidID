@@ -720,7 +720,7 @@ Please use a fasta file with limited ammount of sequences."
 
 	check_mandatory_files.sh $contigs $database
 
-	config_file_individual="circos_individual_OR.conf"
+	config_file_individual="OR.conf"
 
 	calculate_seqlen.sh -i $database -r -o $output_dir/$group/$sample/data -n "database_reconstruct_"$sample &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\ncalculate_seqlen.sh -i $database -r -o $output_dir/$group/$sample/data -n "database_reconstruct_"$sample"
 	#"database_reconstruct_"$sample.length
