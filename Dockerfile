@@ -12,7 +12,7 @@ RUN echo "Install basic development tools" && \
     pip install scif ipython && \
     echo "Installing plasmidID app" && \
     scif install /opt/plasmidid_v1.4.1_centos7.scif
-
+## Test
 
 ENTRYPOINT ["/opt/docker-entrypoint.sh"]
 CMD ["plasmidID.sh"]
