@@ -26,10 +26,10 @@ jobs:
           command: apk add --no-cache pigz python3 openjdk8 bash
       - restore_cache:
           keys:
-            - docker-v1-{{ .Branch }}-{{ epoch }}
-            - docker-v1-{{ .Branch }}-
-            - docker-v1-master-
-            - docker-v1-
+            - docker-v2-{{ .Branch }}-{{ epoch }}
+            - docker-v2-{{ .Branch }}-
+            - docker-v2-master-
+            - docker-v2-
           paths:
             - /tmp/cache/container.tar.gz
 
@@ -104,8 +104,8 @@ jobs:
     steps:
       - restore_cache:
           keys:
-            - data-v1-{{ epoch }}
-            - data-v1-
+            - data-v2-{{ epoch }}
+            - data-v2-
       - run:
           name: Get test data
           command: |
@@ -122,7 +122,7 @@ jobs:
             - data
             - config
       - save_cache:
-         key: data-v1-{{ epoch }}
+         key: data-v2-{{ epoch }}
          paths:
             - /tmp/data
             - /tmp/config
@@ -136,7 +136,7 @@ jobs:
       - attach_workspace:
           at: /tmp
       - save_cache:
-         key: docker-v1-{{ .Branch }}-{{ epoch }}
+         key: docker-v2-{{ .Branch }}-{{ epoch }}
          paths:
             - /tmp/cache/container.tar.gz
 

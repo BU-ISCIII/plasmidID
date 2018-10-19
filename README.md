@@ -43,3 +43,4 @@ singularity exec buisciii/plasmidid plasmidID.sh \
      --no-trim \
      -s KPN
 ```
+p
