@@ -35,7 +35,7 @@ docker run buisciii/plasmidid plasmidID.sh \
 ```
 Or you can use Singularity instead:
 ```Bash
-singularity exec docker://buisciii/plasmidid plasmidID.sh \
+singularity run -w docker://buisciii/plasmidid plasmidID.sh \
      -1 TEST_DATA/KPN_TEST_R1.fastq.gz  \
      -2 TEST_DATA/KPN_TEST_R2.fastq.gz \
      -d TEST_DATA/plasmids_TEST_database.fasta \
