@@ -60,11 +60,12 @@ usage() {
 
 Cdhit_cluster script uses cd-hit/psi-cd-hit to clusterize a FASTA file
 
-usage : $0 <-i inputfile(FASTA)> [-o <directory>] [-n <filename>] [-c <percentage>]
+usage : $0 <-i inputfile(FASTA)> [-o <directory>] [-n <filename>] [-c <percentage>] [-H <cd-hit_command>]
 		[-T <threads>] [-g group_name] [-s <int>] [-M <int>][-C <(0|1)>] [-G <(0|1)>] [-b <blast_prog>] [p] [-v] [-h]
 
 	-i input file in FASTA format
 	-c percentage threshold to cluster, default 80
+	-H cd-hit command, default cd-hit-est
 	-M max available memory (Mbyte), default 400
 	-n file name
 	-s length difference cutoff, default 0.8
@@ -81,6 +82,7 @@ usage : $0 <-i inputfile(FASTA)> [-o <directory>] [-n <filename>] [-c <percentag
 Output directory is the same as input directory
 
 example: cdhit_cluster -i ecoli.fasta -c 90 -M 50000 -T 0
+		cdhit_cluster -H cd-hit -i ecoli.fasta -c 90 -M 50000 -T 0
 
 
 EOF
@@ -136,7 +138,7 @@ threads=0
 
 #PARSE VARIABLE ARGUMENTS WITH getops
 #common example with letters, for long options check longopts2getopts.sh
-options=":i:o:c:M:n:s:g:C:G:b:T:pvh"
+options=":i:o:c:M:n:s:g:C:G:b:T:H:pvh"
 while getopts $options opt; do
 	case $opt in
 		i )
@@ -148,6 +150,9 @@ while getopts $options opt; do
 			;;
 		g)
 			group=$OPTARG
+			;;
+		H)
+			cd_hit_command=$OPTARG
 			;;
 		M )
 			max_memory=$OPTARG
