@@ -35,7 +35,7 @@ docker run buisciii/plasmidid plasmidID.sh \
 ```
 Or you can use Singularity instead:
 ```Bash
-singularity exec buisciii/plasmidid plasmidID.sh \
+singularity run -w docker://buisciii/plasmidid plasmidID.sh \
      -1 TEST_DATA/KPN_TEST_R1.fastq.gz  \
      -2 TEST_DATA/KPN_TEST_R2.fastq.gz \
      -d TEST_DATA/plasmids_TEST_database.fasta \
@@ -43,4 +43,13 @@ singularity exec buisciii/plasmidid plasmidID.sh \
      --no-trim \
      -s KPN
 ```
-p
+
+You can also build the image in your local machine cloning the repository and building it using the Singularity recipe provided:
+
+```Bash
+git clone git@github.com:BU-ISCIII/plasmidID.git
+cd plasmidID
+git submodule init
+git submodule update
+singularity build plasmidid.simg Singularity
+```
