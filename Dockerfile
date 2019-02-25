@@ -14,5 +14,9 @@ RUN echo "Install basic development tools" && \
     scif install /opt/plasmidid_v1.4.2_centos7.scif
 ## Test
 
-ENTRYPOINT ["/opt/docker-entrypoint.sh"]
-CMD ["plasmidID.sh"]
+#ENTRYPOINT ["/opt/docker-entrypoint.sh"]
+#CMD ["plasmidID.sh"]
+
+RUN find /scif/apps -maxdepth 2 -name "bin" | while read in; do echo "export PATH=\$PATH:$in" >> /etc/bashrc;done 
+RUN if [ -z "${LD_LIBRARY_PATH-}" ]; then echo "export LD_LIBRARY_PATH=/usr/local/lib" >> /etc/bashrc;fi
+RUN find /scif/apps -maxdepth 2 -name "lib" | while read in; do echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:$in" >> /etc/bashrc;done
