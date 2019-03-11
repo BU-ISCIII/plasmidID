@@ -41,7 +41,9 @@ docker run -v $PWD:$PWD -w $PWD buisciii/plasmidid plasmidID.sh \
      --no-trim \
      -s KPN
 ```
-Or you can use Singularity instead:
+
+
+Or you can use Singularity instead:->NOT WORKING AT THE MOMENT
 ```Bash
 singularity exec docker://buisciii/plasmidid plasmidID.sh \
      -1 TEST_DATA/KPN_TEST_R1.fastq.gz  \
