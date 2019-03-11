@@ -24,8 +24,16 @@ For furder details, including:
 
 # Quick usage
 Example:
+Clone the repo:
 ```Bash
-docker run buisciii/plasmidid plasmidID.sh \
+git clone git@github.com:BU-ISCIII/plasmidID.git
+cd plasmidID
+git submodule init
+git submodule update
+```
+Run it with the test data using docker or singularity:
+```Bash
+docker run -v $PWD:$PWD -w $PWD buisciii/plasmidid plasmidID.sh \
      -1 TEST_DATA/KPN_TEST_R1.fastq.gz  \
      -2 TEST_DATA/KPN_TEST_R2.fastq.gz \
      -d TEST_DATA/plasmids_TEST_database.fasta \
@@ -35,7 +43,7 @@ docker run buisciii/plasmidid plasmidID.sh \
 ```
 Or you can use Singularity instead:
 ```Bash
-singularity run -w docker://buisciii/plasmidid plasmidID.sh \
+singularity exec docker://buisciii/plasmidid plasmidID.sh \
      -1 TEST_DATA/KPN_TEST_R1.fastq.gz  \
      -2 TEST_DATA/KPN_TEST_R2.fastq.gz \
      -d TEST_DATA/plasmids_TEST_database.fasta \
@@ -52,4 +60,11 @@ cd plasmidID
 git submodule init
 git submodule update
 singularity build plasmidid.simg Singularity
+singularity exec plasmidid.simg plasmidID.sh \
+     -1 TEST_DATA/KPN_TEST_R1.fastq.gz  \
+     -2 TEST_DATA/KPN_TEST_R2.fastq.gz \
+     -d TEST_DATA/plasmids_TEST_database.fasta \
+     -c TEST_DATA/contigs_KPN_TEST.fasta \
+     --no-trim \
+     -s KPN
 ```
