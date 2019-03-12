@@ -33,7 +33,7 @@ git submodule update
 ```
 Run it with the test data using docker or singularity:
 
-**Notice that the input files MUST be in your present working directory or in any folder inside it. For example, if I execute this command in `/home/smonzon`, my folder with the files will be in `/home/smonzon/TEST_DATA`.**
+**Notice that the input files MUST be in your present working directory or in any folder inside it. For example, if I execute this command in `/home/smonzon`, my folder with the files would be in `/home/smonzon/TEST_DATA`.**
 
 ```Bash
 docker run -v $PWD:$PWD -w $PWD buisciii/plasmidid plasmidID.sh \
