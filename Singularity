@@ -21,6 +21,7 @@ From: centos:latest
     # Executables must be exported for nextflow, if you use their singularity native integration.
     # It would be cool to use $SCIF_APPBIN_bwa variable, but it must be set after PATH variable, because I tried to use it here and in %environment without success.
     echo "PlasmidID Done"
+    echo "export LC_ALL=en_US.UTF-8" >> $SINGULARITY_ENVIRONMENT
     find /scif/apps -maxdepth 2 -name "bin" | while read in; do echo "export PATH=\${PATH}:$in" >> $SINGULARITY_ENVIRONMENT;done
 
 
