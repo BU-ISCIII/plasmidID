@@ -134,7 +134,8 @@ echo "PlasmidDatabase: $database"
 echo "Contigs: $contigs"
 echo "Options: --no-trim"
 
-export PATH=$PATH:/scif/apps/plasmidid/plasmidID/bin
+echo "export PATH=$PATH:$script_dir/../bin" > path
+source path
 $script_dir/../plasmidID.sh -1 $script_dir/$R1 -2 $script_dir/$R2 -d $script_dir/$database -c $script_dir/$contigs -s KPN --no-trim
 
 
