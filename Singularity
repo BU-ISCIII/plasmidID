@@ -2,7 +2,7 @@ Bootstrap: docker
 From: centos:latest
 
 %files
-	./scif_app_recipes/* /opt/
+	./scif_app_recipes/ /opt/
 %post
 	echo "Install basic development tools"
 	yum -y groupinstall "Development Tools"
@@ -16,7 +16,7 @@ From: centos:latest
     pip install scif
 
     echo "Installing plasmidID app"
-    scif install /opt/plasmidid_v1.4.2_centos7.scif
+    scif install /opt/scif_app_recipes/plasmidid_v1.4.2_centos7.scif
 
     # Executables must be exported for nextflow, if you use their singularity native integration.
     # It would be cool to use $SCIF_APPBIN_bwa variable, but it must be set after PATH variable, because I tried to use it here and in %environment without success.
