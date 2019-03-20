@@ -46,7 +46,7 @@ docker run -v $PWD:$PWD -w $PWD buisciii/plasmidid plasmidID.sh \
 ```
 
 
-Or you can use Singularity instead:->NOT WORKING AT THE MOMENT
+Or you can use Singularity instead:
 ```Bash
 singularity exec docker://buisciii/plasmidid plasmidID.sh \
      -1 TEST_DATA/KPN_TEST_R1.fastq.gz  \
@@ -71,5 +71,16 @@ singularity exec plasmidid.simg plasmidID.sh \
      -d TEST_DATA/plasmids_TEST_database.fasta \
      -c TEST_DATA/contigs_KPN_TEST.fasta \
      --no-trim \
+     -s KPN
+```
+
+If you want to use trimming functionality you have to supply trimmomatic-directory parameter:
+```
+docker run -v $PWD:$PWD -w $PWD buisciii/plasmidid plasmidID.sh \
+     -1 TEST_DATA/KPN_TEST_R1.fastq.gz  \
+     -2 TEST_DATA/KPN_TEST_R2.fastq.gz \
+     -d TEST_DATA/plasmids_TEST_database.fasta \
+     -c TEST_DATA/contigs_KPN_TEST.fasta \
+     --trimmomatic-directory /scif/apps/trimmomatic/Trimmomatic-0.38 \
      -s KPN
 ```
