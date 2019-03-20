@@ -23,7 +23,7 @@ From: centos:latest
     echo "PlasmidID Done"
     echo "export LC_ALL=en_US.UTF-8" >> $SINGULARITY_ENVIRONMENT
     find /scif/apps -maxdepth 2 -name "bin" | while read in; do echo "export PATH=\${PATH}:$in" >> $SINGULARITY_ENVIRONMENT;done
-
+    find /scif/apps -maxdepth 2 -name "lib" | while read in; do echo "export LD_LIBRARY_PATH=\${LD_LIBRARY_PATH}:$in" >> $SINGULARITY_ENVIRONMENT;done
 
 %runscript
     exec scif "$@"
