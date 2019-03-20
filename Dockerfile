@@ -11,7 +11,7 @@ RUN echo "Install basic development tools" && \
     echo "Installing SCI-F" && \
     pip install scif ipython && \
     echo "Installing plasmidID app" && \
-    scif install /opt/plasmidid_v1.4.2_centos7.scif
+    scif install /opt/scif_app_recipes/plasmidid_v1.4.2_centos7.scif
 
 # Include ENV variables
 ENV LC_ALL=en_US.UTF-8
