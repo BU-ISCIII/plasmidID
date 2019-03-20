@@ -1,6 +1,6 @@
 FROM centos:latest
 
-COPY ./scif_app_recipes/  /opt/
+COPY ./scif_app_recipes  /opt/scif_app_recipes
 
 RUN echo "Install basic development tools" && \
     yum -y groupinstall "Development Tools" && \
