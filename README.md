@@ -77,10 +77,11 @@ singularity exec plasmidid.simg plasmidID.sh \
 If you want to use trimming functionality you have to supply trimmomatic-directory parameter:
 ```
 docker run -v $PWD:$PWD -w $PWD buisciii/plasmidid plasmidID.sh \
-     -1 TEST_DATA/KPN_TEST_R1.fastq.gz  \
-     -2 TEST_DATA/KPN_TEST_R2.fastq.gz \
-     -d TEST_DATA/plasmids_TEST_database.fasta \
-     -c TEST_DATA/contigs_KPN_TEST.fasta \
+     -1 file_R1.fastq.gz  \
+     -2 file_R2.fastq.gz \
+     -d database.fasta \
+     -c contigs.fasta \
      --trimmomatic-directory /scif/apps/trimmomatic/Trimmomatic-0.38 \
      -s KPN
 ```
+> **Note:** You MUST skip trimming filtering in order to use TEST_DATA as it is already filtered!
