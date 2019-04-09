@@ -32,8 +32,7 @@ ENV PATH=$PATH:/scif/apps/bowtie2/bin
 ENV PATH=$PATH:/scif/apps/plasmidid/bin
 ENV PATH=$PATH:/scif/apps/samtools/bin
 ENV PATH=$PATH:/scif/apps/gcc/bin
-ENV LD_LIBRARY_PATH=/usr/local/lib
-ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/scif/apps/hmmer3/lib
+ENV LD_LIBRARY_PATH=/scif/apps/hmmer3/lib
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/scif/apps/prodigal/lib
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/scif/apps/circos/lib
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/scif/apps/minced/lib
@@ -50,6 +49,7 @@ ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/scif/apps/bowtie2/lib
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/scif/apps/plasmidid/lib
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/scif/apps/samtools/lib
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/scif/apps/gcc/lib
+#ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 
 # Include them also in /etc/bashrc
 RUN echo "export LC_ALL=en_US.UTF-8" >> /etc/bashrc
