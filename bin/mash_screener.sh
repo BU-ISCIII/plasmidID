@@ -10,39 +10,39 @@ set -e
 #CENTRE:BU-ISCIII
 #AUTHOR: Pedro J. Sola
 VERSION=1.0
-#CREATED: 21 May 2018
+#CREATED: 27 November 2019
 #REVISION:
-#DESCRIPTION:Script that execute trimmomatic to filter by quality
-#
-#
+
+#DESCRIPTION:Script that screen reads over a database using kmers and estract sequences ids with higher values
+#TODO
 #================================================================
 # END_OF_HEADER
 #================================================================
 
-
+#SHORT USAGE RULES
+#LONG USAGE FUNCTION
 usage() {
 	cat << EOF
 
-quality_trim script execute trimmomatic to filter by quality
+Bowtie_mapper script index a database and map a supplied pair-end sequences
 
-usage : $0 <-1 R1 file> <-2 R2 file> [-o <directory>] [-d <trimmomatic_directory>] <-s sample_name>
-		[-a adapter_file] [-g group_name] [-f <file_name>] [-l <int>] [-M <int>] [-T <int>][-v] [-h]
+usage : $0 [-i <inputfile>] [-o <directory>] <-d database(fasta)> <-s sample_name> <-1 R1> <-2 R2>
+		[-g group_name] [-f <int>] [-T <int>] [-a] [-v] [-h]
 
-	-1 R1 file (mandatory)
-	-2 R2 file (mandatory)
-	-d directory where trimmomatic is installed, default: /opt/Trimmomatic/
-	-a adapters to remove, default: TruSeq3-PE.fa
+	-i input directory (optional)
 	-o output directory (optional)
-	-f file name
-	-l minimus length of trimmed reads (default 40)
-	-s sample name (mandatory)
+	-d database to screen (.fasta)
+	-s sample name
 	-g group name (optional). If unset, samples will be gathered in NO_GROUP group
-	-M RAM memmory (Gb), default 8
-	-T threads, default 1
+	-1 reads corresponding to paired-end R1
+	-2 reads corresponding to paired-end R2
+	-f threshold identity value to retieve sequence ids with at least this value (default 0.9)
+	-w use winner takes it all
+	-T number of threads
 	-v version
 	-h display usage message
 
-example: ./quality_trim.sh -1 ecoli_R1.fastq.gz -2 ecoli_R2.fastq.gz -s ECO232 -g ENTERO -T 8
+example: mash_screener.sh -d database.fasta -s COLI -1 ecoli_1.fastq -2 ecoli_2.fastq
 
 EOF
 }
@@ -82,55 +82,53 @@ error(){
 }
 
 #DECLARE FLAGS AND VARIABLES
-cwd="$(pwd)"
-group="NO_GROUP"
-r1_file="R1_file"
-r2_file="R2_file"
-trimmomatic_directory=/opt/Trimmomatic/
-adapter_file="TruSeq3-PE.fa"
-minimus_length=40
-max_mem=8
 threads=1
+offrate=1
+filter_identity=0.9
+cwd="$(pwd)"
+w_winner=""
+group="NO_GROUP"
+database="Database"
+R1="R1"
+R2="R2"
 
 #PARSE VARIABLE ARGUMENTS WITH getops
 #common example with letters, for long options check longopts2getopts.sh
-options=":1:2:o:f:d:a:s:g:l:n:M:T:vh"
+options=":i:o:s:g:d:1:2:f:T:avh"
 while getopts $options opt; do
 	case $opt in
-		1 )
-			r1_file=$OPTARG
-			;;
-		2 )
-			r2_file=$OPTARG
+		i )
+			input_dir=$OPTARG
 			;;
 		o )
 			output_dir=$OPTARG
 			;;
-		f )
-			file_name=$OPTARG
-			;;
 		s )
 			sample=$OPTARG
-			;;
-		d)
-			trimmomatic_directory=$OPTARG
-			;;
-		a)
-			adapter_file=$OPTARG
-			;;
-		l)
-			minimus_length=$OPTARG
 			;;
 		g)
 			group=$OPTARG
 			;;
-		M )
-			max_mem=$OPTARG
+		d )
+			database=$OPTARG
 			;;
-		T )
+		1 )
+			R1=$OPTARG
+			;;
+		2 )
+			R2=$OPTARG
+			;;
+		f )
+          	filter_identity=$OPTARG
+      		;;
+		w)
+			w_winner="-w"
+			;;
+        T )
 			threads=$OPTARG
-			;;
-		h )
+            ;;
+
+        h )
 		  	usage
 		  	exit 1
 		  	;;
@@ -157,7 +155,6 @@ done
 shift $((OPTIND-1))
 
 
-
 #================================================================
 # MAIN_BODY
 #================================================================
@@ -165,18 +162,18 @@ shift $((OPTIND-1))
 
 echo -e "\n#Executing" $0 "\n"
 
-check_mandatory_files.sh $r1_file $r2_file
+check_dependencies.sh bash mash
 
-check_dependencies.sh trimmomatic
+check_mandatory_files.sh $database $R1
 
 if [ ! $sample ]; then
-	echo "Please include a sample name"
+	echo "ERROR: please, provide a sample name"
+	usage
 	exit 1
 fi
 
-
 if [ ! $output_dir ]; then
-	output_dir="$group/$sample/trimmed"
+	output_dir=$cwd"/$group/$sample/kmer/"
 	echo "Default output directory is" $output_dir
 	mkdir -p $output_dir
 else
@@ -184,34 +181,46 @@ else
 	mkdir -p $output_dir
 fi
 
-if [ ! $filename ]; then
-	filename=$sample
+
+########SKETCH##############
+############################
+
+if [ -f $output_dir/database.msh ]; then \
+	echo "Found a sketch ddbb for" $(basename $database);
+	echo "Omitting sketching"
+else
+	echo "creating sketch of " $(basename $database);
+	mash sketch -i -p $threads -o $output_dir/database $database || error ${LINENO} $(basename $0) "mash screen command failed. See $output_dir/logs for more information"
 fi
 
+########SCREEN##############
+############################
 
-#trimmomatic_executable=$(find $trimmomatic_directory -type f -name "trimmomatic*.jar" | awk 'NR==1')
+if [ -f $output_dir/database.screen.tab ];then \
+	echo "Found a mash screen file for sample" $sample;
+	echo "Omitting screening"
+else
+	echo "$(date)"
+	echo screening $R1
 
-trimmomatic_path=$(whereis trimmomatic | cut -d " " -f 2 | cut -d "/" -f 1,2,3,4,5,6)
-trimmomatic_adapter=$(find $trimmomatic_path -type f -name $adapter_file | awk 'NR==1')
+	mash screen -p $threads $output_dir/database.msh $R1 > $output_dir/database.screen.tab || error ${LINENO} $(basename $0) "Bowtie2 command failed. See $output_dir/logs for more information"
 
-echo "$(date)"
-echo "Quality trimming:"
-echo "R1 = " $r1_file
-echo "R2 = " $r2_file
 
-trimmomatic PE -threads $threads \
-$r1_file \
-$r2_file \
-$output_dir/$sample"_1_paired.fastq.gz" \
-$output_dir/$sample"_1_unpaired.fastq.gz" \
-$output_dir/$sample"_2_paired.fastq.gz" \
-$output_dir/$sample"_2_unpaired.fastq.gz" \
-ILLUMINACLIP:$trimmomatic_adapter:2:30:10 SLIDINGWINDOW:4:20 MINLEN:$minimus_length || error ${LINENO} $(basename $0) "Trimmomatic command failed. See $output_dir/logs for more information."
+	echo "$(date)"
+	echo -e "DONE Screening $sample of $group Group" "\n"
+fi
 
-echo "$(date)"
-echo "DONE quality trimming, file can be fount at:"
-echo $output_dir/$sample"_1_paired.fastq.gz"
-echo $output_dir/$sample"_1_unpaired.fastq.gz"
-echo $output_dir/$sample"_2_paired.fastq.gz"
-echo $output_dir/$sample"_2_unpaired.fastq.gz"
-echo -e "\n"
+######PARSE_RESULT##########
+############################
+
+output_mash_id=$output_dir/database.filtered_$filter_identity
+
+echo "Retrieving sequences matching more than $filter_identity identity"
+
+cat $output_dir/database.screen.tab | awk '($1 >= '"${filter_identity}"') {print $5}' > $output_mash_id
+
+
+#####FILTER SEQUENCES#######
+############################
+
+filter_fasta.sh -i $database -f $output_mash_id

@@ -60,7 +60,8 @@ usage : $0 <-1 R1> <-2 R2> <-d database(fasta)> <-s sample_name> [-g group_name]
 	Coverage and Clustering:
 	-C | --coverage-cutoff	<int>	minimun coverage percentage to select a plasmid as scafold (0-100), default 80
 	-S | --coverage-summary	<int>	minimun coverage percentage to include plasmids in summary image (0-100), default 90
-	-f | --cluster		<int>	identity percentage to cluster plasmids into the same representative sequence (0-100), default 80
+	-f | --cluster	<int>	identity percentage to cluster plasmids into the same representative sequence (0-100), default 80
+	-k | --kmer	<int>	identity to filter plasmids from the database with kmer approach (0-1), default 0.9
 
 	Contig local alignment
 	-i | --alignment-identity <int>	minimun identity percentage aligned for a contig to annotate, default 90
@@ -147,6 +148,7 @@ do
 
 		--explore)	set -- "$@" -E ;;
 		--alignment-identity)	set -- "$@" -i ;;
+		--kmer-identity)	set -- "$@" -k ;;
 		--coverage-cutoff)	set -- "$@"	-C ;;
 		--coverage-summary)	set -- "$@"	-S ;;
 		--cluster)	set -- "$@"	-f ;;
@@ -172,6 +174,7 @@ max_memory=4000
 cwd="$(pwd)"
 group="NO_GROUP"
 database="Database"
+kmer_cutoff=0.9
 coverage_cutoff=80
 coverage_summary=80
 cluster_cutoff=80
@@ -257,6 +260,9 @@ while getopts $options opt; do
 		C )
 			coverage_cutoff=$OPTARG
 			;;
+		k )
+			kmer_cutoff=$OPTARG
+			;;
 		S )
 			coverage_summary=$OPTARG
 			;;
@@ -329,7 +335,7 @@ if [ $only_reconstruct = false ]; then
 
 	echo -e "\n${CYAN}CHECKING DEPENDENCIES AND MANDATORY FILES${NC}"
 
-	check_dependencies.sh blastn bowtie2-build bowtie2 cd-hit-est bedtools prokka samtools circos
+	check_dependencies.sh blastn bowtie2-build bowtie2 cd-hit-est bedtools prokka samtools mash circos
 
 	check_mandatory_files.sh $r1_file $r2_file $database
 fi
@@ -461,7 +467,7 @@ Reads will be quality trimmed with a window of 4 and an average quality of 20"
 	#echo "R1:" $r1_file
 	#echo "R2:" $r2_file
 
-	check_dependencies.sh java
+	check_dependencies.sh trimmomatic
 
 	filestrimmed=$(ls $output_dir/$group/$sample/trimmed 2> /dev/null | grep "paired" | wc -l)
 
@@ -517,11 +523,6 @@ fi
 #group/sample/assembly/scaffolds.fasta
 
 
-
-
-
-
-
 if [ $only_reconstruct = false ]; then
 
 	reconstruct_fasta=$output_dir/$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff"_term.fasta"_$cluster_cutoff
@@ -572,8 +573,18 @@ printf '%s\n' "${variables[$i]}"
 done
 
 
-	echo -e "\n${YELLOW} STARTING MAPPING and CLUSTERING${NC}\n"
+	echo -e "\n${YELLOW} STARTING KMER FILTERING, MAPPING and CLUSTERING${NC}\n"
 
+
+	echo -e "\n${CYAN}SCREENING READS WITH KMERS${NC} ($(date))\n \
+Reads will be screened against database supplied for further filtering and mapping,\n \
+this will reduce the input sequences to map against" $sample
+
+	mash_screener.sh -d $database -1 $r1_file_mapping -s $sample -o $output_dir/$group/$sample/kmer -f $kmer_cutoff &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\n command: \nmash_screener.sh -d $database -1 $r1_file_mapping -s $sample -o $output_dir/$group/$sample/kmer"
+
+
+	screened_ddbb=$output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff"_term.fasta"
+	
 	####MAPPING##################################################################
 	#############################################################################
 	echo -e "\n${CYAN}MAPPING READS${NC} ($(date))\n \
@@ -584,7 +595,7 @@ this will determine the most likely plasmids in the sample" $sample
 		echo -e "\nFound a mapping file for sample" $sample;
 		echo "Omitting mapping"
 	else
-		bowtie_mapper.sh -a -d $database \
+		bowtie_mapper.sh -a -d $screened_ddbb \
 		-T $threads \
 	 	-g $group \
 	 	-s $sample \
