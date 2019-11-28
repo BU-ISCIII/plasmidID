@@ -189,6 +189,7 @@ explore=false
 include_assembly=true
 annotation=false
 verbose_option_circos=""
+w_winner=""
 is_verbose=false
 config_dir="$script_dir/config_files"
 trimmomatic_directory=/opt/Trimmomatic/
@@ -205,7 +206,7 @@ NC='\033[0m'
 
 #PARSE VARIABLE ARGUMENTS WITH getops
 #common example with letters, for long options check longopts2getopts.sh
-options=":1:2:d:s:g:c:a:i:o:C:S:f:l:L:T:M:X:x:y:Y:RVtvh"
+options=":1:2:d:s:g:c:a:k:i:o:C:S:f:l:L:T:M:X:x:y:Y:wRVtvh"
 while getopts $options opt; do
 	case $opt in
 		1 )
@@ -286,6 +287,9 @@ while getopts $options opt; do
 			;;
         o)
 			output_dir=$OPTARG
+			;;
+		w)
+			w_winner="-w"
 			;;
 		V)
 			verbose_option_circos="-V"
@@ -580,7 +584,7 @@ done
 Reads will be screened against database supplied for further filtering and mapping,\n \
 this will reduce the input sequences to map against" $sample
 
-	mash_screener.sh -d $database -1 $r1_file_mapping -s $sample -o $output_dir/$group/$sample/kmer -f $kmer_cutoff &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\n command: \nmash_screener.sh -d $database -1 $r1_file_mapping -s $sample -o $output_dir/$group/$sample/kmer"
+	mash_screener.sh -d $database -1 $r1_file_mapping -s $sample -o $output_dir/$group/$sample/kmer -f $kmer_cutoff $w_winner &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\n command: \nmash_screener.sh -d $database -1 $r1_file_mapping -s $sample -o $output_dir/$group/$sample/kmer"
 
 
 	screened_ddbb=$output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff"_term.fasta"

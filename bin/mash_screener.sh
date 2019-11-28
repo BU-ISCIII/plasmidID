@@ -94,7 +94,7 @@ R2="R2"
 
 #PARSE VARIABLE ARGUMENTS WITH getops
 #common example with letters, for long options check longopts2getopts.sh
-options=":i:o:s:g:d:1:2:f:T:avh"
+options=":i:o:s:g:d:1:2:f:T:avwh"
 while getopts $options opt; do
 	case $opt in
 		i )
@@ -203,7 +203,7 @@ else
 	echo "$(date)"
 	echo screening $R1
 
-	mash screen -p $threads $output_dir/database.msh $R1 > $output_dir/database.screen.tab || error ${LINENO} $(basename $0) "Bowtie2 command failed. See $output_dir/logs for more information"
+	mash screen $w_winner -p $threads $output_dir/database.msh $R1 > $output_dir/database.screen.tab || error ${LINENO} $(basename $0) "Bowtie2 command failed. See $output_dir/logs for more information"
 
 
 	echo "$(date)"
