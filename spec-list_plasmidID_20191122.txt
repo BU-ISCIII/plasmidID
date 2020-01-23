@@ -222,7 +222,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/cairo-1.14.12-h8948797_3.conda
 https://conda.anaconda.org/conda-forge/linux-64/certifi-2019.9.11-py36_0.tar.bz2
 https://repo.anaconda.com/pkgs/main/linux-64/curl-7.67.0-hbc83047_0.tar.bz2
 https://repo.anaconda.com/pkgs/main/linux-64/libgd-2.2.5-hceca4fd_3.conda
-file:///home/pjsola/Downloads/mash-2.2.1-h3d38be6_1.tar.bz2
+https://conda.anaconda.org/bioconda/linux-64/mash-2.2.1-h3d38be6_1.tar.bz2
 https://conda.anaconda.org/bioconda/linux-64/perl-aceperl-1.92-pl526_2.tar.bz2
 https://conda.anaconda.org/bioconda/linux-64/perl-apache-test-1.40-pl526_1.tar.bz2
 https://conda.anaconda.org/bioconda/linux-64/perl-archive-tar-2.32-pl526_0.tar.bz2
