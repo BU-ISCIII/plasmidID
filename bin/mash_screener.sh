@@ -190,7 +190,7 @@ if [ -f $output_dir/database.msh ]; then \
 	echo "Omitting sketching"
 else
 	echo "creating sketch of " $(basename $database);
-	mash sketch -i -k 32 -s 10000 -p $threads -o $output_dir/database $database || error ${LINENO} $(basename $0) "mash screen command failed. See $output_dir/logs for more information"
+	mash sketch -i -k 32 -s 1000 -p $threads -o $output_dir/database $database || error ${LINENO} $(basename $0) "mash screen command failed. See $output_dir/logs for more information"
 fi
 
 ########SCREEN##############
