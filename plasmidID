@@ -1013,11 +1013,10 @@ done
 #obtain list of contigs per plasmid in a separate file
 for i in $(cat $reconstruct_fasta | grep ">" | awk 'gsub(">","",$1) {print $1}')
 do
-	cat $output_dir/$group/$sample/data/$sample".plasmids.complete" \
-	| awk '/'$i'/ && !x[$4]++ {print "_"$4}' > $output_dir/$group/$sample/fasta_files/$i.ac &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\n cat $output_dir/$group/$sample/data/$sample\".plasmids.complete\" | awk \'/\'$i\'/ && !x[$4]++ {print \"_\"$4}\' > $output_dir/$group/$sample/fasta_files/$i.ac"
+	cat $output_dir/$group/$sample/data/$sample".plasmids.complete" | awk '/'"${i}"'/ && !x[$4]++ {print "_"$4}' > $output_dir/$group/$sample/fasta_files/$i.ac
 done
 
-#Extract fasta from contig file, oe per plasmid
+#Extract fasta from contig file, one per plasmid
 for i in $(ls $output_dir/$group/$sample/fasta_files/*.ac)
 do
 	if [ -s $i ]; then
@@ -1025,7 +1024,7 @@ do
 	fi
 done
 
-#Remove previous
+#Remove temp files in fasta_files
 for i in $(ls $output_dir/$group/$sample/fasta_files/*.ac)
 do
 	if [ -e $i ]; then

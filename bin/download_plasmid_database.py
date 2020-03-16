@@ -113,7 +113,7 @@ def main():
     #remove duplicates
     plasmid_reference = set(plasmid_reference)
     #Set terms to exclude
-    terms_to_exclude = ['gene', 'protein', 'partial', 'putative', 'hypothetical']
+    terms_to_exclude = ['gene ', 'protein', 'partial', 'putative', 'hypothetical']
     #Dictionary with erroneous accession numbers to determine the reason
     erroneous = {}
 
@@ -132,12 +132,12 @@ def main():
                 if sum(terms_present) > 0:
                     terms_true = [terms_to_exclude[i] for i, x in enumerate(terms_present) if x == True]
                     erroneous[record.id] = "Include terms: " + ', '.join(terms_true) + " => " + record.description
-                    logger.info(" %s/%s Invalid terms in record %s" % (current_record,total_sequences, record.id))
+                    logger.debug(" %s/%s Invalid terms in record %s" % (current_record,total_sequences, record.id))
                 else:
-                    logger.info(" %s/%s Downloading record %s" % (current_record,total_sequences, record.id))
+                    logger.debug(" %s/%s Downloading record %s" % (current_record,total_sequences, record.id))
                     SeqIO.write(record, output_handle, "fasta")
             except:
-                logger.info(" %s/%s Failed to download %s" % (current_record,total_sequences, record.id))
+                logger.debug(" %s/%s Failed to download %s" % (current_record,total_sequences, record.id))
                 erroneous[record.id] = "failed to download"
             current_record = current_record + 1
     
