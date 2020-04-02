@@ -122,6 +122,10 @@ def main():
 
     total_sequences = len(plasmid_reference)
     current_record = 1
+    logger.info("")
+    logger.info("Starting plasmid database download script: " + str(total_sequences) + " will be downloaded")
+    logger.info("This will take a while.\nCheck progress in " + log_full_path)
+
     with open(plasmid_fasta_path, 'w+') as output_handle:
         for plasmid_accnumber in plasmid_reference:
             try:
@@ -145,6 +149,8 @@ def main():
         with open(plasmid_failed_path, 'w+') as ferror:
             for acc, reason in erroneous.items():
                 ferror.write(acc + ": " + reason)
+
+    logger.info("ALL DONE\nFASTA file is available in: " + plasmid_fasta_path)
 
 if __name__ == '__main__':
     try:
