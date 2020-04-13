@@ -148,7 +148,7 @@ def main():
     if len(erroneous) > 0:
         with open(plasmid_failed_path, 'w+') as ferror:
             for acc, reason in erroneous.items():
-                ferror.write(acc + ": " + reason)
+                ferror.write(acc + ": " + reason + "\n")
 
     logger.info("ALL DONE\nFASTA file is available in: " + plasmid_fasta_path)
 
