@@ -4,6 +4,7 @@
 # plasmidID <img align="left" src="https://github.com/BU-ISCIII/plasmidID/blob/develop/img/plasmidID_logo.png" alt="Logo" width="100">
 
 <br>
+<br>
 
 * [Introduction](#introduction)
 * [Requirements](#requirements)
