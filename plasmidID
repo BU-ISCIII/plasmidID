@@ -15,7 +15,7 @@ set -e
 #INSTITUTION:ISCIII
 #CENTRE:BU-ISCIII
 #AUTHOR: Pedro J. Sola (pedroscampoy@gmail.com)
-VERSION=1.5.1
+VERSION=1.6
 #CREATED: 15 March 2018
 #
 #ACKNOLEDGE: longops2getops.sh: https://gist.github.com/adamhotep/895cebf290e95e613c006afbffef09d7
@@ -52,7 +52,7 @@ usage : $0 <-1 R1> <-2 R2> <-d database(fasta)> <-s sample_name> [-g group_name]
 	--explore	Relaxes default parameters to find less reliable relationships within data supplied and database
 	--only-reconstruct	Database supplied will not be filtered and all sequences will be used as scaffold
 						This option does not require R1 and R2, instead a contig file can be supplied
-
+	-w 			Winner takes it all algorithm when clustering by kmer - QUICKER MODE
 	Trimming:
 	--trimmomatic-directory Indicate directory holding trimmomatic .jar executable
 	--no-trim	Reads supplied will not be quality trimmed
@@ -60,8 +60,8 @@ usage : $0 <-1 R1> <-2 R2> <-d database(fasta)> <-s sample_name> [-g group_name]
 	Coverage and Clustering:
 	-C | --coverage-cutoff	<int>	minimun coverage percentage to select a plasmid as scafold (0-100), default 80
 	-S | --coverage-summary	<int>	minimun coverage percentage to include plasmids in summary image (0-100), default 90
-	-f | --cluster	<int>	identity percentage to cluster plasmids into the same representative sequence (0-100), default 80
-	-k | --kmer	<int>	identity to filter plasmids from the database with kmer approach (0-1), default 0.9
+	-f | --cluster	<int>	kmer identity to cluster plasmids into the same representative sequence (0 means identical) (0-1), default 0.5
+	-k | --kmer	<int>	identity to filter plasmids from the database with kmer approach (0-1), default 0.95
 
 	Contig local alignment
 	-i | --alignment-identity <int>	minimun identity percentage aligned for a contig to annotate, default 90
@@ -174,17 +174,16 @@ max_memory=4000
 cwd="$(pwd)"
 group="NO_GROUP"
 database="Database"
-kmer_cutoff=0.9
+kmer_cutoff=0.95
 coverage_cutoff=80
 coverage_summary=80
-cluster_cutoff=80
+cluster_cutoff=0.5
 alignment_identity=90
 alignment_percentage=30
 extend_annotation=500
 R1="R1_file"
 R2="R2_file"
 no_trim=false
-only_reconstruct=false
 explore=false
 include_assembly=true
 annotation=false
@@ -333,17 +332,24 @@ printf "${YELLOW}Starting plasmidID version:${VERSION}${NC}\n"
 printf "%s"
 printf "${YELLOW}------------------${NC}\n\n"
 
+if [ -z $r1_file -a -z $r1_file ]
+then
+	if [ -f $contigs ];then
+		only_reconstruct=true
+	fi
+else
+	only_reconstruct=false
+fi
 
 if [ $only_reconstruct = false ]; then
 	##CHECK DEPENDENCIES, MANDATORY FIELDS, FOLDERS AND ARGUMENTS
 
 	echo -e "\n${CYAN}CHECKING DEPENDENCIES AND MANDATORY FILES${NC}"
 
-	check_dependencies.sh blastn bowtie2-build bowtie2 cd-hit-est bedtools prokka samtools mash circos
+	check_dependencies.sh blastn bowtie2-build bowtie2 bedtools prokka samtools mash circos
 
 	check_mandatory_files.sh $r1_file $r2_file $database
 fi
-
 
 
 if [ ! $sample ]; then
@@ -384,8 +390,9 @@ fi
 
 if [ $explore = true ]; then
 	coverage_cutoff=60
+	kmer_cutoff=0.9
 	coverage_summary=70
-	cluster_cutoff=70
+	cluster_cutoff=0.3
 	alignment_percentage=10
 fi
 
@@ -459,39 +466,38 @@ fi
 
 ####TRIMMING#################################################################
 #############################################################################
+if [ $only_reconstruct = false ];then
+	if [ $no_trim = false ]; then
 
-if [ $no_trim = false ]; then
+		r1_file_mapping=$r1_file
+		r2_file_mapping=$r2_file
 
+		echo -e "\n${CYAN}TRIMMING READS${NC} $(date)\n \
+	Reads will be quality trimmed with a window of 4 and an average quality of 20"
+		#echo "R1:" $r1_file
+		#echo "R2:" $r2_file
 
-	r1_file_mapping=$r1_file
-	r2_file_mapping=$r2_file
+		check_dependencies.sh trimmomatic
 
-	echo -e "\n${CYAN}TRIMMING READS${NC} $(date)\n \
-Reads will be quality trimmed with a window of 4 and an average quality of 20"
-	#echo "R1:" $r1_file
-	#echo "R2:" $r2_file
+		filestrimmed=$(ls $output_dir/$group/$sample/trimmed 2> /dev/null | grep "paired" | wc -l)
 
-	check_dependencies.sh trimmomatic
-
-	filestrimmed=$(ls $output_dir/$group/$sample/trimmed 2> /dev/null | grep "paired" | wc -l)
-
-	if [ "$filestrimmed" = "4" ];then
-		echo -e "\nFound trimmed files for this sample" $sample;
-		echo "Omitting trimming"
+		if [ "$filestrimmed" = "4" ];then
+			echo -e "\nFound trimmed files for this sample" $sample;
+			echo "Omitting trimming"
+		else
+			quality_trim.sh -1 $r1_file -2 $r2_file -s $sample -g $group -o $output_dir/$group/$sample/trimmed -d $trimmomatic_directory -T $threads &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information. \ncommand: \n quality_trim.sh -1 $r1_file -2 $r2_file -s $sample -g $group -o $output_dir/$group/$sample/trimmed -d $trimmomatic_directory -T $threads"
+		fi
 	else
-		quality_trim.sh -1 $r1_file -2 $r2_file -s $sample -g $group -o $output_dir/$group/$sample/trimmed -d $trimmomatic_directory -T $threads &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information. \ncommand: \n quality_trim.sh -1 $r1_file -2 $r2_file -s $sample -g $group -o $output_dir/$group/$sample/trimmed -d $trimmomatic_directory -T $threads"
+		echo -e "\nNo trim selected, skipping trimming step"
+		r1_file_mapping=$r1_file
+		r2_file_mapping=$r2_file
 	fi
-else
-	echo -e "\nNo trim selected, skipping trimming step"
-	r1_file_mapping=$r1_file
-	r2_file_mapping=$r2_file
+
+	#group/sample/trimmed/sample_1_paired.fastq.gz
+	#group/sample/trimmed/sample_1_unpaired.fastq.gz
+	#group/sample/trimmed/sample_2_paired.fastq.gz
+	#group/sample/trimmed/sample_2_unpaired.fastq.gz
 fi
-
-#group/sample/trimmed/sample_1_paired.fastq.gz
-#group/sample/trimmed/sample_1_unpaired.fastq.gz
-#group/sample/trimmed/sample_2_paired.fastq.gz
-#group/sample/trimmed/sample_2_unpaired.fastq.gz
-
 ####ASSEMLY##################################################################
 #############################################################################
 
@@ -529,7 +535,7 @@ fi
 
 if [ $only_reconstruct = false ]; then
 
-	reconstruct_fasta=$output_dir/$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff"_term.fasta"_$cluster_cutoff
+	reconstruct_fasta=$output_dir/$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff"_term.fasta"
 
 
 ####### PREVIOUS SUMMARY OUTPUT########################
@@ -577,17 +583,26 @@ printf '%s\n' "${variables[$i]}"
 done
 
 
-	echo -e "\n${YELLOW} STARTING KMER FILTERING, MAPPING and CLUSTERING${NC}\n"
+	echo -e "\n${YELLOW} STARTING KMER FILTERING, CLUSTERING and MAPPING ${NC}\n"
 
 
 	echo -e "\n${CYAN}SCREENING READS WITH KMERS${NC} ($(date))\n \
 Reads will be screened against database supplied for further filtering and mapping,\n \
 this will reduce the input sequences to map against" $sample
+	if [ -f  $output_dir/$group/$sample/kmer/database.msh -a -f $output_dir/$group/$sample/kmer/database.screen.tab ];then
+		echo -e "\nFound a kmer file for sample" $sample;
+		echo "Omitting mash execution"
+	else
+		mash_screener.sh -d $database -1 $r1_file_mapping -s $sample -o $output_dir/$group/$sample/kmer -f $kmer_cutoff $w_winner &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\n command: \nmash_screener.sh -d $database -1 $r1_file_mapping -s $sample -o $output_dir/$group/$sample/kmer"
+	fi
+	#output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff"_term.fasta"
 
-	mash_screener.sh -d $database -1 $r1_file_mapping -s $sample -o $output_dir/$group/$sample/kmer -f $kmer_cutoff $w_winner &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\n command: \nmash_screener.sh -d $database -1 $r1_file_mapping -s $sample -o $output_dir/$group/$sample/kmer"
+	echo -e "\n${CYAN}CLUSTERING SEQUENCES BY KMER DISTANCE${NC} ($(date))\n \
+Sequences obtained after screen will be clustered to reduce redundancy,\n \
+one representative, the largest, will be considered for further analysis" $sample
+	mashclust.py -i $output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff"_term.fasta" -d $cluster_cutoff
 
-
-	screened_ddbb=$output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff"_term.fasta"
+	screened_ddbb=$output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff"_term."$cluster_cutoff".representative.fasta"
 	
 	####MAPPING##################################################################
 	#############################################################################
@@ -646,7 +661,7 @@ will pass to further analysis"
  	#sample.coverage_adapted
  	#sample.coverage_adapted_filtered_80
 
-	filter_fasta.sh -i $database -f  $output_dir/$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\nfilter_fasta.sh -i $database -f  $output_dir/$group/$sample/mapping/$sample\".coverage_adapted_filtered_\"$coverage_cutoff"
+	filter_fasta.sh -i $database -f $output_dir/$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\nfilter_fasta.sh -i $database -f  $output_dir/$group/$sample/mapping/$sample\".coverage_adapted_filtered_\"$coverage_cutoff"
 
 	#sample.coverage_adapted_filtered_50_term.fasta
 
@@ -658,20 +673,7 @@ will pass to further analysis"
 		exit 1
 	fi
 
-	echo -e "\n${CYAN}CLUSTERING PUTATIVE PLASMIDS${NC} ($(date))\n \
-Clustering by homology removes database redundancy, taking the longest representative of each group.\n \
-Clusters will be composed by plasmids with an identity of" $cluster_cutoff"% or higher"
-
-	if [ -f  $output_dir/$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff"_term.fasta_"$cluster_cutoff ];then \
-		echo -e "\nFound a clustered file for sample" $sample;
-		echo "Omitting clustering"
-	else
-		cdhit_cluster.sh -i  $output_dir/$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff"_term.fasta" -c $cluster_cutoff -M $max_memory -T $threads &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\ncdhit_cluster.sh -i  $output_dir/$group/$sample/mapping/$sample\".coverage_adapted_filtered_\"$coverage_cutoff\"_term.fasta\" -c $cluster_cutoff -M $max_memory -T $threads"
-
-	fi
-
-
-	process_cluster_output.sh -i $reconstruct_fasta -b  $output_dir/$group/$sample/mapping/$sample".coverage_adapted" -c $coverage_cutoff &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\nprocess_cluster_output.sh -i $reconstruct_fasta -b  $output_dir/$group/$sample/mapping/$sample\".coverage_adapted\" -c $coverage_cutoff"
+	process_cluster_output.sh -i $reconstruct_fasta -b  $output_dir/$group/$sample/mapping/$sample".coverage_adapted" -c 80 &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\nprocess_cluster_output.sh -i $reconstruct_fasta -b  $output_dir/$group/$sample/mapping/$sample\".coverage_adapted\" -c $coverage_cutoff"
 
 	mkdir -p $output_dir/$group/$sample/data
 	cp $output_dir/$group/$sample/mapping/$sample".coverage_adapted_clustered_ac" $output_dir/$group/$sample/data/$sample".coverage_adapted_clustered_ac"
@@ -720,9 +722,10 @@ else
 #####################################################################################################################################################
 ##########################ONLY RECONSTRUCT###########################################################################################################
 #####################################################################################################################################################
+#####################################################################################################################################################
 
 
-	echo -e "\n${BLUE}ONLY RECONSTRUCT MODE SELECTED${NC} ($(date))\n \
+	echo -e "\n${BLUE}ONLY CONTIG MODE SELECTED${NC} ($(date))\n \
 ${YELLOW}WARNING${NC}:PlasmidID will not filter the database supplied by coverage,\n \
 instead all sequences supplied by user will be used as scaffold.\n \
 Please use a fasta file with limited ammount of sequences."
@@ -731,7 +734,7 @@ Please use a fasta file with limited ammount of sequences."
 
 	echo -e "\n${CYAN}CHECKING DEPENDENCIES AND MANDATORY FILES${NC}"
 
-	check_dependencies.sh blastn prokka circos
+	check_dependencies.sh blastn prokka circos mash
 
 	check_mandatory_files.sh $contigs $database
 
@@ -742,11 +745,30 @@ Please use a fasta file with limited ammount of sequences."
 
 	awk '{print $1}' $output_dir/$group/$sample/data/"database_reconstruct_"$sample".length" > $output_dir/$group/$sample/data/$sample".coverage_adapted_clustered_ac" || error ${LINENO} $(basename $0) "AWK command fail when creating $sample\".coverage_adapted_clustered_ac\" file .See $output_dir/logs/plasmidID.log for more information.\ncommand:\nawk '{print $1}' $output_dir/$group/$sample/data/\"database_reconstruct_\"$sample\".length\" > $output_dir/$group/$sample/data/$sample\".coverage_adapted_clustered_ac\""
 
+
+	echo -e "\n${CYAN}SCREENING READS WITH KMERS${NC} ($(date))\n \
+Reads will be screened against database supplied for further filtering and mapping,\n \
+this will reduce the input sequences to map against" $sample
+	if [ -f  $output_dir/$group/$sample/kmer/database.msh -a -f $output_dir/$group/$sample/kmer/database.screen.tab ];then
+		echo -e "\nFound a kmer file for sample" $sample;
+		echo "Omitting mash execution"
+	else
+		mash_screener.sh -d $database -1 $contigs -s $sample -o $output_dir/$group/$sample/kmer -f $kmer_cutoff $w_winner &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\n command: \nmash_screener.sh -d $database -1 $r1_file_mapping -s $sample -o $output_dir/$group/$sample/kmer"
+	fi
+	#output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff"_term.fasta"
+
+	echo -e "\n${CYAN}CLUSTERING SEQUENCES BY KMER DISTANCE${NC} ($(date))\n \
+Sequences obtained after screen will be clustered to reduce redundancy,\n \
+one representative, the largest, will be considered for further analysis" $sample
+	mashclust.py -i $output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff"_term.fasta" -d $cluster_cutoff
+
+	screened_ddbb=$output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff"_term."$cluster_cutoff".representative.fasta"
+
 	build_karyotype.sh -i $output_dir/$group/$sample/data/"database_reconstruct_"$sample".length" -R -o $output_dir/$group/$sample/data -f $sample &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\nbuild_karyotype.sh -i $output_dir/$group/$sample/data/\"database_reconstruct_\"$sample\".length\" -R -o $output_dir/$group/$sample/data -f $sample"
 	#sample.karyotype_individual.txt
 	#sample.karyotype_individual.txt
 
-	reconstruct_fasta=$database
+	reconstruct_fasta=$output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff"_term."$cluster_cutoff".representative.fasta"
 
 	if [ -f $output_dir/$group/$sample/data/$sample".bedgraph_term" ];then
 		rm $output_dir/$group/$sample/data/$sample".bedgraph_term"
