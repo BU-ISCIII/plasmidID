@@ -26,19 +26,17 @@ usage() {
 
 spades_assembly script that assemble illumina sequences using SPAdes
 
-usage : $0 <-p R1_paired file> <-P R2_paired file> [-u <R1_unpaired>] [-U <R2_unpaired>] [-o <directory>]
+usage : $0 <-p R1_paired file> <-P R2_paired file> [-o <directory>]
 		 [-k <int>][-s sample_name] [-g group_name] [-f <file_name>] [-T <int>] [q] [-c] [-v] [-h]
 
 	-p R1_paired file (mandatory)
 	-P R2_paired file (mandatory)
-	-u R1_unpaired file
-	-U R2_unpaired file
 	-k kmers, supplied as numbers sepparated by number or one flag per number, default: 21,33,55,77,99,127
 	-o output directory (optional)
 	-f file name
 	-s sample name (mandatory)
 	-g group name (optional). If unset, samples will be gathered in NO_GROUP group
-	-q quick_mode: look for files in a folder SUPPLIED with "paired" and "unpaired" term
+	-q quick_mode: look for files in a folder SUPPLIED with "paired" term
 	-c clean mode: remove unnecesary temporary folders
 	-T threads, default 1
 	-v version
@@ -89,8 +87,6 @@ cwd="$(pwd)"
 group="NO_GROUP"
 r1_paired_file="R1_paired_file"
 r2_paired_file="R2_paired_file"
-r1_unpaired_command=""
-r2_unpaired_command=""
 threads=1
 kmer_values_command="21,33,55,77,99,127"
 kmer_option=false
@@ -107,14 +103,6 @@ while getopts $options opt; do
 			;;
 		P )
 			r2_paired_file=$OPTARG
-			;;
-		u )
-			r1_unpaired_file=$OPTARG
-			r1_unpaired_command=$(echo "--s1" $r1_unpaired_file)
-			;;
-		U )
-			r2_unpaired_file=$OPTARG
-			r2_unpaired_command=$(echo "--s1" $r2_unpaired_file)
 			;;
 		o )
 			output_dir=$OPTARG
@@ -212,10 +200,6 @@ if [ $quick_mode = true ]; then
 	echo "Entering QUICK MODE"
 	r1_paired_file=$(find $directory_reads -name  "*1_paired.fastq.gz" -type f)
 	r2_paired_file=$(find $directory_reads -name  "*2_paired.fastq.gz" -type f)
-	r1_unpaired_file=$(find $directory_reads -name  "*1_unpaired.fastq.gz" -type f)
-	r1_unpaired_command=$(echo "--s1" $r1_unpaired_file)
-	r2_unpaired_file=$(find $directory_reads -name  "*2_unpaired.fastq.gz" -type f)
-	r2_unpaired_command=$(echo "--s2" $r2_unpaired_file)
 fi
 
 
@@ -231,8 +215,6 @@ echo "$(date)"
 echo "Assembly:"
 echo "R1 paired file = " $r1_paired_file
 echo "R2 paired file = " $r2_paired_file
-echo "R1 unpaired file = " $r1_unpaired_file
-echo "R2 unpaired file = " $r2_unpaired_file
 
 
 spades.py \
@@ -241,8 +223,6 @@ spades.py \
 -k $kmer_values_command \
 --pe1-1 $r1_paired_file \
 --pe1-2 $r2_paired_file \
-$r1_unpaired_command \
-$r2_unpaired_command \
 -o $output_dir || error ${LINENO} $(basename $0) "Spades command failed. See $output_dir/logs for more information."
 
 

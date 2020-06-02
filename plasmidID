@@ -255,7 +255,6 @@ while getopts $options opt; do
 		R )
 			only_reconstruct=true
 			no_trim=true
-			reconstruct_fasta=$database
 			;;
 		C )
 			coverage_cutoff=$OPTARG
@@ -740,12 +739,6 @@ Please use a fasta file with limited ammount of sequences."
 
 	config_file_individual="OR.conf"
 
-	calculate_seqlen.sh -i $database -r -o $output_dir/$group/$sample/data -n "database_reconstruct_"$sample &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\ncalculate_seqlen.sh -i $database -r -o $output_dir/$group/$sample/data -n "database_reconstruct_"$sample"
-	#"database_reconstruct_"$sample.length
-
-	awk '{print $1}' $output_dir/$group/$sample/data/"database_reconstruct_"$sample".length" > $output_dir/$group/$sample/data/$sample".coverage_adapted_clustered_ac" || error ${LINENO} $(basename $0) "AWK command fail when creating $sample\".coverage_adapted_clustered_ac\" file .See $output_dir/logs/plasmidID.log for more information.\ncommand:\nawk '{print $1}' $output_dir/$group/$sample/data/\"database_reconstruct_\"$sample\".length\" > $output_dir/$group/$sample/data/$sample\".coverage_adapted_clustered_ac\""
-
-
 	echo -e "\n${CYAN}SCREENING READS WITH KMERS${NC} ($(date))\n \
 Reads will be screened against database supplied for further filtering and mapping,\n \
 this will reduce the input sequences to map against" $sample
@@ -763,6 +756,11 @@ one representative, the largest, will be considered for further analysis" $sampl
 	mashclust.py -i $output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff"_term.fasta" -d $cluster_cutoff
 
 	screened_ddbb=$output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff"_term."$cluster_cutoff".representative.fasta"
+
+	calculate_seqlen.sh -i $screened_ddbb -r -o $output_dir/$group/$sample/data -n "database_reconstruct_"$sample &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\ncalculate_seqlen.sh -i $database -r -o $output_dir/$group/$sample/data -n "database_reconstruct_"$sample"
+	#"database_reconstruct_"$sample.length
+
+	awk '{print $1}' $output_dir/$group/$sample/data/"database_reconstruct_"$sample".length" > $output_dir/$group/$sample/data/$sample".coverage_adapted_clustered_ac" || error ${LINENO} $(basename $0) "AWK command fail when creating $sample\".coverage_adapted_clustered_ac\" file .See $output_dir/logs/plasmidID.log for more information.\ncommand:\nawk '{print $1}' $output_dir/$group/$sample/data/\"database_reconstruct_\"$sample\".length\" > $output_dir/$group/$sample/data/$sample\".coverage_adapted_clustered_ac\""
 
 	build_karyotype.sh -i $output_dir/$group/$sample/data/"database_reconstruct_"$sample".length" -R -o $output_dir/$group/$sample/data -f $sample &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\nbuild_karyotype.sh -i $output_dir/$group/$sample/data/\"database_reconstruct_\"$sample\".length\" -R -o $output_dir/$group/$sample/data -f $sample"
 	#sample.karyotype_individual.txt
