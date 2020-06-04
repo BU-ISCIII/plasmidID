@@ -179,7 +179,7 @@ coverage_cutoff=80
 coverage_summary=80
 cluster_cutoff=0.5
 alignment_identity=90
-alignment_percentage=30
+alignment_percentage=20
 extend_annotation=500
 R1="R1_file"
 R2="R2_file"
@@ -724,10 +724,8 @@ else
 #####################################################################################################################################################
 
 
-	echo -e "\n${BLUE}ONLY CONTIG MODE SELECTED${NC} ($(date))\n \
-${YELLOW}WARNING${NC}:PlasmidID will not filter the database supplied by coverage,\n \
-instead all sequences supplied by user will be used as scaffold.\n \
-Please use a fasta file with limited ammount of sequences."
+	echo -e "\n${BLUE}SMRT/CONTIG MODE SELECTED${NC} ($(date))\n \
+PlasmidID will only use contigs supplied and will not filter by mapping coverage\n"
 
 	##CHECK DEPENDENCIES, MANDATORY FIELDS, FOLDERS AND ARGUMENTS
 
@@ -1071,5 +1069,9 @@ draw_circos_images.sh -i $output_dir/$group/$sample \
 -l $output_dir/$group/$sample/logs/draw_circos_images.log \
 -c $verbose_option_circos || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\ndraw_circos_images.sh -i $output/$group/$sample -d $config_dir -C $config_file_individual -o $output_dir/$group/$sample/images -g $group -s $sample -l $output_dir/$group/$sample/logs/draw_circos_images.log -c $verbose_option_circos"
 
+echo -e "\n${CYAN}CREATING SUMMARY REPORT${NC} ($(date))\n \
+An html report with miniatures of the images will be generate with useful statistics to determine the correct plasmids in the sample."
+
+summary_report_pid.py -i $output_dir/$group/$sample -g
 
 echo -e "\n${YELLOW}ALL DONE WITH plasmidID${NC}\nThank you for using plasmidID\n"
