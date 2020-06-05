@@ -188,7 +188,7 @@ explore=false
 include_assembly=true
 annotation=false
 verbose_option_circos=""
-w_winner=""
+w_winner="-w"
 is_verbose=false
 config_dir="$script_dir/config_files"
 trimmomatic_directory=/opt/Trimmomatic/
@@ -287,7 +287,7 @@ while getopts $options opt; do
 			output_dir=$OPTARG
 			;;
 		w)
-			w_winner="-w"
+			w_winner=""
 			;;
 		V)
 			verbose_option_circos="-V"
@@ -599,7 +599,7 @@ this will reduce the input sequences to map against" $sample
 	echo -e "\n${CYAN}CLUSTERING SEQUENCES BY KMER DISTANCE${NC} ($(date))\n \
 Sequences obtained after screen will be clustered to reduce redundancy,\n \
 one representative, the largest, will be considered for further analysis" $sample
-	mashclust.py -i $output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff"_term.fasta" -d $cluster_cutoff
+	mashclust.py -i $output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff"_term.fasta" -d $cluster_cutoff &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\n command:mashclust.py -i $output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff"_term.fasta" -d $cluster_cutoff"
 
 	screened_ddbb=$output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff"_term."$cluster_cutoff".representative.fasta"
 	
@@ -751,7 +751,7 @@ this will reduce the input sequences to map against" $sample
 	echo -e "\n${CYAN}CLUSTERING SEQUENCES BY KMER DISTANCE${NC} ($(date))\n \
 Sequences obtained after screen will be clustered to reduce redundancy,\n \
 one representative, the largest, will be considered for further analysis" $sample
-	mashclust.py -i $output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff"_term.fasta" -d $cluster_cutoff
+	mashclust.py -i $output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff"_term.fasta" -d $cluster_cutoff &>> $log_file  || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\n command: mashclust.py -i $output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff"_term.fasta" -d $cluster_cutoff"
 
 	screened_ddbb=$output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff"_term."$cluster_cutoff".representative.fasta"
 
@@ -1072,6 +1072,6 @@ draw_circos_images.sh -i $output_dir/$group/$sample \
 echo -e "\n${CYAN}CREATING SUMMARY REPORT${NC} ($(date))\n \
 An html report with miniatures of the images will be generate with useful statistics to determine the correct plasmids in the sample."
 
-summary_report_pid.py -i $output_dir/$group/$sample -g
+summary_report_pid.py -i $output_dir/$group/$sample -g || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\nsummary_report_pid.py -i $output_dir/$group/$sample -g"
 
 echo -e "\n${YELLOW}ALL DONE WITH plasmidID${NC}\nThank you for using plasmidID\n"
