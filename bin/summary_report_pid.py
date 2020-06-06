@@ -349,6 +349,7 @@ def summary_to_html_group(group_folder, html_template):
     dfm = dfm.sort_values(by=['N','length'], ascending=[False,False]).reset_index(drop=True)
     
     table = tabulate(dfm, headers='keys', tablefmt='html', showindex=False)
+    table = html.unescape(table)
     
     final_html = html_template.replace('TABLESUMMARY', table)
     
