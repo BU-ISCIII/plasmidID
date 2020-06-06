@@ -6,6 +6,8 @@ import sys
 import re
 import logging
 import subprocess
+import html
+
 
 # Third party imports
 import argparse
@@ -307,6 +309,7 @@ def summary_to_html(sample_folder, final_individual_dataframe, html_template):
     df.to_csv(hidden_filename, sep='\t', index=False)
     
     table = tabulate(df, headers='keys', tablefmt='html', showindex=False)
+    table = html.unescape(table)
     table = table.replace("style=\"text-align: right;\"", "")
     
     final_html = html_template.replace('TABLESUMMARY', table)

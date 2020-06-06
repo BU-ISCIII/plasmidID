@@ -15,7 +15,7 @@ set -e
 #INSTITUTION:ISCIII
 #CENTRE:BU-ISCIII
 #AUTHOR: Pedro J. Sola (pedroscampoy@gmail.com)
-VERSION=1.6
+VERSION=1.6.1
 #CREATED: 15 March 2018
 #
 #ACKNOLEDGE: longops2getops.sh: https://gist.github.com/adamhotep/895cebf290e95e613c006afbffef09d7
@@ -52,7 +52,7 @@ usage : $0 <-1 R1> <-2 R2> <-d database(fasta)> <-s sample_name> [-g group_name]
 	--explore	Relaxes default parameters to find less reliable relationships within data supplied and database
 	--only-reconstruct	Database supplied will not be filtered and all sequences will be used as scaffold
 						This option does not require R1 and R2, instead a contig file can be supplied
-	-w 			Winner takes it all algorithm when clustering by kmer - QUICKER MODE
+	-w 			Undo winner takes it all algorithm when clustering by kmer - QUICKER MODE
 	Trimming:
 	--trimmomatic-directory Indicate directory holding trimmomatic .jar executable
 	--no-trim	Reads supplied will not be quality trimmed
@@ -65,7 +65,7 @@ usage : $0 <-1 R1> <-2 R2> <-d database(fasta)> <-s sample_name> [-g group_name]
 
 	Contig local alignment
 	-i | --alignment-identity <int>	minimun identity percentage aligned for a contig to annotate, default 90
-	-l | --alignment-percentage <int>	minimun length percentage aligned for a contig to annotate, default 30
+	-l | --alignment-percentage <int>	minimun length percentage aligned for a contig to annotate, default 20
 	-L | --length-total	<int>	minimun alignment length to filter blast analysis
 	--extend-annotation <int>	look for annotation over regions with no homology found (base pairs), default 500bp
 
