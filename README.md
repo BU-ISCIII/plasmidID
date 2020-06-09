@@ -109,7 +109,7 @@ More info about [annotation file](#annotation-file)
 ## Usage
 
 ```
-usage : /home/pjsola/.conda/envs/pid162/bin/plasmidID <-1 R1> <-2 R2> <-d database(fasta)> <-s sample_name> [-g group_name] [options]
+usage : plasmidID <-1 R1> <-2 R2> <-d database(fasta)> <-s sample_name> [-g group_name] [options]
 
 	Mandatory input data:
 	-1 | --R1	<filename>	reads corresponding to paired-end R1 (mandatory)
@@ -164,10 +164,26 @@ Under construction
 
 ## Output
 
-Under construction
+Since v1.6, the more relevant output is located in GROUP/SAMPLE folder:
+
+- **SAMPLE_final_results.html(.tab)**
+	- id: Name of the accession number of reference
+	- length: length of the reference sequence
+	- species: species of the reference sequence
+	- description: rest of reference fasta header
+	- contig_name: number of the contigs that align the minimun required for complete contig track
+	- SAMPLE:
+		- Image of the reconstructed plasmid (click to open in new tab)
+		- MAPPING % (percentage): percentage of reference covered with reads
+			- X for contig mode (gray colour)
+			- Orientative colouring (the closer to 100% the better)
+		- ALIGN FR (fraction_covered): total length of contigs aligned (complete) / reference sequence length
+			- Orientative colouring (the closer to 1 the better)
+			
 
 ## Annotation file
 
+Under construction
 
 ## Illustrated pipeline
 
