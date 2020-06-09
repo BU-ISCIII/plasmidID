@@ -106,6 +106,10 @@ plasmidID \
 ```
 More info about [annotation file](#annotation-file)
 
+If there are several samples in the same GROUP folder
+```
+summary_report_pid.py -i NO_GROUP/
+```
 ## Usage
 
 ```
