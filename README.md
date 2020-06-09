@@ -39,7 +39,7 @@ PlasmidID is a **computational pipeline** implemented in **BASH** that maps Illu
 * [Bowtie 2 v2.2.4](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml)
 * [SAMtools v1.2](http://samtools.sourceforge.net/)
 * [prokka v1.12](http://www.vicbioinformatics.com/software.prokka.shtml)
-* [cd-hit v4.6.6](http://weizhongli-lab.org/cd-hit/)
+* [cd-hit v4.6.6](http://weizhongli-lab.org/cd-hit/) (no longer needed since v1.6)
 * [circos v0.69.3](http://circos.ca/software/download/circos/)
 * [mash v2.2](https://github.com/marbl/Mash)
 
@@ -70,13 +70,14 @@ Install [Anaconda3](https://www.anaconda.com/distribution/)
 ```
 conda install -c conda-forge -c bioconda plasmidid
 ```
-Wait for the environment to solve (will take a lot)
+Wait for the environment to solve
 
-Ignore errors
+Ignore warnings/errors
 
 ## Quick usage
 
 ```
+#Illumina paired-end
 plasmidID \
 -1 SAMPLE_R1.fastq.gz  \
 -2 SAMPLE_R2.fastq.gz \
