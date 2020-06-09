@@ -76,14 +76,22 @@ Ignore warnings/errors
 
 ## Quick usage
 
+Illumina paired-end
 ```
-#Illumina paired-end
 plasmidID \
 -1 SAMPLE_R1.fastq.gz  \
 -2 SAMPLE_R2.fastq.gz \
 -d YYYY-MM-DD_plasmids.fasta \
 -c SAMPLE_assembled_contigs.fasta \
 --no-trim \
+-s SAMPLE
+```
+
+SMRT sequencing (only contigs
+```
+plasmidID \
+-d YYYY-MM-DD_plasmids.fasta \
+-c SAMPLE_assembled_contigs.fasta \
 -s SAMPLE
 ```
 
