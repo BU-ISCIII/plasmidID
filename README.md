@@ -1,5 +1,6 @@
 
-[![CircleCI Build Status](https://circleci.com/gh/circleci/circleci-docs.svg?style=shield)](https://circleci.com/gh/BU-ISCIII/plasmidID) [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![CircleCi Community](https://img.shields.io/badge/community-CircleCI%20Discuss-343434.svg)](https://discuss.circleci.com) [![Scif](https://img.shields.io/badge/Filesystem-Scientific-brightgreen.svg)](https://sci-f.github.io)
+[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/fusion-report/README.html)
+[![CircleCI Build Status](https://circleci.com/gh/circleci/circleci-docs.svg?style=shield)](https://circleci.com/gh/BU-ISCIII/plasmidID) [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Scif](https://img.shields.io/badge/Filesystem-Scientific-brightgreen.svg)](https://sci-f.github.io)
 
 # plasmidID <img align="left" src="https://github.com/BU-ISCIII/plasmidID/blob/develop/img/plasmidID_logo.png" alt="Logo" width="100">
 
@@ -16,6 +17,7 @@
 * [Quick usage](#quick-usage)
 * [Usage](#usage)
 * [Output](#output)
+* [Annotation file](#annotation-file)
 * [Illustrated pipeline](#illustrated-pipeline)
 * [Docker](#docker)
 
@@ -38,7 +40,7 @@ PlasmidID is a **computational pipeline** implemented in **BASH** that maps Illu
 * [Bowtie 2 v2.2.4](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml)
 * [SAMtools v1.2](http://samtools.sourceforge.net/)
 * [prokka v1.12](http://www.vicbioinformatics.com/software.prokka.shtml)
-* [cd-hit v4.6.6](http://weizhongli-lab.org/cd-hit/)
+* [cd-hit v4.6.6](http://weizhongli-lab.org/cd-hit/) (no longer needed since v1.6)
 * [circos v0.69.3](http://circos.ca/software/download/circos/)
 * [mash v2.2](https://github.com/marbl/Mash)
 
@@ -69,12 +71,13 @@ Install [Anaconda3](https://www.anaconda.com/distribution/)
 ```
 conda install -c conda-forge -c bioconda plasmidid
 ```
-Wait for the environment to solve (will take a lot)
+Wait for the environment to solve
 
-Ignore errors
+Ignore warnings/errors
 
 ## Quick usage
 
+Illumina paired-end
 ```
 plasmidID \
 -1 SAMPLE_R1.fastq.gz  \
@@ -85,10 +88,32 @@ plasmidID \
 -s SAMPLE
 ```
 
+SMRT sequencing (only contigs)
+```
+plasmidID \
+-d YYYY-MM-DD_plasmids.fasta \
+-c SAMPLE_contigs.fasta \
+-s SAMPLE
+```
+
+Annotate any fasta you want
+```
+plasmidID \
+-d YYYY-MM-DD_plasmids.fasta \
+-c SAMPLE_assembled_contigs.fasta \
+-a annotation_file \
+-s SAMPLE
+```
+More info about [annotation file](#annotation-file)
+
+If there are several samples in the same GROUP folder
+```
+summary_report_pid.py -i NO_GROUP/
+```
 ## Usage
 
 ```
-usage : /home/pjsola/.conda/envs/pid/bin/plasmidID <-1 R1> <-2 R2> <-d database(fasta)> <-s sample_name> [-g group_name] [options]
+usage : plasmidID <-1 R1> <-2 R2> <-d database(fasta)> <-s sample_name> [-g group_name] [options]
 
 	Mandatory input data:
 	-1 | --R1	<filename>	reads corresponding to paired-end R1 (mandatory)
@@ -106,7 +131,7 @@ usage : /home/pjsola/.conda/envs/pid/bin/plasmidID <-1 R1> <-2 R2> <-d database(
 	--explore	Relaxes default parameters to find less reliable relationships within data supplied and database
 	--only-reconstruct	Database supplied will not be filtered and all sequences will be used as scaffold
 						This option does not require R1 and R2, instead a contig file can be supplied
-
+	-w 			Undo winner takes it all algorithm when clustering by kmer - QUICKER MODE
 	Trimming:
 	--trimmomatic-directory Indicate directory holding trimmomatic .jar executable
 	--no-trim	Reads supplied will not be quality trimmed
@@ -114,12 +139,12 @@ usage : /home/pjsola/.conda/envs/pid/bin/plasmidID <-1 R1> <-2 R2> <-d database(
 	Coverage and Clustering:
 	-C | --coverage-cutoff	<int>	minimun coverage percentage to select a plasmid as scafold (0-100), default 80
 	-S | --coverage-summary	<int>	minimun coverage percentage to include plasmids in summary image (0-100), default 90
-	-f | --cluster	<int>	identity percentage to cluster plasmids into the same representative sequence (0-100), default 80
-	-k | --kmer	<int>	identity to filter plasmids from the database with kmer approach (0-1), default 0.9
+	-f | --cluster	<int>	kmer identity to cluster plasmids into the same representative sequence (0 means identical) 		(0-1), default 0.5
+	-k | --kmer	<int>	identity to filter plasmids from the database with kmer approach (0-1), default 0.95
 
 	Contig local alignment
 	-i | --alignment-identity <int>	minimun identity percentage aligned for a contig to annotate, default 90
-	-l | --alignment-percentage <int>	minimun length percentage aligned for a contig to annotate, default 30
+	-l | --alignment-percentage <int>	minimun length percentage aligned for a contig to annotate, default 20
 	-L | --length-total	<int>	minimun alignment length to filter blast analysis
 	--extend-annotation <int>	look for annotation over regions with no homology found (base pairs), default 500bp
 
@@ -134,7 +159,7 @@ usage : /home/pjsola/.conda/envs/pid/bin/plasmidID <-1 R1> <-2 R2> <-d database(
 	-h | --help		display usage message
 
 example: ./plasmidID.sh -1 ecoli_R1.fastq.gz -2 ecoli_R2.fastq.gz -d database.fasta -s ECO_553 -G ENTERO
-		./plasmidID.sh -1 ecoli_R1.fastq.gz -2 ecoli_R2.fastq.gz -d PacBio_sample.fasta -c scaffolds.fasta -C 60 -s ECO_60 -G ENTERO --no-trim
+	./plasmidID.sh -1 ecoli_R1.fastq.gz -2 ecoli_R2.fastq.gz -d PacBio_sample.fasta -c scaffolds.fasta -C 60 -s ECO_60 -G ENTERO --no-trim
 ```
 
 ## Examples
@@ -143,8 +168,26 @@ Under construction
 
 ## Output
 
-Under construction
+Since v1.6, the more relevant output is located in GROUP/SAMPLE folder:
 
+- **SAMPLE_final_results.html(.tab)**
+	- id: Name of the accession number of reference
+	- length: length of the reference sequence
+	- species: species of the reference sequence
+	- description: rest of reference fasta header
+	- contig_name: number of the contigs that align the minimun required for complete contig track
+	- SAMPLE:
+		- Image of the reconstructed plasmid (click to open in new tab)
+		- MAPPING % (percentage): percentage of reference covered with reads
+			- X for contig mode (gray colour)
+			- Orientative colouring (the closer to 100% the better)
+		- ALIGN FR (fraction_covered): total length of contigs aligned (complete) / reference sequence length
+			- Orientative colouring (the closer to 1 the better)
+			
+
+## Annotation file
+
+Under construction
 
 ## Illustrated pipeline
 
