@@ -172,8 +172,6 @@ def pairwise_to_cluster(pw,threshold = 0.5):
     
     cluster_df_return = cluster_df.stack().droplevel(1).reset_index().rename(columns={'index': 'group', 0: 'id'})
 
-    cluster_df_return.to_csv('/processing_Data/antibioticos/mperezv/ANALYSIS/Polimixinas_OTA/plasmidID/NO_GROUP/8c/mapping/test_cluster.tab', sep='\t')
-
     return cluster_df_return
 
 def big_pairwise_to_cluster(pw,threshold = 0.5):
@@ -244,8 +242,6 @@ def big_pairwise_to_cluster(pw,threshold = 0.5):
     cluster_df = pd.DataFrame(groups.values(),index=list(groups))
     
     cluster_df_return = cluster_df.stack().droplevel(1).reset_index().rename(columns={'index': 'group', 0: 'id'})
-
-    cluster_df_return.to_csv('/processing_Data/bioinformatics/references/plasmidID/plasmid_ddbb/20200203/test_ddbb.csv')
             
     return cluster_df_return
             
