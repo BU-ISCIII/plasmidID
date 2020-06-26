@@ -127,7 +127,7 @@ done
 shift $((OPTIND-1))
 
 ## Execute plasmidID with test data.
-echo "Executing:../plasmidID.sh -1 $R1 -2 $R2 -d $database -c $contigs -s KPN --no-trim"
+echo "Executing:../plasmidID -1 $R1 -2 $R2 -d $database -c $contigs -s KPN --no-trim"
 echo "Forward reads: $R1"
 echo "Reverse reads: $R2"
 echo "PlasmidDatabase: $database"
@@ -136,7 +136,7 @@ echo "Options: --no-trim"
 
 echo "export PATH=$PATH:$script_dir/../bin" > path
 source path
-$script_dir/../plasmidID.sh -1 $script_dir/$R1 -2 $script_dir/$R2 -d $script_dir/$database -c $script_dir/$contigs -s KPN --no-trim
+$script_dir/../plasmidID -1 $script_dir/$R1 -2 $script_dir/$R2 -d $script_dir/$database -c $script_dir/$contigs -s KPN --no-trim
 
 
 echo "ALL DONE. TEST COMPLETED SUCCESSFULLY YOUR INSTALLATION SHOULD BE CORRECT."
