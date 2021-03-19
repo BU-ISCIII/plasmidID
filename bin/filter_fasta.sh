@@ -194,12 +194,19 @@ if [ $term_option = true ] && [ $file_option = false ]; then
 elif [ $term_option = false ] && [ $file_option = true ]; then
 
 	check_mandatory_files.sh $file_for_filtering
+	if [ ! -s $file_for_filtering ];then
+		echo -e "ERROR: terms file empty!!"
+		exit 1
+	fi
 
 	final_list_terms_regexp=$(printf "%s|" $(cat $file_for_filtering) | sed 's/|$//g')
 else
 
 	check_mandatory_files.sh $file_for_filtering
-
+	if [ ! -s $file_for_filtering ];then
+		echo -e "ERROR: terms file empty!!"
+		exit 1
+	fi
 	list_terms_listed=$(for term in "${terms_for_filtering[@]}"; do echo "$term"; done)
 	list_terms_regexp_term=$(printf "%s|" $list_terms_listed | sed 's/|$//g')
 	list_terms_regexp_file=$(printf "%s|" $(cat $file_for_filtering) | sed 's/|$//g')
