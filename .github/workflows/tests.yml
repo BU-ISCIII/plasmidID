@@ -1,0 +1,23 @@
+name: tests ci
+# This workflow runs the pipeline with the minimal test dataset to check that it completes any errors
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+  release:
+    types: [published]
+
+jobs:
+  test:
+    name: Run tests
+    # Only run on push if this is the nf-core dev branch (merged PRs)
+    runs-on: ubuntu-latest
+    env:
+    steps:
+      - name: Check out pipeline code
+        uses: actions/checkout@v2
+
+      - name: Run pipeline with test data
+        run: |
+          docker run --privileged buisciii/plasmidid:dev bash test/test.sh
