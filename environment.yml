@@ -14,6 +14,7 @@ dependencies:
   - bioconda::blast
   - bioconda::spades
   - bioconda::trimmomatic
+  - tbb==2020.2
   - conda-forge::gawk
   - conda-forge::biopython
   - conda-forge::numpy

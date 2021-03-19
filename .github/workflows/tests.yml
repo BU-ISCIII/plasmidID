@@ -1,6 +1,8 @@
 name: tests ci
 # This workflow runs the pipeline with the minimal test dataset to check that it completes any errors
 on:
+  push:
+    branches: [develop]
   workflow_run:
     workflows: ["deploy dev"]
     branches: [develop]
