@@ -154,7 +154,7 @@ do
 		--cluster)	set -- "$@"	-f ;;
 		--alignment-percentage)	set -- "$@"	-l ;;
 		--length-total)	set -- "$@"	-L ;;
-		
+
 		--extend-annotation) set -- "$@"	-x ;;
 ##ADDITIONAL-
 		--memory)		set -- "$@"	-M ;;
@@ -593,6 +593,11 @@ this will reduce the input sequences to map against" $sample
 		echo "Omitting mash execution"
 	else
 		mash_screener.sh -d $database -1 $r1_file_mapping -s $sample -o $output_dir/$group/$sample/kmer -f $kmer_cutoff $w_winner &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\n command: \nmash_screener.sh -d $database -1 $r1_file_mapping -s $sample -o $output_dir/$group/$sample/kmer"
+		if [ ! -f $output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff"_term.fasta" ]
+		then
+			echo -e "\n${RED}NO PLASMIDS HAVE PASSED THE FILTER. EXITING...${RED}"
+			exit 0
+		fi
 	fi
 	#output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff"_term.fasta"
 
@@ -602,7 +607,7 @@ one representative, the largest, will be considered for further analysis" $sampl
 	mashclust.py -i $output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff"_term.fasta" -d $cluster_cutoff &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\n command:mashclust.py -i $output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff"_term.fasta" -d $cluster_cutoff"
 
 	screened_ddbb=$output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff"_term."$cluster_cutoff".representative.fasta"
-	
+
 	####MAPPING##################################################################
 	#############################################################################
 	echo -e "\n${CYAN}MAPPING READS${NC} ($(date))\n \

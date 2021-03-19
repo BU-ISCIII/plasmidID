@@ -222,5 +222,10 @@ cat $output_dir/database.screen.tab | awk '($1 >= '"${filter_identity}"') {print
 
 #####FILTER SEQUENCES#######
 ############################
-
-filter_fasta.sh -i $database -f $output_mash_id
+if [ $(cat $output_mash_id | wc -l | cut -d " " -f 1) > 0 ]
+then
+	filter_fasta.sh -i $database -f $output_mash_id
+else
+	echo -e "No plasmids have passed the mash identity filter!! Exiting!!"
+	exit 0
+fi
