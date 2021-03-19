@@ -1,0 +1,27 @@
+name: Dockerhub push (develop)
+# This builds the docker image and pushes it to DockerHub
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  push_dockerhub:
+    name: Push new Docker image to Docker Hub (dev)
+    runs-on: ubuntu-latest
+    # Only run for the official repo, for releases and merged PRs
+    if: ${{ github.repository == 'BU-ISCIII/plasmidID' }}
+    env:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_PASS: ${{ secrets.DOCKERHUB_PASSWORD }}
+    steps:
+      - name: Check out pipeline code
+        uses: actions/checkout@v2
+
+      - name: Build new docker image
+        run: docker build --no-cache . -t buisciii/plasmidid:dev
+
+      - name: Push Docker image to DockerHub (develop)
+        run: |
+          echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+          docker push buisciii/plasmidid:dev
