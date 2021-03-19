@@ -345,7 +345,7 @@ if [ $only_reconstruct = false ]; then
 
 	echo -e "\n${CYAN}CHECKING DEPENDENCIES AND MANDATORY FILES${NC}"
 
-	check_dependencies.sh blastn bowtie2-build bowtie2 bedtools prokka samtools mash circos
+	check_dependencies.sh gawk blastn bowtie2-build bowtie2 bedtools prokka samtools mash circos
 
 	check_mandatory_files.sh $r1_file $r2_file $database
 fi
@@ -737,7 +737,7 @@ PlasmidID will only use contigs supplied and will not filter by mapping coverage
 
 	echo -e "\n${CYAN}CHECKING DEPENDENCIES AND MANDATORY FILES${NC}"
 
-	check_dependencies.sh blastn prokka circos mash
+	check_dependencies.sh blastn prokka circos mash gawk
 
 	check_mandatory_files.sh $contigs $database
 
