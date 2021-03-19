@@ -15,7 +15,7 @@ set -e
 #INSTITUTION:ISCIII
 #CENTRE:BU-ISCIII
 #AUTHOR: Pedro J. Sola (pedroscampoy@gmail.com)
-VERSION=1.3.3
+VERSION=1.6.3
 #CREATED: 15 March 2018
 #
 #ACKNOLEDGE: longops2getops.sh: https://gist.github.com/adamhotep/895cebf290e95e613c006afbffef09d7
@@ -136,7 +136,7 @@ echo "Options: --no-trim"
 
 echo "export PATH=$PATH:$script_dir/../bin" > path
 source path
-$script_dir/../plasmidID.sh -1 $script_dir/$R1 -2 $script_dir/$R2 -d $script_dir/$database -c $script_dir/$contigs -s KPN --no-trim
+$script_dir/../plasmidID -1 $script_dir/$R1 -2 $script_dir/$R2 -d $script_dir/$database -c $script_dir/$contigs -s KPN --no-trim
 
 
 echo "ALL DONE. TEST COMPLETED SUCCESSFULLY YOUR INSTALLATION SHOULD BE CORRECT."
