@@ -15,7 +15,6 @@ jobs:
   test:
     name: Run tests
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    # Only run on push if this is the nf-core dev branch (merged PRs)
     runs-on: ubuntu-latest
     env:
     steps:
