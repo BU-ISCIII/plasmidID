@@ -593,10 +593,13 @@ this will reduce the input sequences to map against" $sample
 		echo "Omitting mash execution"
 	else
 		mash_screener.sh -d $database -1 $r1_file_mapping -s $sample -o $output_dir/$group/$sample/kmer -f $kmer_cutoff $w_winner &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\n command: \nmash_screener.sh -d $database -1 $r1_file_mapping -s $sample -o $output_dir/$group/$sample/kmer"
-		if [ ! -f $output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff"_term.fasta" ]
+
+		if [ ! -s $output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff ]
 		then
-			echo -e "\n${RED}NO PLASMIDS HAVE PASSED THE FILTER. EXITING...${RED}"
-			exit 0
+			echo -e "${RED}ERROR${NC}"
+			echo "NO PLASMIDS MATCHED KMER IDENTITY REQUERIMENTS, PLEASE, TRY WITH LOWER KMER ID CUTOFF"
+			echo "################################################################################"
+			exit 1
 		fi
 	fi
 	#output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff"_term.fasta"
@@ -665,17 +668,15 @@ will pass to further analysis"
  	#sample.coverage_adapted
  	#sample.coverage_adapted_filtered_80
 
-	filter_fasta.sh -i $database -f $output_dir/$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\nfilter_fasta.sh -i $database -f  $output_dir/$group/$sample/mapping/$sample\".coverage_adapted_filtered_\"$coverage_cutoff"
-
-	#sample.coverage_adapted_filtered_50_term.fasta
-
-
 	if [ ! -s  $output_dir/$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff ]; then \
 		echo -e "${RED}ERROR${NC}"
 		echo "NO PLASMIDS MATCHED MAPPING REQUERIMENTS, PLEASE, TRY WITH LOWER COVERAGE CUTOFF"
 		echo "################################################################################"
 		exit 1
-	fi
+    fi
+
+	filter_fasta.sh -i $database -f $output_dir/$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\nfilter_fasta.sh -i $database -f  $output_dir/$group/$sample/mapping/$sample\".coverage_adapted_filtered_\"$coverage_cutoff"
+	#sample.coverage_adapted_filtered_50_term.fasta
 
 	process_cluster_output.sh -i $reconstruct_fasta -b  $output_dir/$group/$sample/mapping/$sample".coverage_adapted" -c 80 &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\nprocess_cluster_output.sh -i $reconstruct_fasta -b  $output_dir/$group/$sample/mapping/$sample\".coverage_adapted\" -c $coverage_cutoff"
 
@@ -750,6 +751,14 @@ this will reduce the input sequences to map against" $sample
 		echo "Omitting mash execution"
 	else
 		mash_screener.sh -d $database -1 $contigs -s $sample -o $output_dir/$group/$sample/kmer -f $kmer_cutoff $w_winner &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\n command: \nmash_screener.sh -d $database -1 $r1_file_mapping -s $sample -o $output_dir/$group/$sample/kmer"
+
+		if [ ! -s $output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff ]
+		then
+			echo -e "${RED}ERROR${NC}"
+			echo "NO PLASMIDS MATCHED KMER IDENTITY REQUERIMENTS, PLEASE, TRY WITH LOWER KMER ID CUTOFF"
+			echo "################################################################################"
+			exit 1
+		fi
 	fi
 	#output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff"_term.fasta"
 
