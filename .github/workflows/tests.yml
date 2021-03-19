@@ -3,10 +3,8 @@ name: tests ci
 on:
   workflow_run:
     workflows: ["deploy dev"]
+    branches: [develop]
     types: [completed]
-  push:
-    branches:
-      - develop
   pull_request:
   release:
     types: [published]
