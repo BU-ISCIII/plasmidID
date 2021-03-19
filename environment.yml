@@ -5,20 +5,20 @@ channels:
   - defaults
 dependencies:
   - conda-forge::gawk==5.1.0
+  - conda-forge::biopython==1.78
+  - conda-forge::numpy
+  - conda-forge::pandas
+  - conda-forge::scikit-learn
+  - conda-forge::scipy
+  - conda-forge::tabulate
+  - conda-forge::wget
   - bioconda::bowtie2==2.4.2
   - bioconda::bedtools==2.30.0
   - bioconda::samtools==1.11
   - bioconda::mash==2.3
   - bioconda::circos==0.69.8
   - bioconda::prokka==1.14.6
-  - bioconda::biopython==1.78
   - bioconda::blast==2.11.0
   - bioconda::spades==3.13.0
   - bioconda::trimmomatic
   - python==3.6
-  - numpy
-  - pandas
-  - scikit-learn
-  - scipy
-  - tabulate
-  - wget
