@@ -16,7 +16,6 @@ jobs:
     name: Run tests
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
-    env:
     steps:
       - name: Check out pipeline code
         uses: actions/checkout@v2
