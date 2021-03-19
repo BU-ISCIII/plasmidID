@@ -1,6 +1,9 @@
 name: tests ci
 # This workflow runs the pipeline with the minimal test dataset to check that it completes any errors
 on:
+  workflow_run:
+    workflows: ["deploy dev"]
+    types: [completed]
   push:
     branches:
       - develop
@@ -11,6 +14,7 @@ on:
 jobs:
   test:
     name: Run tests
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     # Only run on push if this is the nf-core dev branch (merged PRs)
     runs-on: ubuntu-latest
     env:
