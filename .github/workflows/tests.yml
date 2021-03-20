@@ -3,19 +3,34 @@ name: tests ci
 on:
   push:
     branches: [develop]
-  workflow_run:
-    workflows: ["deploy dev"]
-    branches: [develop]
-    types:
-        - completed
   pull_request_target:
+    branches: [develop]
   release:
     types: [published]
 
 jobs:
-  on-sucess:
+  push_dockerhub:
+    name: Push new Docker image to Docker Hub (dev)
+    runs-on: ubuntu-latest
+    # Only run for the official repo, for releases and merged PRs
+    if: ${{ github.repository == 'BU-ISCIII/plasmidID' }}
+    env:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_PASS: ${{ secrets.DOCKERHUB_PASSWORD }}
+    steps:
+      - name: Check out pipeline code
+        uses: actions/checkout@v2
+
+      - name: Build new docker image
+        run: docker build --no-cache . -t buisciii/plasmidid:dev
+
+      - name: Push Docker image to DockerHub (develop)
+        run: |
+          echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+          docker push buisciii/plasmidid:dev
+  run-tests:
     name: Run tests
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    needs: push_dockerhub
     runs-on: ubuntu-latest
     steps:
       - name: Check out pipeline code
