@@ -75,6 +75,28 @@ Wait for the environment to solve
 
 Ignore warnings/errors
 
+#### Use Docker
+
+Example:
+Clone the repo:
+```Bash
+git clone git@github.com:BU-ISCIII/plasmidID.git
+cd plasmidID
+```
+Run it with the test data using docker:
+
+**Notice that the input files MUST be in your present working directory or in any folder inside it. For example, if I execute this command in `/home/smonzon`, my folder with the files would be in `/home/smonzon/test`.**
+
+```Bash
+docker run -v $PWD:$PWD -w $PWD buisciii/plasmidid plasmidID \
+     -1 test/KPN_TEST_R1.fastq.gz  \
+     -2 test/KPN_TEST_R2.fastq.gz \
+     -d test/plasmids_TEST_database.fasta \
+     -c test/contigs_KPN_TEST.fasta \
+     --no-trim \
+     -s KPN
+```
+
 ## Quick usage
 
 Illumina paired-end
@@ -183,7 +205,7 @@ Since v1.6, the more relevant output is located in GROUP/SAMPLE folder:
 			- Orientative colouring (the closer to 100% the better)
 		- ALIGN FR (fraction_covered): total length of contigs aligned (complete) / reference sequence length
 			- Orientative colouring (the closer to 1 the better)
-			
+
 
 ## Annotation file
 
@@ -198,72 +220,3 @@ For furder details, including:
 
 <p align="center"><img src="https://github.com/BU-ISCIII/plasmidID/blob/master/img/pipeline_pID.png" alt="workflow_small"  width="500">
 
-
-
-
-
-
-
-## Docker
-
-Example:
-Clone the repo:
-```Bash
-git clone git@github.com:BU-ISCIII/plasmidID.git
-cd plasmidID
-git submodule init
-git submodule update
-```
-Run it with the test data using docker or singularity:
-
-**Notice that the input files MUST be in your present working directory or in any folder inside it. For example, if I execute this command in `/home/smonzon`, my folder with the files would be in `/home/smonzon/TEST_DATA`.**
-
-```Bash
-docker run -v $PWD:$PWD -w $PWD buisciii/plasmidid plasmidID.sh \
-     -1 TEST_DATA/KPN_TEST_R1.fastq.gz  \
-     -2 TEST_DATA/KPN_TEST_R2.fastq.gz \
-     -d TEST_DATA/plasmids_TEST_database.fasta \
-     -c TEST_DATA/contigs_KPN_TEST.fasta \
-     --no-trim \
-     -s KPN
-```
-
-Or you can use Singularity instead:
-```Bash
-singularity exec docker://buisciii/plasmidid plasmidID.sh \
-     -1 TEST_DATA/KPN_TEST_R1.fastq.gz  \
-     -2 TEST_DATA/KPN_TEST_R2.fastq.gz \
-     -d TEST_DATA/plasmids_TEST_database.fasta \
-     -c TEST_DATA/contigs_KPN_TEST.fasta \
-     --no-trim \
-     -s KPN
-```
-
-You can also build the image in your local machine cloning the repository and building it using the Singularity recipe provided:
-
-```Bash
-git clone git@github.com:BU-ISCIII/plasmidID.git
-cd plasmidID
-git submodule init
-git submodule update
-singularity build plasmidid.simg Singularity
-singularity exec plasmidid.simg plasmidID.sh \
-     -1 TEST_DATA/KPN_TEST_R1.fastq.gz  \
-     -2 TEST_DATA/KPN_TEST_R2.fastq.gz \
-     -d TEST_DATA/plasmids_TEST_database.fasta \
-     -c TEST_DATA/contigs_KPN_TEST.fasta \
-     --no-trim \
-     -s KPN
-```
-
-If you want to use trimming functionality you have to supply trimmomatic-directory parameter:
-```
-docker run -v $PWD:$PWD -w $PWD buisciii/plasmidid plasmidID.sh \
-     -1 file_R1.fastq.gz  \
-     -2 file_R2.fastq.gz \
-     -d database.fasta \
-     -c contigs.fasta \
-     --trimmomatic-directory /scif/apps/trimmomatic/Trimmomatic-0.38 \
-     -s KPN
-```
-> **Note:** You MUST skip trimming filtering in order to use TEST_DATA as it is already filtered!
