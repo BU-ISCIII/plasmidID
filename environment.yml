@@ -23,3 +23,4 @@ dependencies:
   - conda-forge::scipy
   - conda-forge::tabulate
   - conda-forge::wget
+  - conda-forge::bc
