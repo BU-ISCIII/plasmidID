@@ -38,4 +38,5 @@ jobs:
 
       - name: Run pipeline with test data
         run: |
-          docker run -w "$PWD" --privileged buisciii/plasmidid:dev bash test/test.sh
+          docker run -w "$PWD" --privileged buisciii/plasmidid:dev pwd
+          docker run -w "$PWD" --privileged buisciii/plasmidid:dev ls
