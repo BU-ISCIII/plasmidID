@@ -15,7 +15,7 @@ set -e
 #INSTITUTION:ISCIII
 #CENTRE:BU-ISCIII
 #AUTHOR: Pedro J. Sola (pedroscampoy@gmail.com)
-VERSION=1.6.3
+VERSION=1.6.4
 #CREATED: 15 March 2018
 #
 #ACKNOLEDGE: longops2getops.sh: https://gist.github.com/adamhotep/895cebf290e95e613c006afbffef09d7
@@ -154,7 +154,7 @@ do
 		--cluster)	set -- "$@"	-f ;;
 		--alignment-percentage)	set -- "$@"	-l ;;
 		--length-total)	set -- "$@"	-L ;;
-		
+
 		--extend-annotation) set -- "$@"	-x ;;
 ##ADDITIONAL-
 		--memory)		set -- "$@"	-M ;;
@@ -345,7 +345,7 @@ if [ $only_reconstruct = false ]; then
 
 	echo -e "\n${CYAN}CHECKING DEPENDENCIES AND MANDATORY FILES${NC}"
 
-	check_dependencies.sh blastn bowtie2-build bowtie2 bedtools prokka samtools mash circos
+	check_dependencies.sh gawk blastn bowtie2-build bowtie2 bedtools prokka samtools mash circos
 
 	check_mandatory_files.sh $r1_file $r2_file $database
 fi
@@ -593,6 +593,14 @@ this will reduce the input sequences to map against" $sample
 		echo "Omitting mash execution"
 	else
 		mash_screener.sh -d $database -1 $r1_file_mapping -s $sample -o $output_dir/$group/$sample/kmer -f $kmer_cutoff $w_winner &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\n command: \nmash_screener.sh -d $database -1 $r1_file_mapping -s $sample -o $output_dir/$group/$sample/kmer"
+
+		if [ ! -s $output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff ]
+		then
+			echo -e "${RED}ERROR${NC}"
+			echo "NO PLASMIDS MATCHED KMER IDENTITY REQUERIMENTS, PLEASE, TRY WITH LOWER KMER ID CUTOFF"
+			echo "################################################################################"
+			exit 1
+		fi
 	fi
 	#output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff"_term.fasta"
 
@@ -602,7 +610,7 @@ one representative, the largest, will be considered for further analysis" $sampl
 	mashclust.py -i $output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff"_term.fasta" -d $cluster_cutoff &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\n command:mashclust.py -i $output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff"_term.fasta" -d $cluster_cutoff"
 
 	screened_ddbb=$output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff"_term."$cluster_cutoff".representative.fasta"
-	
+
 	####MAPPING##################################################################
 	#############################################################################
 	echo -e "\n${CYAN}MAPPING READS${NC} ($(date))\n \
@@ -660,17 +668,15 @@ will pass to further analysis"
  	#sample.coverage_adapted
  	#sample.coverage_adapted_filtered_80
 
-	filter_fasta.sh -i $database -f $output_dir/$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\nfilter_fasta.sh -i $database -f  $output_dir/$group/$sample/mapping/$sample\".coverage_adapted_filtered_\"$coverage_cutoff"
-
-	#sample.coverage_adapted_filtered_50_term.fasta
-
-
 	if [ ! -s  $output_dir/$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff ]; then \
 		echo -e "${RED}ERROR${NC}"
 		echo "NO PLASMIDS MATCHED MAPPING REQUERIMENTS, PLEASE, TRY WITH LOWER COVERAGE CUTOFF"
 		echo "################################################################################"
 		exit 1
-	fi
+    fi
+
+	filter_fasta.sh -i $database -f $output_dir/$group/$sample/mapping/$sample".coverage_adapted_filtered_"$coverage_cutoff &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\nfilter_fasta.sh -i $database -f  $output_dir/$group/$sample/mapping/$sample\".coverage_adapted_filtered_\"$coverage_cutoff"
+	#sample.coverage_adapted_filtered_50_term.fasta
 
 	process_cluster_output.sh -i $reconstruct_fasta -b  $output_dir/$group/$sample/mapping/$sample".coverage_adapted" -c 80 &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\ncommand:\nprocess_cluster_output.sh -i $reconstruct_fasta -b  $output_dir/$group/$sample/mapping/$sample\".coverage_adapted\" -c $coverage_cutoff"
 
@@ -731,7 +737,7 @@ PlasmidID will only use contigs supplied and will not filter by mapping coverage
 
 	echo -e "\n${CYAN}CHECKING DEPENDENCIES AND MANDATORY FILES${NC}"
 
-	check_dependencies.sh blastn prokka circos mash
+	check_dependencies.sh blastn prokka circos mash gawk
 
 	check_mandatory_files.sh $contigs $database
 
@@ -745,6 +751,14 @@ this will reduce the input sequences to map against" $sample
 		echo "Omitting mash execution"
 	else
 		mash_screener.sh -d $database -1 $contigs -s $sample -o $output_dir/$group/$sample/kmer -f $kmer_cutoff $w_winner &>> $log_file || error ${LINENO} $(basename $0) "See $output_dir/logs/plasmidID.log for more information.\n command: \nmash_screener.sh -d $database -1 $r1_file_mapping -s $sample -o $output_dir/$group/$sample/kmer"
+
+		if [ ! -s $output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff ]
+		then
+			echo -e "${RED}ERROR${NC}"
+			echo "NO PLASMIDS MATCHED KMER IDENTITY REQUERIMENTS, PLEASE, TRY WITH LOWER KMER ID CUTOFF"
+			echo "################################################################################"
+			exit 1
+		fi
 	fi
 	#output_dir/$group/$sample/kmer/database.filtered_$kmer_cutoff"_term.fasta"
 

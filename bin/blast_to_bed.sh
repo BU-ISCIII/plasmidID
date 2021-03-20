@@ -246,6 +246,10 @@ echo "Adapting blast to bed using" $(basename $input_file) "with:"
 echo "Blast identity=" $blast_id_cutoff
 echo "Min length aligned=" $blast_len_alignment
 echo "Min len percentage=" $blast_len_percentage
+echo "database_delimiter=" $database_delimiter
+echo "database_field)=" $database_field
+echo "query_delimiter=" $query_delimiter
+echo "query_field=" $query_field
 
 
 cat $input_file | sort -k3 -nr | \

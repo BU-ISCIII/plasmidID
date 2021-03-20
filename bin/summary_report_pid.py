@@ -13,7 +13,7 @@ import html
 import argparse
 import datetime
 import pandas as pd
-import numpy as np 
+import numpy as np
 from Bio import Entrez
 from Bio import SeqIO
 from tabulate import tabulate
@@ -31,7 +31,7 @@ AUTHOR: Pedro J. Sola (pedroscampoy@gmail.com)
 d^v^b
 VERSION=0.1
 CREATED: 04 June 2020
-REVISION: 
+REVISION:
 
 TODO:
 
@@ -58,7 +58,7 @@ def check_file_exists(file_name):
     """
     #file_info = os.stat(file_name) #Retrieve the file info to check if has size > 0
     #or file_info.st_size == 0:
-    if not os.path.isfile(file_name): 
+    if not os.path.isfile(file_name):
         logger.info(RED + BOLD + "File: %s not found or empty\n" % file_name + END_FORMATTING)
         sys.exit(1)
     return os.path.isfile(file_name)
@@ -75,7 +75,7 @@ def extract_files(folder):
                 complete_file = os.path.join(root, name)
             elif "representative" in name and name.endswith(".fasta"):
                 representative_file = os.path.join(root, name)
-                
+
     return percentage_file, complete_file, representative_file
 
 def percentage_to_df(percentage_file):
@@ -101,17 +101,17 @@ def len_description_to_df(representative_file):
     return df
 
 def complete_report_df(complete_file, len_description_df, percentage_df):
-    
+
     def set_to_list(row):
         listed_set = list(row.contig_name)
         listed_set.sort()
         return listed_set
-    
+
     #CP029217.1	176762	288994	9	id=170244
     dfc = pd.read_csv(complete_file, sep="\t", names=['id', 'start', 'end', 'contig_name', 'contig_id'])
     dfc['len_covered'] = dfc.end - dfc.start
     covered_df = dfc.groupby('id')['len_covered'].sum().reset_index()
-    contigs_df = dfc.groupby('id')['contig_name'].apply(set).reset_index()#Merge all dataframes 
+    contigs_df = dfc.groupby('id')['contig_name'].apply(set).reset_index()#Merge all dataframes
     #Merge all dataframes
     df = len_description_df.merge(covered_df, on='id', how='left')
     df['fraction_covered'] = round(df.len_covered / df.length, 2)
@@ -130,8 +130,8 @@ def include_images(sample_folder, summary_df):
         for root, _, files in os.walk(sample_folder):
             for name in files:
                 if 'images' in root and row.id in name and name.endswith('.png'):
-                    return 'file://' + os.path.join(root, name)
-                
+                    return os.path.relpath(os.path.join(root, name), sample_folder)
+
     summary_df['images'] = summary_df.apply(lambda x: image_finder(x, sample_folder), axis=1)
     summary_df.to_csv(sample_folder + '/' + sample +  '_final_results.tab', sep='\t', index=False)
     return summary_df
@@ -140,9 +140,9 @@ html_template = """
     <!doctype html>
 
     <html lang="en">
-    
+
     <style type="text/css">
-    
+
     body {
         font: normal 20px "Courier New", Arial, sans-serif;
         padding: auto;
@@ -153,38 +153,38 @@ html_template = """
         max-width: 350px;
         height: auto;
     }
-    
+
     .summary{
         display: flex;
         flex-direction: column-reverse;
     }
-    
+
     .numeric-values {
         display: flex;
         flex-direction: row;
         justify-content: space-around;
     }
-    
+
     .numeric-values div {
         flex-grow: 1;
     }
-    
+
     .neutral {
         background-color: lightgray;
     }
-    
+
     .likely {
         background-color: limegreen;
     }
-    
+
     .unlikely {
         background-color: sandybrown;
     }
-    
+
     .unprobable {
         background-color: brown;
     }
-    
+
     header {
         display: flex;
         flex-direction: row;
@@ -192,16 +192,16 @@ html_template = """
         align-items: flex-end;
         font-size: 2.7em;
     }
-    
+
     table {
         position: relative;
-        border-collapse: collapse; 
+        border-collapse: collapse;
     }
-    
+
     header img {
         width: 70px;
     }
-    
+
     th {
         font-size: 1.3em;
         background-color: skyblue;
@@ -213,17 +213,17 @@ html_template = """
         font-size: 1.1em;
         text-align: center;
     }
-    
+
     footer {
         height: 3em;
         padding: 1;
     }
-    
+
     tr:nth-child(even) {background-color: snow;}
     tr:hover {background-color:azure;}
 
     </style>
-    
+
     <head>
       <meta charset="utf-8">
 
@@ -251,8 +251,8 @@ html_template = """
       </footer>
     </body>
     </html>
-    
-    
+
+
     \n"""
 
 def summary_to_html(sample_folder, final_individual_dataframe, html_template):
@@ -260,7 +260,7 @@ def summary_to_html(sample_folder, final_individual_dataframe, html_template):
     sample = sample_folder.split("/")[-1]
     html_filename = os.path.join(sample_folder, sample + '_final_results.html')
     hidden_filename = os.path.join(sample_folder, '.' + sample + '_final_individual_results.tab')
-    
+
     def complete_to_rating(row):
         if row.fraction_covered >= 0.8 and row.fraction_covered <= 1.2:
             return 'likely'
@@ -268,7 +268,7 @@ def summary_to_html(sample_folder, final_individual_dataframe, html_template):
             return 'unlikely'
         else:
             return 'unprobable'
-        
+
     def mapping_to_rating(row):
         if row.percentage == 'X':
             return 'neutral'
@@ -278,8 +278,8 @@ def summary_to_html(sample_folder, final_individual_dataframe, html_template):
             return 'unlikely'
         else:
             return 'unprobable'
-        
-    
+
+
     def apply_img_tag(row):
         return '<div class=summary>' + '\n' + \
     '<div class=numeric-values>' + '\n' + \
@@ -290,28 +290,28 @@ def summary_to_html(sample_folder, final_individual_dataframe, html_template):
     '<img src=' + row.images + ' alt=' + "\"" + row.id + "\"" + '>' + '\n' + \
     '</a>' + '\n' + \
     '</div>'
-    
+
     def italic_species(row):
         return '<i>' + row.species + '</i>'
-    
+
     df['perc_rating'] = df.apply(lambda x: mapping_to_rating(x), axis=1)
-    
+
     df['complete_rating'] = df.apply(lambda x: complete_to_rating(x), axis=1)
-    
+
     df['images'] = df.apply(lambda x: apply_img_tag(x), axis=1)
-    
+
     df['species'] = df.apply(lambda x: italic_species(x), axis=1)
-    
-    df.drop(['percentage', 'fraction_covered', 'perc_rating', 'complete_rating'], axis = 1, inplace = True) 
+
+    df.drop(['percentage', 'fraction_covered', 'perc_rating', 'complete_rating'], axis = 1, inplace = True)
 
     df.rename(columns={'images':sample}, inplace=True)
-    
+
     df.to_csv(hidden_filename, sep='\t', index=False)
-    
+
     table = tabulate(df, headers='keys', tablefmt='html', showindex=False)
     table = html.unescape(table)
     table = table.replace("style=\"text-align: right;\"", "")
-    
+
     final_html = html_template.replace('TABLESUMMARY', table)
     with open(html_filename, 'w+') as f:
         f.write(final_html)
@@ -331,33 +331,33 @@ def summary_to_html_group(group_folder, html_template):
         del df['contig_name']
         individual_dfs.append(df)
         sample_list_column.append(df.columns.tolist()[-1])
-                
+
     dfm = individual_dfs[0]
     for df_ in individual_dfs[1:]:
         dfm = dfm.merge(df_, on=['id','length', 'species', 'description'], how='outer')
-    
+
     coun_df = dfm.drop(['length', 'species', 'description'], axis = 1).groupby('id').count().sum(axis=1).reset_index(name='N')
-    
+
     dfm = dfm.merge(coun_df, on='id', how='outer')
-    
+
     columns_reorder = ['id','length', 'species', 'description', 'N'] + sample_list_column
-    
+
     dfm = dfm[columns_reorder]
-    
+
     dfm.fillna('-', inplace=True)
-    
+
     dfm = dfm.sort_values(by=['N','length'], ascending=[False,False]).reset_index(drop=True)
-    
+
     table = tabulate(dfm, headers='keys', tablefmt='html', showindex=False)
     table = html.unescape(table)
-    
+
     final_html = html_template.replace('TABLESUMMARY', table)
-    
+
     with open(html_filename, 'w+') as f:
         f.write(final_html)
-        
+
     return dfm
-    
+
 def summary_to_tab_group(group_folder):
     group = group_folder.split("/")[-1]
     tab_filename = os.path.join(group_folder, group + '_final_results.tab')
@@ -374,34 +374,34 @@ def summary_to_tab_group(group_folder):
         df.drop(['contig_name', 'images'], axis = 1, inplace=True)
         df.rename(columns={'fraction_covered':'Fr_cov_' + sample, 'percentage':'Map%_' + sample}, inplace=True)
         individual_dfs.append(df)
-        
+
     dfm = individual_dfs[0]
     for df_ in individual_dfs[1:]:
         dfm = dfm.merge(df_, on=['id','length', 'species', 'description'], how='outer')
-        
+
     count_df = dfm.filter(regex='Fr_cov.*|^id$', axis=1).groupby('id').count().sum(axis=1).reset_index(name='N')
-    
+
     dfm = dfm.merge(count_df, on='id', how='outer')
-    
+
     columns_reorder = dfm.columns.tolist()[0:4]
     columns_reorder.append(dfm.columns.tolist()[-1])
     columns_reorder = columns_reorder + dfm.columns.tolist()[4:-1]
-    
+
     dfm = dfm[columns_reorder]
-    
+
     dfm = dfm.sort_values(by=['N','length'], ascending=[False,False]).reset_index(drop=True)
-    
+
     dfm.to_csv(tab_filename, sep='\t', index=False)
-    
+
     return
-    
+
 
 def main():
 
     def get_arguments():
 
         parser = argparse.ArgumentParser(prog = 'summary_report_pid.py', description= 'Creates a summary report in tsv and hml from plasmidID execution')
-        
+
         parser.add_argument('-i', '--input', dest="input_folder", metavar="input_folder", type=str, required=True, help='REQUIRED.Input pID folder')
         parser.add_argument('-g', '--group', required=False,  action='store_false', help='Creates a group report instead of individual (Default True)')
 

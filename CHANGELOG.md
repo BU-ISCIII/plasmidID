@@ -1,6 +1,12 @@
 # Changelog
-All notable changes to this project will be documented in this file.
 
+## 1.6.4 - 2021-03-2020
+### Added
+- Updated Dockerfile
+- Migrated tests to github actions
+### Fixed
+- Updated environment.yml for conda.
+- Fixed issues #12,#14,#15,#17. Cases with no plasmids or too many. Relative paths in html images.
 
 ## 1.4.2 - 2018-09-29
 ### Added
@@ -11,11 +17,11 @@ All notable changes to this project will be documented in this file.
 
 ## 1.4 - 2018-09-20
 ### Added
-- Automatically annotated genes/cds are displayed differently depending on whether they are located in forward or reverse 
+- Automatically annotated genes/cds are displayed differently depending on whether they are located in forward or reverse
 - Psi-cd-hit and blast now handle threads
 - Improved error handling
 - Doocker/Singularity compatibility
-- One multifasta file per reference plasmid is generated with all the similar contigs from the sample 
+- One multifasta file per reference plasmid is generated with all the similar contigs from the sample
 - Quick staus of values applied to plasmid reconstruction
 
 ###Fixed

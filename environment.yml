@@ -1,0 +1,26 @@
+name: plasmidID
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python>=3.6
+  - bioconda::bowtie2
+  - bioconda::bedtools
+  - bioconda::samtools
+  - bioconda::mash>=2
+  - bioconda::circos
+  - bioconda::prokka>=1.14
+  - bioconda::blast
+  - bioconda::spades
+  - bioconda::trimmomatic
+  - tbb==2020.2
+  - conda-forge::gawk
+  - conda-forge::biopython
+  - conda-forge::numpy
+  - conda-forge::pandas
+  - conda-forge::scikit-learn
+  - conda-forge::scipy
+  - conda-forge::tabulate
+  - conda-forge::wget
+  - conda-forge::bc

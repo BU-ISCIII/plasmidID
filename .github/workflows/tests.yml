@@ -1,0 +1,38 @@
+name: tests ci
+# This workflow runs the pipeline with the minimal test dataset to check that it completes any errors
+on:
+  push:
+    branches: [develop]
+  pull_request_target:
+    branches: [develop]
+  release:
+    types: [published]
+
+jobs:
+  push_dockerhub:
+    name: Push new Docker image to Docker Hub (dev)
+    runs-on: ubuntu-latest
+    # Only run for the official repo, for releases and merged PRs
+    if: ${{ github.repository == 'BU-ISCIII/plasmidID' }}
+    env:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_PASS: ${{ secrets.DOCKERHUB_PASSWORD }}
+    steps:
+      - name: Check out pipeline code
+        uses: actions/checkout@v2
+
+      - name: Build new docker image
+        run: docker build --no-cache . -t buisciii/plasmidid:dev
+
+      - name: Push Docker image to DockerHub (develop)
+        run: |
+          echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+          docker push buisciii/plasmidid:dev
+  run-tests:
+    name: Run tests
+    needs: push_dockerhub
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run pipeline with test data
+        run: |
+            docker run buisciii/plasmidid:dev bash /opt/plasmidID/test/test.sh
