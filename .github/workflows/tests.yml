@@ -31,8 +31,8 @@ jobs:
   run-tests:
     name: Run tests
     needs: push_dockerhub
-    runs-on: buisciii/plasmidid:dev
+    runs-on: ubuntu-latest
     steps:
       - name: Run pipeline with test data
         run: |
-            cd /opt/plasmidID/test ; bash test.sh
+            docker run buisciii/plasmidid:dev bash /opt/plasmidID/test/test.sh
