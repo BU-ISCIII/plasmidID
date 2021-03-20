@@ -31,11 +31,8 @@ jobs:
   run-tests:
     name: Run tests
     needs: push_dockerhub
-    runs-on: ubuntu-latest
+    runs-on: buisciii/plasmidid:dev
     steps:
-      - name: Check out pipeline code
-        uses: actions/checkout@v2
-
       - name: Run pipeline with test data
         run: |
-          docker run -v ${{ github.workspace }}:/opt --privileged buisciii/plasmidid:dev bash /work/test/test.sh
+            cd /opt/plasmidID/test ; bash test.sh
