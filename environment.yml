@@ -8,9 +8,9 @@ dependencies:
   - bioconda::bowtie2
   - bioconda::bedtools
   - bioconda::samtools
-  - bioconda::mash
+  - bioconda::mash>=2
   - bioconda::circos
-  - bioconda::prokka
+  - bioconda::prokka>=1.14
   - bioconda::blast
   - bioconda::spades
   - bioconda::trimmomatic
