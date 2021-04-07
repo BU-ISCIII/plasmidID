@@ -1,10 +1,11 @@
-name: plasmidID
+name: plasmidID_test
 channels:
   - conda-forge
   - bioconda
   - defaults
 dependencies:
   - python>=3.6
+  - bioconda::perl-gd>=2.71
   - bioconda::bowtie2
   - bioconda::bedtools
   - bioconda::samtools
