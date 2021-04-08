@@ -1,4 +1,4 @@
-name: plasmidID_test
+name: plasmidID
 channels:
   - conda-forge
   - bioconda
