@@ -212,7 +212,7 @@ prokka --force --outdir $output_dir \
 --usegenus \
 --centre BU-ISCIII \
 --locustag $prefix \
---compliant \
+--addgenes \
 --cpus $threads \
 $input_file #|| error ${LINENO} $(basename $0) "Prokka command failed. See $output_dir/logs for more information."
 
