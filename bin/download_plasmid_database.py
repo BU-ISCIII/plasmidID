@@ -19,7 +19,7 @@ logger = logging.getLogger()
 =============================================================
 HEADER
 =============================================================
-FUNCTION: Download up to date plasmid database from ftp://ftp.ncbi.nlm.nih.gov/genomes/GENOME_REPORTS/plasmids.txt.
+FUNCTION: Download up to date plasmid database from https://ftp.ncbi.nlm.nih.gov/genomes/GENOME_REPORTS/plasmids.txt.
             Remove those sequences with terms not related to complete plasmid such: gene, protein, partial, putative or hypothetical
 
 INSTITUTION:CNM-ISCIII
@@ -37,33 +37,36 @@ END_OF_HEADER
 ================================================================
 """
 
+
 def check_create_dir(path):
     if os.path.exists(path):
         pass
     else:
         os.mkdir(path)
 
+
 def main():
 
     def get_arguments():
 
-        parser = argparse.ArgumentParser(prog = 'download_plasmid_database.py', description= 'Download up to date plasmid database from ncbi ftp')
-        
-        parser.add_argument('-o', '--output', type=str, required=True, help='REQUIRED. Output directory to extract plasmid database')
+        parser = argparse.ArgumentParser(
+            prog='download_plasmid_database.py', description='Download up to date plasmid database from ncbi ftp')
+
+        parser.add_argument('-o', '--output', type=str, required=True,
+                            help='REQUIRED. Output directory to extract plasmid database')
 
         arguments = parser.parse_args()
 
         return arguments
 
     args = get_arguments()
-    
 
     output_dir = os.path.abspath(args.output)
 
     check_create_dir(output_dir)
 
-    #LOGGING
-    #Create log file with date and time
+    # LOGGING
+    # Create log file with date and time
     today = str(datetime.date.today())
     right_now_full = "".join(today.split("-"))
 
@@ -81,12 +84,11 @@ def main():
 
     stream_handler = logging.StreamHandler()
     stream_handler.setLevel(logging.INFO)
-    #stream_handler.setFormatter(formatter)
+    # stream_handler.setFormatter(formatter)
 
     logger.addHandler(stream_handler)
     logger.addHandler(file_handler)
 
-    
     #####################START PIPELINE################
 
     logger.debug(args)
@@ -101,56 +103,67 @@ def main():
     plasmid_failed_path = os.path.join(output_dir, plasmid_failed_file)
 
     try:
-        df = pd.read_csv('ftp://ftp.ncbi.nlm.nih.gov/genomes/GENOME_REPORTS/plasmids.txt', sep='\t')
+        df = pd.read_csv(
+            'https://ftp.ncbi.nlm.nih.gov/genomes/GENOME_REPORTS/plasmids.txt', sep='\t')
     except:
         logger.info('there was a problem accessing the ftp')
         sys.exit(1)
-    
+
     df.to_csv(plasmid_text_path, sep='\t', index=False)
 
-    plasmid_reference = df['RefSeq'][df.RefSeq != "-"].tolist() + df['INSDC'][df.RefSeq == "-"].tolist()
+    plasmid_reference = df['RefSeq'][df.RefSeq !=
+                                     "-"].tolist() + df['INSDC'][df.RefSeq == "-"].tolist()
 
-    #remove duplicates
+    # remove duplicates
     plasmid_reference = set(plasmid_reference)
-    #Set terms to exclude
-    terms_to_exclude = ['gene ', 'protein', 'partial', 'putative', 'hypothetical']
-    #Dictionary with erroneous accession numbers to determine the reason
+    # Set terms to exclude
+    terms_to_exclude = ['gene ', 'protein',
+                        'partial', 'putative', 'hypothetical']
+    # Dictionary with erroneous accession numbers to determine the reason
     erroneous = {}
-
 
     Entrez.email = "A.N.Other@example.com"
 
     total_sequences = len(plasmid_reference)
     current_record = 1
     logger.info("")
-    logger.info("Starting plasmid database download script: " + str(total_sequences) + " will be downloaded")
+    logger.info("Starting plasmid database download script: " +
+                str(total_sequences) + " will be downloaded")
     logger.info("This will take a while.\nCheck progress in " + log_full_path)
 
     with open(plasmid_fasta_path, 'w+') as output_handle:
         for plasmid_accnumber in plasmid_reference:
             try:
-                handle = Entrez.efetch(db="nucleotide", id=plasmid_accnumber, rettype="fasta", retmode="text")
+                handle = Entrez.efetch(
+                    db="nucleotide", id=plasmid_accnumber, rettype="fasta", retmode="text")
                 record = SeqIO.read(handle, "fasta")
-                terms_present = [x in record.description for x in terms_to_exclude]
+                terms_present = [
+                    x in record.description for x in terms_to_exclude]
                 handle.close()
                 if sum(terms_present) > 0:
-                    terms_true = [terms_to_exclude[i] for i, x in enumerate(terms_present) if x == True]
-                    erroneous[record.id] = "Include terms: " + ', '.join(terms_true) + " => " + record.description
-                    logger.debug(" %s/%s Invalid terms in record %s" % (current_record,total_sequences, record.id))
+                    terms_true = [terms_to_exclude[i]
+                                  for i, x in enumerate(terms_present) if x == True]
+                    erroneous[record.id] = "Include terms: " + \
+                        ', '.join(terms_true) + " => " + record.description
+                    logger.debug(" %s/%s Invalid terms in record %s" %
+                                 (current_record, total_sequences, record.id))
                 else:
-                    logger.debug(" %s/%s Downloading record %s" % (current_record,total_sequences, record.id))
+                    logger.debug(" %s/%s Downloading record %s" %
+                                 (current_record, total_sequences, record.id))
                     SeqIO.write(record, output_handle, "fasta")
             except:
-                logger.debug(" %s/%s Failed to download %s" % (current_record,total_sequences, record.id))
+                logger.debug(" %s/%s Failed to download %s" %
+                             (current_record, total_sequences, record.id))
                 erroneous[record.id] = "failed to download"
             current_record = current_record + 1
-    
+
     if len(erroneous) > 0:
         with open(plasmid_failed_path, 'w+') as ferror:
             for acc, reason in erroneous.items():
                 ferror.write(acc + ": " + reason + "\n")
 
     logger.info("ALL DONE\nFASTA file is available in: " + plasmid_fasta_path)
+
 
 if __name__ == '__main__':
     try:
