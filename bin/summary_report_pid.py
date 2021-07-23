@@ -47,21 +47,24 @@ UNDERLINE = '\033[4m'
 RED = '\033[31m'
 GREEN = '\033[32m'
 MAGENTA = '\033[35m'
-BLUE =  '\033[34m'
+BLUE = '\033[34m'
 CYAN = '\033[36m'
 YELLOW = '\033[93m'
 DIM = '\033[2m'
+
 
 def check_file_exists(file_name):
     """
         Check file exist and is not 0 Kb, if not program exit.
     """
-    #file_info = os.stat(file_name) #Retrieve the file info to check if has size > 0
-    #or file_info.st_size == 0:
+    # file_info = os.stat(file_name) #Retrieve the file info to check if has size > 0
+    # or file_info.st_size == 0:
     if not os.path.isfile(file_name):
-        logger.info(RED + BOLD + "File: %s not found or empty\n" % file_name + END_FORMATTING)
+        logger.info(RED + BOLD + "File: %s not found or empty\n" %
+                    file_name + END_FORMATTING)
         sys.exit(1)
     return os.path.isfile(file_name)
+
 
 def extract_files(folder):
     percentage_file = ""
@@ -78,16 +81,18 @@ def extract_files(folder):
 
     return percentage_file, complete_file, representative_file
 
+
 def percentage_to_df(percentage_file):
     if not percentage_file == "":
         df = pd.read_csv(percentage_file, sep=" ", names=['id', 'percentage'])
         df['percentage'] = df['percentage'].round(2)
         return df
     else:
-        return pd.DataFrame(columns=['id','percentage'])
+        return pd.DataFrame(columns=['id', 'percentage'])
+
 
 def len_description_to_df(representative_file):
-    df = pd.DataFrame(columns=['id','length','species', 'description'])
+    df = pd.DataFrame(columns=['id', 'length', 'species', 'description'])
     index = 0
     for seq_record in SeqIO.parse(representative_file, "fasta"):
         df.loc[index, 'id'] = seq_record.id
@@ -100,6 +105,7 @@ def len_description_to_df(representative_file):
 
     return df
 
+
 def complete_report_df(complete_file, len_description_df, percentage_df):
 
     def set_to_list(row):
@@ -107,12 +113,14 @@ def complete_report_df(complete_file, len_description_df, percentage_df):
         listed_set.sort()
         return listed_set
 
-    #CP029217.1	176762	288994	9	id=170244
-    dfc = pd.read_csv(complete_file, sep="\t", names=['id', 'start', 'end', 'contig_name', 'contig_id'])
+    # CP029217.1	176762	288994	9	id=170244
+    dfc = pd.read_csv(complete_file, sep="\t", names=[
+                      'id', 'start', 'end', 'contig_name', 'contig_id'])
     dfc['len_covered'] = dfc.end - dfc.start
     covered_df = dfc.groupby('id')['len_covered'].sum().reset_index()
-    contigs_df = dfc.groupby('id')['contig_name'].apply(set).reset_index()#Merge all dataframes
-    #Merge all dataframes
+    contigs_df = dfc.groupby('id')['contig_name'].apply(
+        set).reset_index()  # Merge all dataframes
+    # Merge all dataframes
     df = len_description_df.merge(covered_df, on='id', how='left')
     df['fraction_covered'] = round(df.len_covered / df.length, 2)
     del df['len_covered']
@@ -124,17 +132,22 @@ def complete_report_df(complete_file, len_description_df, percentage_df):
     df = df.fillna('X')
     return df
 
+
 def include_images(sample_folder, summary_df):
     sample = sample_folder.split("/")[-1]
+
     def image_finder(row, sample_folder):
         for root, _, files in os.walk(sample_folder):
             for name in files:
                 if 'images' in root and row.id in name and name.endswith('.png'):
                     return os.path.relpath(os.path.join(root, name), sample_folder)
 
-    summary_df['images'] = summary_df.apply(lambda x: image_finder(x, sample_folder), axis=1)
-    summary_df.to_csv(sample_folder + '/' + sample +  '_final_results.tab', sep='\t', index=False)
+    summary_df['images'] = summary_df.apply(
+        lambda x: image_finder(x, sample_folder), axis=1)
+    summary_df.to_csv(sample_folder + '/' + sample +
+                      '_final_results.tab', sep='\t', index=False)
     return summary_df
+
 
 html_template = """
     <!doctype html>
@@ -255,11 +268,13 @@ html_template = """
 
     \n"""
 
+
 def summary_to_html(sample_folder, final_individual_dataframe, html_template):
     df = final_individual_dataframe.copy()
     sample = sample_folder.split("/")[-1]
     html_filename = os.path.join(sample_folder, sample + '_final_results.html')
-    hidden_filename = os.path.join(sample_folder, '.' + sample + '_final_individual_results.tab')
+    hidden_filename = os.path.join(
+        sample_folder, '.' + sample + '_final_individual_results.tab')
 
     def complete_to_rating(row):
         if row.fraction_covered >= 0.8 and row.fraction_covered <= 1.2:
@@ -279,17 +294,16 @@ def summary_to_html(sample_folder, final_individual_dataframe, html_template):
         else:
             return 'unprobable'
 
-
     def apply_img_tag(row):
         return '<div class=summary>' + '\n' + \
-    '<div class=numeric-values>' + '\n' + \
-    '<div class=\"percentage ' + row.perc_rating + '\">' + 'MAPPING %<br>' + str(row.percentage) + '</div>' + '\n' + \
-    '<div class=\"complete ' + row.complete_rating + '\">' + 'ALIGN FR<br>' + str(row.fraction_covered) + '</div>' + '\n' + \
-    '</div>' + '\n' + \
-    '<a href=' + row.images + ' target=\"_blank\">' + '\n' + \
-    '<img src=' + row.images + ' alt=' + "\"" + row.id + "\"" + '>' + '\n' + \
-    '</a>' + '\n' + \
-    '</div>'
+            '<div class=numeric-values>' + '\n' + \
+            '<div class=\"percentage ' + row.perc_rating + '\">' + 'MAPPING %<br>' + str(row.percentage) + '</div>' + '\n' + \
+            '<div class=\"complete ' + row.complete_rating + '\">' + 'ALIGN FR<br>' + str(row.fraction_covered) + '</div>' + '\n' + \
+            '</div>' + '\n' + \
+            '<a href=' + row.images + ' target=\"_blank\">' + '\n' + \
+            '<img src=' + row.images + ' alt=' + "\"" + row.id + "\"" + '>' + '\n' + \
+            '</a>' + '\n' + \
+            '</div>'
 
     def italic_species(row):
         return '<i>' + row.species + '</i>'
@@ -302,9 +316,10 @@ def summary_to_html(sample_folder, final_individual_dataframe, html_template):
 
     df['species'] = df.apply(lambda x: italic_species(x), axis=1)
 
-    df.drop(['percentage', 'fraction_covered', 'perc_rating', 'complete_rating'], axis = 1, inplace = True)
+    df.drop(['percentage', 'fraction_covered', 'perc_rating',
+             'complete_rating'], axis=1, inplace=True)
 
-    df.rename(columns={'images':sample}, inplace=True)
+    df.rename(columns={'images': sample}, inplace=True)
 
     df.to_csv(hidden_filename, sep='\t', index=False)
 
@@ -315,6 +330,7 @@ def summary_to_html(sample_folder, final_individual_dataframe, html_template):
     final_html = html_template.replace('TABLESUMMARY', table)
     with open(html_filename, 'w+') as f:
         f.write(final_html)
+
 
 def summary_to_html_group(group_folder, html_template):
     group = group_folder.split("/")[-1]
@@ -334,19 +350,36 @@ def summary_to_html_group(group_folder, html_template):
 
     dfm = individual_dfs[0]
     for df_ in individual_dfs[1:]:
-        dfm = dfm.merge(df_, on=['id','length', 'species', 'description'], how='outer')
+        dfm = dfm.merge(
+            df_, on=['id', 'length', 'species', 'description'], how='outer')
 
-    coun_df = dfm.drop(['length', 'species', 'description'], axis = 1).groupby('id').count().sum(axis=1).reset_index(name='N')
+    coun_df = dfm.drop(['length', 'species', 'description'], axis=1).groupby(
+        'id').count().sum(axis=1).reset_index(name='N')
 
     dfm = dfm.merge(coun_df, on='id', how='outer')
 
-    columns_reorder = ['id','length', 'species', 'description', 'N'] + sample_list_column
+    columns_reorder = ['id', 'length', 'species',
+                       'description', 'N'] + sample_list_column
 
     dfm = dfm[columns_reorder]
 
     dfm.fillna('-', inplace=True)
 
-    dfm = dfm.sort_values(by=['N','length'], ascending=[False,False]).reset_index(drop=True)
+    dfm = dfm.sort_values(by=['N', 'length'], ascending=[
+                          False, False]).reset_index(drop=True)
+
+    def handle_relpath(x):
+        if 'href' in str(x):
+            href_tag = re.search(r'<a href=(.*png)', x)
+            #img_tag = re.search(r'<img src=(.*png)', x)
+            sample = href_tag.group(1).split("/")[-1].split("_")[0]
+            x_replaced = x.replace(href_tag.group(
+                1), sample + "/" + href_tag.group(1))
+            return x_replaced
+        else:
+            return x
+
+    dfm = dfm.applymap(handle_relpath)
 
     table = tabulate(dfm, headers='keys', tablefmt='html', showindex=False)
     table = html.unescape(table)
@@ -358,28 +391,33 @@ def summary_to_html_group(group_folder, html_template):
 
     return dfm
 
+
 def summary_to_tab_group(group_folder):
     group = group_folder.split("/")[-1]
     tab_filename = os.path.join(group_folder, group + '_final_results.tab')
+    if os.path.isfile(tab_filename):
+        os.remove(tab_filename)
     individual_files = []
     for root, _, files in os.walk(group_folder):
         for name in files:
             if name.endswith("final_results.tab"):
                 individual_files.append(os.path.join(root, name))
     individual_dfs = []
-
     for file in individual_files:
         sample = file.split('/')[-1].replace('_final_results.tab', '')
         df = pd.read_csv(file, sep='\t')
-        df.drop(['contig_name', 'images'], axis = 1, inplace=True)
-        df.rename(columns={'fraction_covered':'Fr_cov_' + sample, 'percentage':'Map%_' + sample}, inplace=True)
+        df.drop(['contig_name', 'images'], axis=1, inplace=True)
+        df.rename(columns={'fraction_covered': 'Fr_cov_' +
+                           sample, 'percentage': 'Map%_' + sample}, inplace=True)
         individual_dfs.append(df)
 
     dfm = individual_dfs[0]
     for df_ in individual_dfs[1:]:
-        dfm = dfm.merge(df_, on=['id','length', 'species', 'description'], how='outer')
+        dfm = dfm.merge(
+            df_, on=['id', 'length', 'species', 'description'], how='outer')
 
-    count_df = dfm.filter(regex='Fr_cov.*|^id$', axis=1).groupby('id').count().sum(axis=1).reset_index(name='N')
+    count_df = dfm.filter(
+        regex='Fr_cov.*|^id$', axis=1).groupby('id').count().sum(axis=1).reset_index(name='N')
 
     dfm = dfm.merge(count_df, on='id', how='outer')
 
@@ -389,7 +427,8 @@ def summary_to_tab_group(group_folder):
 
     dfm = dfm[columns_reorder]
 
-    dfm = dfm.sort_values(by=['N','length'], ascending=[False,False]).reset_index(drop=True)
+    dfm = dfm.sort_values(by=['N', 'length'], ascending=[
+                          False, False]).reset_index(drop=True)
 
     dfm.to_csv(tab_filename, sep='\t', index=False)
 
@@ -400,11 +439,13 @@ def main():
 
     def get_arguments():
 
-        parser = argparse.ArgumentParser(prog = 'summary_report_pid.py', description= 'Creates a summary report in tsv and hml from plasmidID execution')
+        parser = argparse.ArgumentParser(
+            prog='summary_report_pid.py', description='Creates a summary report in tsv and hml from plasmidID execution')
 
-        parser.add_argument('-i', '--input', dest="input_folder", metavar="input_folder", type=str, required=True, help='REQUIRED.Input pID folder')
-        parser.add_argument('-g', '--group', required=False,  action='store_false', help='Creates a group report instead of individual (Default True)')
-
+        parser.add_argument('-i', '--input', dest="input_folder", metavar="input_folder",
+                            type=str, required=True, help='REQUIRED.Input pID folder')
+        parser.add_argument('-g', '--group', required=False,  action='store_false',
+                            help='Creates a group report instead of individual (Default True)')
 
         arguments = parser.parse_args()
 
@@ -415,8 +456,8 @@ def main():
     input_folder = os.path.abspath(args.input_folder)
     #output_dir = input_folder
 
-    #LOGGING
-    #Create log file with date and time
+    # LOGGING
+    # Create log file with date and time
     #right_now = str(datetime.date.today())
     #right_now_full = "_".join(right_now.split(" "))
 
@@ -429,36 +470,44 @@ def main():
     #formatter = logging.Formatter('%(asctime)s:%(message)s')
 
     #file_handler = logging.FileHandler(log_full_path)
-    #file_handler.setLevel(logging.DEBUG)
-    #file_handler.setFormatter(formatter)
+    # file_handler.setLevel(logging.DEBUG)
+    # file_handler.setFormatter(formatter)
 
     stream_handler = logging.StreamHandler()
     stream_handler.setLevel(logging.INFO)
-    #stream_handler.setFormatter(formatter)
+    # stream_handler.setFormatter(formatter)
 
     logger.addHandler(stream_handler)
-    #logger.addHandler(file_handler)
+    # logger.addHandler(file_handler)
 
     #####################START PIPELINE################
 
     logger.info(args)
-    #CALCULATE MASH DISTANCE
+    # CALCULATE MASH DISTANCE
     logger.info('Creating summary')
 
     if args.group == True:
         summary_to_html_group(input_folder, html_template)
         summary_to_tab_group(input_folder)
     else:
-        percentage_file, complete_file, representative_file = extract_files(input_folder)
+        percentage_file, complete_file, representative_file = extract_files(
+            input_folder)
         check_file_exists(complete_file)
         check_file_exists(representative_file)
         percentage_df = percentage_to_df(percentage_file)
         len_description_df = len_description_to_df(representative_file)
-        summary_df = complete_report_df(complete_file, len_description_df, percentage_df)
-        final_individual_dataframe = include_images(input_folder, summary_df)
-        summary_to_html(input_folder, final_individual_dataframe, html_template)
+        summary_df = complete_report_df(
+            complete_file, len_description_df, percentage_df)
+        if summary_df.shape[0] == 0:
+            logger.info('No plasmids were suitable for report')
+        else:
+            final_individual_dataframe = include_images(
+                input_folder, summary_df)
+            summary_to_html(
+                input_folder, final_individual_dataframe, html_template)
 
     logger.info('DONE')
+
 
 if __name__ == '__main__':
     try:
